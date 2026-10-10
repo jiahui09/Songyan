@@ -1,0 +1,153 @@
+<!--
+  @page: page-about
+  @hexo-layout: layout/page.ejs
+  @hexo-partial: _partial/page/about.ejs
+  @description: 关于页：斋号「松下斋」、作者「春唇语冬」生平偶记、印章形制与主题理念说明、落款印章
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>关于斋主 · 春唇语冬</title>
+  <meta name="description" content="春唇语冬，斋号松下。守一砚松烟，理四卷余墨。外古内今，分卷而治。">
+  <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
+  <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
+  <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
+  <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
+  <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+</head>
+<body>
+
+  <!-- 页头 Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./index.html" class="site-header__brand" title="返回卷首">
+        <span class="seal site-header__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title">春唇语冬</span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li>
+          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
+          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
+          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+          <li><a href="./archive.html" class="site-header__nav-link">归档</a></li>
+          <li><a href="./page-about.html" class="site-header__nav-link site-header__nav-link--active">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main site-main--narrow">
+    <article class="page-about">
+
+      <header style="text-align: center; margin-bottom: var(--space-8); padding-bottom: var(--space-6); border-bottom: 1px solid var(--line);">
+        <div style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-3);">
+          <!-- 规范 4.4 brand 变体：40-60px，间距 12px -->
+          <span class="seal seal--brand" aria-label="春唇语冬印章">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+              <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+              <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+              <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+                <text x="65" y="34">春</text>
+                <text x="65" y="66">唇</text>
+                <text x="35" y="34">语</text>
+                <text x="35" y="66">冬</text>
+              </g>
+            </svg>
+          </span>
+          <span style="font-family: var(--font-title); font-size: var(--text-2xl); letter-spacing: 0.1em; color: var(--ink);">春唇语冬</span>
+        </div>
+        <p style="font-family: var(--font-title); font-size: var(--text-sm); color: var(--ink-light); margin: 0;">
+          居松下斋 · 守一砚松烟 · 分四卷余墨
+        </p>
+      </header>
+
+      <!-- @hexo: page.content -->
+      <div class="page-content" style="line-height: 1.85;">
+        <h2>自述</h2>
+        <p>
+          生于江左，居无常地。平生喜古调之铿锵，爱编程之精密；闲时研墨试纸，抚琴听雨，忙时折冲代码，构筑系统。此博客名曰「春唇语冬」，取四季流转、言语有声之意。
+        </p>
+
+        <h2>分卷而治</h2>
+        <p>
+          传统博客常将杂录、技术与词赋杂糅一室，读之未免气脉杂乱。本站依「分卷而治」之法，立为四卷：
+        </p>
+        <ol>
+          <li><strong>词卷：</strong>旧调新填，循词林正韵，严守平仄，以朱砂点韵、文末笺注考据；</li>
+          <li><strong>随笔：</strong>记山川风物、案头书画与日用随感，以岁月时光轴连贯；</li>
+          <li><strong>技术：</strong>述软件架构、前端工程与设计令牌，以双栏折角纸笺高效呈现；</li>
+          <li><strong>项目：</strong>陈平日雕琢之软件、开源模组与小器皿。</li>
+        </ol>
+
+        <h2>关于全站唯一印章</h2>
+        <p>
+          本站通体唯钤一章——<strong>「春唇语冬」</strong>元朱文方形印。形制为 2.5cm 方框，右起两行二乘二排列：右上为「春」，右下为「唇」，左上为「语」，左下为「冬」。印色取传统印泥朱红（#B03A2E），不设任何花哨旋转或发光效果。
+        </p>
+      </div>
+      <!-- @end -->
+
+      <!-- 文章末尾落款 -->
+      <div class="post-signature">
+        <div class="post-signature__meta">
+          <p class="post-signature__author">春唇语冬 谨白</p>
+          <time datetime="2026-10-10">岁次丙午 霜月写于松下斋</time>
+        </div>
+        <div class="seal seal--signature" aria-label="春唇语冬钤印">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <span>春唇语冬</span>
+      </div>
+      <p class="site-footer__copy">© 2026 春唇语冬 · 词重仪式 · 技术重效率</p>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/seal.js"></script>
+</body>
+</html>

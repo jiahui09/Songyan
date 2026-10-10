@@ -1,0 +1,23 @@
+{
+  "name": "hexo-theme-songyan",
+  "version": "0.1.0",
+  "description": "「松烟」Hexo 主题：外古内今，分卷而治。专为词家、行者与工程师打造的宣纸暖调博客主题。",
+  "main": "scripts/type-mapping.js",
+  "keywords": [
+    "hexo",
+    "theme",
+    "hexo-theme",
+    "songyan",
+    "chinese-classical",
+    "calligraphy",
+    "vertical-writing"
+  ],
+  "author": "春唇语冬",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "hexo": ">=7.0.0"
+  }
+}

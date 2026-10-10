@@ -1,0 +1,203 @@
+{
+  "site": {
+    "title": "春唇语冬",
+    "subtitle": "",
+    "description": "松烟墨晕，四卷清赏。外古内今，分卷而治。",
+    "author": "春唇语冬",
+    "year": 2026,
+    "theme": "松烟 (Songyan)"
+  },
+  "sections": [
+    { "id": "ci", "name": "词卷", "desc": "旧调新填，韵脚笺注", "path": "post-ci.html" },
+    { "id": "essay", "name": "随笔", "desc": "岁月偶得，行云流觞", "path": "post-essay.html" },
+    { "id": "tech", "name": "技术", "desc": "代码札记，现代纸笺", "path": "post-tech.html" },
+    { "id": "project", "name": "项目", "desc": "作品展柜，雕琢有物", "path": "post-project.html" }
+  ],
+  "posts": [
+    {
+      "id": "ci-1",
+      "type": "ci",
+      "title": "水调歌头·秋夜怀远",
+      "date": "2026-10-10 20:00:00",
+      "cipai": "水调歌头",
+      "rhyme": "词林正韵第七部（仄韵）",
+      "excerpt": "露下碧梧冷，风引画檐铃。素娥何事多病，掩泪对孤屏。料得玉阶凝伫，应念青衫零落，清梦绕江南。",
+      "lines": [
+        "露下碧梧冷，风引画檐铃。",
+        "素娥何事多病，掩泪对孤屏。",
+        "料得玉阶凝伫，应念青衫零落，清梦绕江南。",
+        "回首故山路，极目暮云平。",
+        "溯流光，吹铁笛，醉中听。",
+        "十年旧约何在？客舍冷青灯。",
+        "但使冰心依旧，休问流年虚度，天际看孤星。",
+        "待得梅花发，再共拂尘缨。"
+      ],
+      "rhyme_words": ["铃", "屏", "南", "平", "听", "灯", "星", "缨"],
+      "annotations": [
+        { "word": "素娥", "meaning": "月中嫦娥，古诗词常用借代明月或月中仙子。" },
+        { "word": "拂尘缨", "meaning": "抖去冠缨上的尘垢，语出《楚辞·渔父》「沧浪之水清兮，可以濯吾缨」，表超脱出尘之怀。" },
+        { "word": "琼楼玉宇", "meaning": "高耸美玉构建的楼阁，指月中宫殿。" }
+      ],
+      "cipai_data": {
+        "meter": "双调九十五字，前段九句四平韵，后段十句六平韵",
+        "pattern": "仄仄仄平仄，平仄仄平平（韵）。中平平仄平仄，平仄仄平平（韵）。仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。平仄仄平仄，仄仄仄平平（韵）。\n平中仄，中中仄，仄平平（韵）。中平平仄，平仄平仄仄平平（韵）。仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。中仄仄平仄，平仄仄平平（韵）。"
+      }
+    },
+    {
+      "id": "ci-2",
+      "type": "ci",
+      "title": "定风波·松烟煮雪",
+      "date": "2026-09-24 16:30:00",
+      "cipai": "定风波",
+      "rhyme": "词林正韵第一部",
+      "excerpt": "莫向窗前数暮鸦，柴扉虚掩试烹茶。一研松烟分细墨，何必，纸边小字记韶华。",
+      "lines": [
+        "莫向窗前数暮鸦，柴扉虚掩试烹茶。",
+        "一研松烟分细墨，何必，纸边小字记韶华。",
+        "竹里敲冰声自好，倾倒，瓦瓶寒水漫轻沙。",
+        "待到清宵幽籁寂，长揖，坐看飞雪入梅花。"
+      ],
+      "rhyme_words": ["鸦", "茶", "华", "好", "倒", "沙", "寂", "揖", "花"]
+    },
+    {
+      "id": "ci-3",
+      "type": "ci",
+      "title": "临江仙·客舍听秋",
+      "date": "2026-09-08 21:15:00",
+      "cipai": "临江仙",
+      "rhyme": "词林正韵第十部",
+      "excerpt": "落拓江湖知几度，江南秋尽难休。夜凉竹几覆轻裘。烛花频落尽，细雨打空楼。",
+      "lines": [
+        "落拓江湖知几度，江南秋尽难休。",
+        "夜凉竹几覆轻裘。烛花频落尽，细雨打空楼。",
+        "旧友关山书信少，相逢只在归舟。",
+        "凭阑且自泛清流。浮生尘外客，何处不淹留。"
+      ],
+      "rhyme_words": ["休", "裘", "楼", "少", "舟", "流", "留"]
+    },
+    {
+      "id": "essay-1",
+      "type": "essay",
+      "title": "钱塘江观潮杂记",
+      "date": "2026-10-10 15:30:00",
+      "weather": "晴",
+      "location": "杭州 · 六和塔畔",
+      "mood": "澄澈",
+      "excerpt": "是日江风劲冽，初见白练一线横亘天际，俄顷如雪山奔涌，万马摧山倒海而至。坐塔下小筑，烹龙井，听潮声渐远，天地归寂。",
+      "content": "八月十八，钱塘秋汛。晨起微凉，携一壶清茶独登六和塔。远眺江面，波澜未惊。约未申之交，天际隐有雷鸣，俄见素练横江，疾若奔马。涛头推拥数丈，轰訇震耳，临岸喷薄如雪崩，游人相顾失色。顷刻潮头已过，江水复归澄碧，唯岸侧细苇犹自摇颤。天地大观，奔雷与静默皆在须臾，人生劳碌，安能不付之一笑。"
+    },
+    {
+      "id": "essay-2",
+      "type": "essay",
+      "title": "雨窗试研徽州油烟墨",
+      "date": "2026-09-15 10:20:00",
+      "weather": "霖雨",
+      "location": "松下斋",
+      "mood": "宁和",
+      "excerpt": "案头歙砚蓄水数滴，执墨锭缓缓旋磨。油烟细腻如脂，泛紫玉光泽。落笔宣纸，渗而不溃，浓淡自成丘壑。",
+      "content": "江南连日阴雨，草木被润，书房案头亦有湿润木香。自木箧中翻出早岁购得之古法松烟墨一笏，棱角森然，叩之有金石之声。蓄古井水于砚池，凝神细磨。墨汁如漆，微闻麝香与松脂气。铺温州皮纸随意涂抹，或枯或湿，墨韵层次历历在目。古人所谓'惜墨如金'，盖墨亦有灵，不可轻慢耳。"
+    },
+    {
+      "id": "essay-3",
+      "type": "essay",
+      "title": "夜读《随园食单》偶感",
+      "date": "2026-08-30 22:40:00",
+      "weather": "微风",
+      "location": "松下斋",
+      "mood": "幽趣",
+      "excerpt": "袁子才论厨事，重本味而斥虚饰。所谓物各有性，制各有法，与作文、治事无异。繁冗堆砌者，实则乏真醇也。",
+      "content": "夜深万籁俱寂，披衣读袁简斋《随园食单》。其开篇论须知单，云'物各有性，如人各有资'，深惬我心。庖厨一艺，尚知笋不可与重油并烹、鱼不可去鲜取膏，况文章与软件之构筑乎？今之造作者，多患贪多务得，层层包裹，失其质朴真骨。治一馔如作一诗，去其渣滓，存其天然，方为上乘。"
+    },
+    {
+      "id": "tech-1",
+      "type": "tech",
+      "title": "Hexo 主题架构与从零发布指南",
+      "date": "2026-10-10 10:00:00",
+      "series": "Hexo主题开发",
+      "level": "进阶",
+      "read_time": 6,
+      "categories": ["前端工程"],
+      "tags": ["Hexo", "EJS", "CSS3", "架构设计"],
+      "excerpt": "剖析 Hexo 渲染管道、Filter 扩展与分卷多模型架构设计，从 tokens 规范到无框架原生交互的工程化落地最佳实践。",
+      "code_snippet": "hexo.extend.filter.register('before_post_render', function (data) {\n  const map = hexo.theme.config.type_mapping || {};\n  const src = (data.source || '').replace(/\\\\/g, '/');\n  if (!data.type) {\n    for (const [pattern, type] of Object.entries(map)) {\n      const prefix = pattern.replace(/\\*\\*.*$/, '').replace(/\\*.*$/, '');\n      if (prefix && src.startsWith(prefix)) {\n        data.type = type;\n        break;\n      }\n    }\n  }\n  const valid = ['ci', 'essay', 'tech', 'project'];\n  if (!valid.includes(data.type)) data.type = 'tech';\n  return data;\n});"
+    },
+    {
+      "id": "tech-2",
+      "type": "tech",
+      "title": "现代 CSS 自定义属性与中式古风色阶编排",
+      "date": "2026-09-20 14:00:00",
+      "series": "设计系统",
+      "level": "通用",
+      "read_time": 4,
+      "categories": ["前端样式"],
+      "tags": ["CSS-Tokens", "色板体系", "无障碍"],
+      "excerpt": "如何利用 CSS Custom Properties 搭建宣纸暖色温、浓墨高对比度（WCAG AA ≥ 7:1）以及朱砂、竹青、赭石的色彩约束与分层。",
+      "code_snippet": ":root {\n  color-scheme: light;\n  --paper:     #F7F2E7;\n  --ink:       #1F1F1F;\n  --cinnabar:  #B23A2F;\n  --bamboo:    #6B7F5E;\n  --ochre:     #B08D57;\n  --ease-ink:  cubic-bezier(0.22, 1, 0.36, 1);\n  --dur-enter: 320ms;\n}"
+    },
+    {
+      "id": "tech-3",
+      "type": "tech",
+      "title": "前端动效克制律：落墨动词与 320ms 物理标尺",
+      "date": "2026-09-02 09:30:00",
+      "series": "动效哲学",
+      "level": "理论",
+      "read_time": 5,
+      "categories": ["用户体验"],
+      "tags": ["动画规范", "性能", "无障碍"],
+      "excerpt": "解析全站单一动词「落墨」的物理模型，杜绝过度动效与无谓浮华，在 320ms 内完成透明度、微位移与模糊收敛的仪式感。",
+      "code_snippet": "@keyframes luo-mo {\n  from { opacity: 0; filter: blur(2px); transform: translateY(4px); }\n  to   { opacity: 1; filter: blur(0);   transform: translateY(0); }\n}\n.enter {\n  animation: luo-mo var(--dur-enter) var(--ease-ink) both;\n}"
+    },
+    {
+      "id": "project-1",
+      "type": "project",
+      "title": "松烟 Hexo 主题",
+      "status": "维护中",
+      "stack": ["Hexo", "EJS", "CSS3 Tokens", "Vanilla JS"],
+      "repo": "https://github.com/user/hexo-theme-songyan",
+      "demo": "https://example.com/songyan-demo",
+      "excerpt": "外古内今，分卷而治。专为词家、行者与工程师打造的宣纸暖调 Hexo 博客主题。",
+      "changelog": [
+        { "version": "v0.1.0", "date": "2026-10-10", "notes": "完成原型三件套、四卷版式与元朱文印章" }
+      ]
+    },
+    {
+      "id": "project-2",
+      "type": "project",
+      "title": "词林谱正 · 律绝平仄自动校对器",
+      "status": "维护中",
+      "stack": ["TypeScript", "Rust-WASM", "PWA"],
+      "repo": "https://github.com/user/cilin-puzheng",
+      "demo": "https://example.com/cilin-app",
+      "excerpt": "基于词林正韵与平水韵数据库的古诗词韵律检索与平仄辅助检校工具。",
+      "changelog": [
+        { "version": "v1.2.0", "date": "2026-08-18", "notes": "支持孤雁出群格与拗救规则判断" }
+      ]
+    },
+    {
+      "id": "project-3",
+      "type": "project",
+      "title": "纸墨录 · 个人双向链接札记本",
+      "status": "实验中",
+      "stack": ["SQLite", "WebComponents", "Native"],
+      "repo": "https://github.com/user/zhimo-notes",
+      "demo": "https://example.com/zhimo",
+      "excerpt": "离线优先的本地双链知识卡片工具，排版借鉴宋刻本版心与鱼尾留白设计。",
+      "changelog": [
+        { "version": "v0.3.0", "date": "2026-07-04", "notes": "首个公开测试版" }
+      ]
+    },
+    {
+      "id": "project-4",
+      "type": "project",
+      "title": "古印文矢量字模引擎",
+      "status": "已归档",
+      "stack": ["SVG", "OpenType.js", "Canvas"],
+      "repo": "https://github.com/user/seal-vector-engine",
+      "demo": "https://example.com/seal-engine",
+      "excerpt": "元朱文与汉白文印章自动化排版与手工钤盖噪点合成原型实验。",
+      "changelog": [
+        { "version": "v1.0.0", "date": "2025-12-20", "notes": "代码封存入库" }
+      ]
+    }
+  ]
+}

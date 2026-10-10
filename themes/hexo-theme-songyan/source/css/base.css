@@ -1,0 +1,204 @@
+/**
+ * 「松烟」基础样式 (Base Styles)
+ * 包含通用 Reset、全局排版规范、打印样式与无障碍降级
+ */
+
+@import "./tokens.css";
+
+/* 基础盒模型与排版重置 */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.75;
+  background-color: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-serif);
+  background-color: var(--paper);
+  background-image: url("../assets/paper-texture.png");
+  background-repeat: repeat;
+  color: var(--ink);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 链接规范（朱砂点染） */
+a {
+  color: var(--cinnabar);
+  text-decoration: none;
+  transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
+}
+
+a:hover, a:focus-visible {
+  color: var(--cinnabar-hover);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--ochre);
+  outline-offset: 2px;
+}
+
+/* 标题规范（默认选用文楷/宋体） */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  color: var(--ink);
+  line-height: 1.35;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+
+p {
+  margin-bottom: var(--space-4);
+  line-height: 1.8;
+}
+
+/* 强调与引用 */
+em, i {
+  font-style: normal;
+  color: var(--ink-light);
+}
+
+strong, b {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+blockquote {
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-6);
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  color: var(--ink-light);
+  font-family: var(--font-serif);
+  font-style: normal;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background-color: var(--line);
+  margin: var(--space-8) 0;
+}
+
+ul, ol {
+  padding-left: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+li {
+  margin-bottom: var(--space-2);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 全站唯一入场动效：「落墨」 */
+@keyframes luo-mo {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.enter {
+  animation: luo-mo var(--dur-enter) var(--ease-ink) both;
+}
+
+/* 首页唯一印章盖下动效（400ms，仅一次） */
+@keyframes seal-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.seal-stamp-once {
+  animation: seal-stamp var(--dur-seal) var(--ease-ink) both;
+}
+
+/* 尊重减弱动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .enter, .seal-stamp-once {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* 打印样式：词卷强制横排、去除侧栏与噪点 */
+@media print {
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+  }
+
+  .site-header,
+  .site-footer,
+  .nav-sections,
+  .post-tech__sidebar,
+  .code-block__header,
+  .copy-btn,
+  .pagination,
+  .watermark-wrap .seal--watermark {
+    display: none !important;
+  }
+
+  .post-ci__vertical-wrap {
+    writing-mode: horizontal-tb !important;
+    overflow: visible !important;
+  }
+
+  .post-card,
+  .post-tech__main,
+  article {
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: underline !important;
+  }
+}

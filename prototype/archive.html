@@ -1,0 +1,197 @@
+<!--
+  @page: archive
+  @hexo-layout: layout/archive.ejs
+  @hexo-partial: _partial/archive/timeline.ejs
+  @description: 归档页：卷轴时间线、一条竖向赭石细线、四卷四色小圆点（词朱砂/随笔竹青/技术黛青/项目赭石）、年份大号楷体节点、落墨动效
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>四卷归档 · 岁月长卷 · 春唇语冬</title>
+  <meta name="description" content="春唇语冬四卷归档：词卷、随笔、技术、项目岁月长卷。">
+  <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
+  <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
+  <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
+  <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
+  <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+</head>
+<body>
+
+  <!-- 页头 Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./index.html" class="site-header__brand" title="返回卷首">
+        <span class="seal site-header__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title">春唇语冬</span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li>
+          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
+          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
+          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+          <li><a href="./archive.html" class="site-header__nav-link site-header__nav-link--active">归档</a></li>
+          <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <header style="text-align: center; margin-bottom: var(--space-8);">
+      <h1 class="post-title enter" style="font-size: var(--text-3xl);">岁月卷轴 · 历年归档</h1>
+      <p style="font-size: var(--text-sm); color: var(--ink-light); margin-top: var(--space-2);">
+        记录篇什总计：11 篇
+      </p>
+
+      <!-- 四卷图例（四色小圆点） -->
+      <div class="archive-legend" style="justify-content: center; margin-top: var(--space-4);">
+        <span class="archive-legend__item">
+          <span class="archive-legend__dot" style="background-color: var(--cinnabar);"></span> 词卷
+        </span>
+        <span class="archive-legend__item">
+          <span class="archive-legend__dot" style="background-color: var(--bamboo);"></span> 随笔
+        </span>
+        <span class="archive-legend__item">
+          <span class="archive-legend__dot" style="background-color: var(--ink-light);"></span> 技术
+        </span>
+        <span class="archive-legend__item">
+          <span class="archive-legend__dot" style="background-color: var(--ochre);"></span> 项目
+        </span>
+      </div>
+    </header>
+
+    <!-- 卷轴时间线容器 -->
+    <div class="archive-timeline">
+
+      <!-- @hexo: for year, posts in site.posts.groupBy('year') -->
+      <section class="archive-year-group">
+        <h2 class="archive-year-title">二〇二六 · 丙午年</h2>
+
+        <ul class="archive-items">
+          <!-- @hexo: for post in posts -->
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
+            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
+            <a href="./post-ci.html" class="archive-item__title">水调歌头·秋夜怀远</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
+            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
+            <a href="./post-essay.html" class="archive-item__title">钱塘江观潮杂记</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
+            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
+            <a href="./post-tech.html" class="archive-item__title">Hexo 主题架构与从零发布指南</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
+            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
+            <a href="./post-project.html" class="archive-item__title">松烟 Hexo 主题发布</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
+            <time class="archive-item__date" datetime="2026-09-24">09-24</time>
+            <a href="./post-ci.html" class="archive-item__title">定风波·松烟煮雪</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
+            <time class="archive-item__date" datetime="2026-09-20">09-20</time>
+            <a href="./post-tech.html" class="archive-item__title">现代 CSS 自定义属性与中式古风色阶编排</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
+            <time class="archive-item__date" datetime="2026-09-15">09-15</time>
+            <a href="./post-essay.html" class="archive-item__title">雨窗试研徽州油烟墨</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
+            <time class="archive-item__date" datetime="2026-09-08">09-08</time>
+            <a href="./post-ci.html" class="archive-item__title">临江仙·客舍听秋</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
+            <time class="archive-item__date" datetime="2026-09-02">09-02</time>
+            <a href="./post-tech.html" class="archive-item__title">前端动效克制律：落墨动词与 320ms 物理标尺</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
+            <time class="archive-item__date" datetime="2026-08-30">08-30</time>
+            <a href="./post-essay.html" class="archive-item__title">夜读《随园食单》偶感</a>
+          </li>
+
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
+            <time class="archive-item__date" datetime="2026-08-18">08-18</time>
+            <a href="./post-project.html" class="archive-item__title">词林谱正 · 律绝平仄自动校对器</a>
+          </li>
+          <!-- @end -->
+        </ul>
+      </section>
+
+      <section class="archive-year-group">
+        <h2 class="archive-year-title">二〇二五 · 乙巳年</h2>
+        <ul class="archive-items">
+          <li class="archive-item enter">
+            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
+            <time class="archive-item__date" datetime="2025-12-20">12-20</time>
+            <a href="./post-project.html" class="archive-item__title">古印文矢量字模引擎（封存）</a>
+          </li>
+        </ul>
+      </section>
+      <!-- @end -->
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <span>春唇语冬</span>
+      </div>
+      <p class="site-footer__copy">© 2026 春唇语冬 · 词重仪式 · 技术重效率</p>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/seal.js"></script>
+</body>
+</html>

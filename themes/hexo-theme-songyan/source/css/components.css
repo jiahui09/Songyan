@@ -1,0 +1,694 @@
+/**
+ * 「松烟」组件样式库 (Components)
+ * 严格遵循 BEM 命名规范与 tokens.css 变量约束
+ */
+
+/* =========================================================
+   1. 页头导航与 Brand Logo（印前名后）
+   ========================================================= */
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background-color: var(--paper);
+  position: relative;
+  z-index: 100;
+}
+
+.site-header__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.site-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.site-header__seal {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.site-header__title-wrap {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.site-header__title {
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.site-header__title-line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: var(--ochre);
+  margin-top: 3px;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-header__nav-link {
+  font-family: var(--font-title);
+  font-size: var(--text-base);
+  color: var(--ink-light);
+  white-space: nowrap;
+  position: relative;
+  padding-bottom: 2px;
+  transition: color var(--dur-feedback) var(--ease-ink);
+}
+
+.site-header__nav-link:hover,
+.site-header__nav-link--active {
+  color: var(--cinnabar);
+}
+
+.site-header__nav-link--active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1.5px;
+  background-color: var(--cinnabar);
+}
+
+/* =========================================================
+   2. 印章变体体系 (Seals)
+   ========================================================= */
+.seal {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.seal svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.seal--brand {
+  width: 48px;
+  height: 48px;
+}
+
+.seal--signature {
+  width: 110px;
+  height: 110px;
+}
+
+.seal--mini {
+  width: 36px;
+  height: 36px;
+}
+
+.seal--watermark {
+  width: 80px;
+  height: 80px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+/* 状态印章（复用方形印章形式） */
+.seal-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  background: var(--paper-deep);
+}
+
+.seal-status--maintaining {
+  color: var(--bamboo);
+  border-color: var(--bamboo);
+}
+
+.seal-status--archived {
+  color: var(--ochre);
+  border-color: var(--ochre);
+}
+
+.seal-status--experiment {
+  color: var(--ink-light);
+  border-color: var(--ink-light);
+}
+
+/* 水印容器 */
+.watermark-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: var(--space-4) 0;
+  border: 1px solid var(--line);
+  background: var(--paper-deep);
+}
+
+.watermark-wrap > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.watermark-wrap .seal--watermark {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+
+/* 落款区 */
+.post-signature {
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+.post-signature__meta {
+  text-align: right;
+  font-family: var(--font-title);
+  color: var(--ink-light);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.post-signature__author {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* =========================================================
+   3. 分卷流入口与卡片系统
+   ========================================================= */
+.nav-sections {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+}
+
+.nav-section-card {
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  transition: border-color var(--dur-feedback) var(--ease-ink), background-color var(--dur-feedback) var(--ease-ink);
+}
+
+.nav-section-card:hover {
+  border-color: var(--ochre);
+  background-color: var(--paper-card);
+}
+
+.nav-section-card__title {
+  font-family: var(--font-title);
+  font-size: var(--text-lg);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-section-card__desc {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  margin-top: var(--space-1);
+}
+
+/* 通用分卷栏目头 */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ochre);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.section-header__title {
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-header__tag {
+  font-size: var(--text-xs);
+  color: var(--ink-light);
+  font-weight: normal;
+}
+
+.section-header__more {
+  font-size: var(--text-sm);
+  font-family: var(--font-title);
+  color: var(--cinnabar);
+}
+
+/* 基础卡片样式 */
+.post-card {
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  padding: var(--space-6);
+  position: relative;
+  transition: border-color var(--dur-feedback) var(--ease-ink);
+}
+
+.post-card:hover {
+  border-color: var(--ochre);
+}
+
+.post-card__header {
+  margin-bottom: var(--space-3);
+}
+
+.post-card__title {
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
+  color: var(--ink);
+  margin-bottom: var(--space-2);
+}
+
+.post-card__title a {
+  color: var(--ink);
+}
+
+.post-card__title a:hover {
+  color: var(--cinnabar);
+}
+
+.post-card__meta {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.post-card__excerpt {
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  line-height: 1.7;
+  margin-bottom: var(--space-3);
+}
+
+/* 词卷卡片特定微调 */
+.post-card--ci {
+  border-left: 2px solid var(--cinnabar);
+}
+
+.post-card--ci .post-card__lines {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  line-height: 1.8;
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--paper-deep);
+  border-radius: var(--radius-xs);
+}
+
+/* 随笔卡片轻量 */
+.post-card--essay {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--line);
+  border-radius: 0;
+  padding: var(--space-4) 0;
+}
+
+.post-card--essay:hover {
+  border-color: var(--bamboo);
+}
+
+/* =========================================================
+   4. 折角纸笺（技术文札记栏与特色卡片）
+   ========================================================= */
+.folded-note {
+  position: relative;
+  background: var(--paper-card);
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-xs);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  /* 右上角切角 */
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  transition: clip-path var(--dur-unfold) var(--ease-ink);
+}
+
+/* 右上角折角三角（CSS border 纯色实现，不引入图片） */
+.folded-note::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 14px 14px 0;
+  border-color: transparent transparent var(--ochre) transparent;
+  transition: border-width var(--dur-unfold) var(--ease-ink);
+}
+
+.folded-note:hover {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+
+.folded-note:hover::before {
+  border-width: 0 16px 16px 0;
+}
+
+.folded-note__title {
+  font-family: var(--font-title);
+  font-size: var(--text-base);
+  color: var(--ink);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line-light);
+}
+
+.folded-note__item {
+  font-size: var(--text-xs);
+  color: var(--ink-light);
+  margin-bottom: var(--space-2);
+  display: flex;
+  justify-content: space-between;
+}
+
+.folded-note__label {
+  color: var(--ink-faint);
+}
+
+/* =========================================================
+   5. 代码块组件 (Code Blocks)
+   ========================================================= */
+.code-block {
+  margin: var(--space-6) 0;
+  background: var(--code-bg);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  border: 1px solid #333333;
+}
+
+.code-block__header {
+  background: var(--code-bg-alt);
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #333333;
+}
+
+.code-block__lang {
+  font-family: var(--font-code);
+  font-size: var(--text-xs);
+  color: #A0AEC0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid #4A5568;
+  color: #CBD5E0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: background-color var(--dur-feedback) var(--ease-ink), color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
+}
+
+.copy-btn:hover {
+  background: #2D3748;
+  color: #FFFFFF;
+  border-color: #718096;
+}
+
+.copy-btn--copied {
+  background: var(--bamboo);
+  border-color: var(--bamboo);
+  color: #FFFFFF;
+}
+
+.code-block__pre {
+  margin: 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--code-text);
+}
+
+/* =========================================================
+   6. 词卷特色：笺注、韵脚朱砂点、平仄折叠
+   ========================================================= */
+/* 韵脚朱砂小圆点 */
+.rhyme-dot {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.rhyme-dot::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: var(--cinnabar);
+}
+
+/* 竖排时韵脚点位置 */
+.vertical-text .rhyme-dot::after {
+  right: -5px;
+  top: 50%;
+}
+
+/* 笺注高亮联动淡入 */
+.ci-annotation-item {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  transition: background-color 300ms var(--ease-ink);
+}
+
+.ci-annotation-item--highlight {
+  background-color: var(--seal-bg-light);
+  border-left: 2px solid var(--cinnabar);
+}
+
+/* 平仄折叠收纳器 */
+.ci-meter-details {
+  margin-top: var(--space-8);
+  border: 1px solid var(--line);
+  background: var(--paper-deep);
+  border-radius: var(--radius-xs);
+  padding: var(--space-3) var(--space-4);
+}
+
+.ci-meter-details summary {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ci-meter-content {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.8;
+  color: var(--ink-light);
+  white-space: pre-wrap;
+  border-top: 1px dashed var(--line);
+  padding-top: var(--space-3);
+}
+
+/* =========================================================
+   7. 标签与元数据（Zero-Pill 规范）
+   ========================================================= */
+.meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+}
+
+.meta-tags__item {
+  font-size: var(--text-xs);
+  color: var(--bamboo);
+}
+
+.meta-tags__item::before {
+  content: "#";
+  opacity: 0.6;
+}
+
+.meta-separator {
+  color: var(--line);
+  padding: 0 4px;
+}
+
+/* =========================================================
+   8. 分页与按钮
+   ========================================================= */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-10) 0;
+  list-style: none;
+  padding: 0;
+}
+
+.pagination__item a,
+.pagination__item span {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  color: var(--ink-light);
+  background: var(--paper-card);
+}
+
+.pagination__item a:hover {
+  border-color: var(--ochre);
+  color: var(--cinnabar);
+}
+
+.pagination__item--current span {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar);
+  background: var(--seal-bg-light);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--paper-card);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--dur-feedback) var(--ease-ink), color var(--dur-feedback) var(--ease-ink), background-color var(--dur-feedback) var(--ease-ink);
+}
+
+.btn:hover {
+  border-color: var(--ochre);
+  color: var(--cinnabar);
+}
+
+.btn--primary {
+  border-color: var(--cinnabar);
+  background: var(--cinnabar);
+  color: #FFFFFF;
+}
+
+.btn--primary:hover {
+  background: var(--cinnabar-hover);
+  border-color: var(--cinnabar-hover);
+  color: #FFFFFF;
+}
+
+/* =========================================================
+   9. 页脚 (Footer)
+   ========================================================= */
+.site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  background: var(--paper-deep);
+  padding: var(--space-8) var(--space-6);
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  color: var(--ink-light);
+}
+
+.site-footer__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.site-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.site-footer__links {
+  display: flex;
+  gap: var(--space-4);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.site-footer__links a {
+  color: var(--ink-light);
+}
+
+.site-footer__links a:hover {
+  color: var(--cinnabar);
+}
+
+.site-footer__copy {
+  color: var(--ink-faint);
+  line-height: 1.6;
+}

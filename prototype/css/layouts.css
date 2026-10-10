@@ -1,0 +1,556 @@
+/**
+ * 「松烟」版式与页面布局样式 (Layouts)
+ * 包含首页分卷流、四卷专有版式、归档时间轴、一纸空笺等
+ */
+
+/* =========================================================
+   1. 通用版心容器
+   ========================================================= */
+.site-main {
+  flex: 1;
+  max-width: var(--container-max);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-16);
+}
+
+.site-main--narrow {
+  max-width: var(--prose-max);
+}
+
+/* =========================================================
+   2. 首页 (卷首 · 分卷流) 版式
+   ========================================================= */
+.hero-scroll {
+  text-align: center;
+  padding: var(--space-12) 0 var(--space-10);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-10);
+  position: relative;
+}
+
+.hero-scroll__verse {
+  font-family: var(--font-title);
+  font-size: var(--text-2xl);
+  color: var(--ink);
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+}
+
+.hero-scroll__seal-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.hero-scroll__sub {
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  letter-spacing: 0.05em;
+  margin-top: var(--space-2);
+}
+
+.home-grid-ci {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+}
+
+.home-list-essay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-12);
+}
+
+.home-grid-tech {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+}
+
+.home-grid-projects {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+}
+
+/* =========================================================
+   3. 词页 (type: ci) 版式
+   ========================================================= */
+/* 横排版式（v0.1 基准） */
+.post-ci__header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.post-ci__cipai-badge {
+  display: inline-block;
+  font-family: var(--font-title);
+  color: var(--cinnabar);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-2);
+}
+
+.post-ci__body-horizontal {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  line-height: 2.2;
+}
+
+.post-ci__line {
+  margin-bottom: var(--space-3);
+  letter-spacing: 0.06em;
+}
+
+/* 竖排版式（参考稿：桌面端竖排，移动端横排） */
+.post-ci__vertical-container {
+  position: relative;
+  border: 1px solid var(--line);
+  background: var(--paper-card);
+  padding: var(--space-8) var(--space-6);
+  margin: var(--space-6) 0;
+  border-radius: var(--radius-xs);
+}
+
+.post-ci__vertical-hint-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line-light);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-6);
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.post-ci__vertical-scroll-prompt {
+  color: var(--cinnabar);
+  transition: opacity 1200ms var(--ease-ink);
+}
+
+.post-ci__vertical-scroll-prompt.fade-out {
+  opacity: 0;
+}
+
+.post-ci__vertical-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-4);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 仅在桌面端且支持 hover 开启竖排 */
+@media (min-width: 1024px) and (hover: hover) {
+  .post-ci__vertical-wrap {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    min-height: 480px;
+    height: 520px;
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+
+  .post-ci__vertical-wrap .post-ci__title-v {
+    font-family: var(--font-title);
+    font-size: var(--text-2xl);
+    letter-spacing: 0.15em;
+    margin-left: var(--space-8);
+    font-weight: 600;
+  }
+
+  .post-ci__vertical-wrap .post-ci__lines-v {
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    line-height: 2.4;
+    letter-spacing: 0.12em;
+    margin-left: var(--space-6);
+  }
+
+  .post-ci__vertical-wrap .post-ci__line-v {
+    margin-left: var(--space-4);
+    display: inline-block;
+  }
+}
+
+/* 移动端降级为横排 */
+@media (max-width: 1023px) {
+  .post-ci__vertical-wrap {
+    writing-mode: horizontal-tb;
+    text-align: center;
+    line-height: 2.2;
+    font-size: var(--text-base);
+  }
+}
+
+.post-ci__annotations {
+  margin-top: var(--space-8);
+  border-top: 1px dashed var(--line);
+  padding-top: var(--space-4);
+}
+
+.post-ci__annotations-title {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  margin-bottom: var(--space-3);
+}
+
+/* =========================================================
+   4. 随笔页 (type: essay) 版式（时光轴）
+   ========================================================= */
+.essay-article {
+  max-width: var(--prose-max);
+  margin: 0 auto;
+}
+
+.essay-header {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.essay-meta-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.essay-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.essay-body {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+.essay-body p {
+  text-indent: 2em;
+  margin-bottom: var(--space-6);
+}
+
+/* =========================================================
+   5. 技术文页 (type: tech) 版式（双栏 + 札记栏）
+   ========================================================= */
+.tech-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.tech-main {
+  min-width: 0;
+  max-width: var(--prose-max);
+}
+
+.tech-header {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.tech-body {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.8;
+}
+
+.tech-body h2 {
+  margin: var(--space-8) 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line-light);
+}
+
+.tech-body h3 {
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.tech-sidebar {
+  position: sticky;
+  top: var(--space-6);
+}
+
+/* =========================================================
+   6. 项目页 (type: project) 版式
+   ========================================================= */
+.project-container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.project-card {
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--dur-feedback) var(--ease-ink);
+}
+
+.project-card:hover {
+  border-color: var(--ochre);
+}
+
+.project-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.project-card__title {
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
+  color: var(--ink);
+}
+
+.project-card__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  list-style: none;
+  padding: 0;
+}
+
+.project-card__stack-item {
+  font-family: var(--font-code);
+  font-size: var(--text-xs);
+  color: var(--ink-light);
+  background: var(--paper-deep);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.project-card__links {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line-light);
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+/* =========================================================
+   7. 归档页 (archive.html) 卷轴时间线
+   ========================================================= */
+.archive-timeline {
+  position: relative;
+  max-width: var(--prose-max);
+  margin: var(--space-8) auto;
+  padding-left: var(--space-8);
+}
+
+/* 竖向赭石细线 */
+.archive-timeline::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--ochre);
+}
+
+.archive-year-group {
+  margin-bottom: var(--space-10);
+  position: relative;
+}
+
+.archive-year-title {
+  font-family: var(--font-title);
+  font-size: var(--text-2xl);
+  color: var(--ink);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.archive-year-title::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--space-8) + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--ochre);
+  border: 2px solid var(--paper);
+}
+
+.archive-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.archive-item {
+  position: relative;
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+/* 四卷四色小圆点 */
+.archive-item__dot {
+  position: absolute;
+  left: calc(-1 * var(--space-8) + 8px);
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.archive-item__dot--ci {
+  background-color: var(--cinnabar);
+}
+
+.archive-item__dot--essay {
+  background-color: var(--bamboo);
+}
+
+.archive-item__dot--tech {
+  background-color: var(--ink-light);
+}
+
+.archive-item__dot--project {
+  background-color: var(--ochre);
+}
+
+.archive-item__date {
+  font-family: var(--font-code);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  width: 50px;
+}
+
+.archive-item__title {
+  font-family: var(--font-title);
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.archive-item__title:hover {
+  color: var(--cinnabar);
+}
+
+.archive-legend {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  font-size: var(--text-xs);
+  color: var(--ink-light);
+}
+
+.archive-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.archive-legend__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* =========================================================
+   8. 404 页（一纸空笺）
+   ========================================================= */
+.empty-paper {
+  text-align: center;
+  padding: var(--space-16) 0;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.empty-paper__title {
+  font-family: var(--font-title);
+  font-size: var(--text-3xl);
+  color: var(--ink);
+  margin-bottom: var(--space-4);
+}
+
+.empty-paper__verse {
+  font-family: var(--font-title);
+  font-size: var(--text-lg);
+  color: var(--ink-light);
+  line-height: 1.8;
+  margin-bottom: var(--space-8);
+}
+
+.empty-paper__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+/* =========================================================
+   9. 响应式适配
+   ========================================================= */
+@media (max-width: 900px) {
+  .nav-sections {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .home-grid-ci,
+  .home-grid-tech,
+  .home-grid-projects,
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+  .tech-container {
+    grid-template-columns: 1fr;
+  }
+  .tech-sidebar {
+    position: static;
+    margin-top: var(--space-8);
+  }
+}
+
+@media (max-width: 640px) {
+  .site-header__inner {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .site-header__nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+  .nav-sections {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "松烟（Songyan）Hexo 主题原型与契约",
+  "description": "「松烟」Hexo 主题静态原型、Hexo 骨架与契约规范三件套（外古内今，分卷而治，作者春唇语冬）。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

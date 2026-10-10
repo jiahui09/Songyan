@@ -1,0 +1,35 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+  <defs>
+    <filter id="seal-texture">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.06"/>
+      </feComponentTransfer>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+
+  <!-- 外线 1.5px，圆角 3px -->
+  <rect x="6" y="6" width="88" height="88" rx="3"
+        fill="none" stroke="var(--seal-color, #B03A2E)" stroke-width="1.5"/>
+  <!-- 内线 0.6px，透明度 0.5，圆角 2px -->
+  <rect x="10" y="10" width="80" height="80" rx="2"
+        fill="none" stroke="var(--seal-color, #B03A2E)" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- 元朱文 2×2 排列：右起两行（右上春、右下唇、左上语、左下冬） -->
+  <g fill="var(--seal-color, #B03A2E)"
+     font-family="var(--font-seal, 'FZShuTi', 'STKaiti', 'KaiTi', serif)"
+     font-size="28" font-weight="bold"
+     text-anchor="middle" dominant-baseline="central">
+    <text x="65" y="34">春</text>
+    <text x="65" y="66">唇</text>
+    <text x="35" y="34">语</text>
+    <text x="35" y="66">冬</text>
+  </g>
+
+  <!-- 极淡手工钤盖肌理蒙版 -->
+  <rect x="6" y="6" width="88" height="88" rx="3"
+        fill="var(--seal-color, #B03A2E)" filter="url(#seal-texture)"
+        opacity="0.5" style="mix-blend-mode: multiply" pointer-events="none"/>
+</svg>

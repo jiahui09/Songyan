@@ -1,0 +1,86 @@
+/**
+ * 「松烟」(Songyan) Hexo 主题设计系统设计令牌 (Design Tokens)
+ * 唯一来源：所有颜色、间距、圆角、时长均由本文件定义，全站禁止硬编码颜色与魔数
+ */
+
+:root {
+  /* 声明宣纸暖色单浅色主题，全站不做暗色模式 */
+  color-scheme: light;
+
+  /* 基础宣纸与水墨色板 */
+  --paper:                 #F7F2E7;  /* 宣纸底（浅米白暖色） */
+  --paper-deep:            #EFE9DC;  /* 卡片、引用块、浅底容器 */
+  --paper-card:            #FDFBF7;  /* 悬浮卡片高亮底 */
+  --ink:                   #1F1F1F;  /* 浓墨正文（对比度 ≥ 7:1） */
+  --ink-light:             #3F4E4F;  /* 黛青，次要文字、辅助信息 */
+  --ink-faint:             #7A8485;  /* 淡墨，时间戳、无字提示 */
+  --cinnabar:              #B23A2F;  /* 朱砂，重点、韵脚、链接（对比度 ≥ 4.5:1） */
+  --cinnabar-hover:        #8E2B21;  /* 朱砂深色悬停态 */
+  --bamboo:                #6B7F5E;  /* 竹青，标签、维护中状态（对比度 ≥ 4.5:1） */
+  --ochre:                 #B08D57;  /* 赭石，装饰细线、归档时间轴、已归档状态 */
+  --line:                  #D8CFBE;  /* 细分割线 */
+  --line-light:            #E8E0D2;  /* 极淡分割线 */
+
+  /* 印章专用体系（严禁 #FF0000 纯红） */
+  --seal-color:            #B03A2E;  /* 印泥红 */
+  --seal-bg-light:         rgba(176, 58, 46, 0.08); /* 极淡印泥衬底 */
+  --seal-texture-strength: 0.06;     /* 手工钤盖肌理强度 */
+
+  /* 代码块专用（局限在代码容器内部，不扩散至全站） */
+  --code-bg:               #1E1E1E;
+  --code-bg-alt:           #25282A;
+  --code-text:             #E8E0D0;
+  --code-selection:        #3B4252;
+  --code-comment:          #7F8C8D;
+  --code-keyword:          #D08770;
+  --code-string:           #A3BE8C;
+  --code-func:             #EBCB8B;
+  --code-num:              #B48EAD;
+
+  /* 字体族定义（系统字体优先，首版禁止外部 WebFont） */
+  --font-title: "LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", serif;
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-code:  "JetBrains Mono", "Fira Code", Monaco, Consolas, "Courier New", monospace;
+  --font-seal:  "FZShuTi", "STKaiti", "KaiTi", serif;
+
+  /* 字号阶梯 */
+  --text-xs:    0.75rem;    /* 12px */
+  --text-sm:    0.875rem;   /* 14px */
+  --text-base:  1rem;       /* 16px */
+  --text-lg:    1.125rem;   /* 18px */
+  --text-xl:    1.25rem;    /* 20px */
+  --text-2xl:   1.5rem;     /* 24px */
+  --text-3xl:   1.875rem;   /* 30px */
+  --text-4xl:   2.25rem;    /* 36px */
+
+  /* 间距尺寸 */
+  --space-1:    0.25rem;    /* 4px */
+  --space-2:    0.5rem;     /* 8px */
+  --space-3:    0.75rem;    /* 12px */
+  --space-4:    1rem;       /* 16px */
+  --space-5:    1.25rem;    /* 20px */
+  --space-6:    1.5rem;     /* 24px */
+  --space-8:    2rem;       /* 32px */
+  --space-10:   2.5rem;     /* 40px */
+  --space-12:   3rem;       /* 48px */
+  --space-16:   4rem;       /* 64px */
+  --space-20:   5rem;       /* 80px */
+
+  /* 边框圆角（克制微圆角，体现纸质方正感） */
+  --radius-none: 0px;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+
+  /* 容器版心 */
+  --container-max: 1120px;
+  --prose-max:     720px;
+
+  /* 动效铁律（全站唯一一套物理时长与缓动） */
+  --ease-ink:      cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-enter:     320ms;  /* 落墨入场 */
+  --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
+  --dur-unfold:    200ms;  /* 折角纸笺展开 */
+  --dur-seal:      400ms;  /* 首页印章盖下（仅一次） */
+}

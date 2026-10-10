@@ -1,0 +1,189 @@
+<!--
+  @page: post-ci
+  @hexo-layout: layout/post.ejs
+  @hexo-partial: _partial/post/ci.ejs
+  @description: 词卷单页（横排版，v0.1 基准）：居中横排、词牌、韵脚朱砂点、笺注高亮联动、平仄折叠、落款印章
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水调歌头·秋夜怀远 · 春唇语冬</title>
+  <meta name="description" content="水调歌头·秋夜怀远，词林正韵第七部，露下碧梧冷，风引画檐铃。">
+  <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
+  <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
+  <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
+  <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
+  <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+</head>
+<body>
+
+  <!-- 页头 Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./index.html" class="site-header__brand" title="返回卷首"> <!-- 待转 url_for('/') -->
+        <span class="seal site-header__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title">春唇语冬</span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <li><a href="./post-ci.html" class="site-header__nav-link site-header__nav-link--active">词卷</a></li>
+          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
+          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
+          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+          <li><a href="./archive.html" class="site-header__nav-link">归档</a></li>
+          <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main site-main--narrow">
+    <article class="post-ci">
+
+      <!-- 头部：词牌名与元数据 -->
+      <header class="post-ci__header">
+        <!-- @hexo: if page.cipai -->
+        <span class="post-ci__cipai-badge">词牌 · 水调歌头</span>
+        <!-- @end -->
+
+        <!-- @hexo: page.title -->
+        <h1 class="post-title enter">水调歌头·秋夜怀远</h1>
+        <!-- @end -->
+
+        <div class="post-card__meta" style="justify-content: center; margin-top: var(--space-2);">
+          <!-- @hexo: date(page.date, 'YYYY-MM-DD') -->
+          <time datetime="2026-10-10">2026-10-10</time>
+          <!-- @end -->
+          <span class="meta-separator">·</span>
+          <!-- @hexo: page.rhyme -->
+          <span>词林正韵第七部（仄韵）</span>
+          <!-- @end -->
+          <span class="meta-separator">·</span>
+          <a href="./post-ci-vertical.html" style="font-size: var(--text-xs); color: var(--ochre);">[查看竖排版参考]</a>
+        </div>
+      </header>
+
+      <!-- 词作正文（居中横排，含 ruby 注音与韵脚朱砂圆点） -->
+      <!-- @hexo: page.content -->
+      <div class="post-ci__body-horizontal">
+        <p class="post-ci__line">
+          露下碧梧冷，风引画檐<span class="rhyme-dot" data-annotation-target="ling" title="韵脚：铃">铃</span>。
+        </p>
+        <p class="post-ci__line">
+          <ruby data-annotation-target="su-e" style="cursor: pointer;">素娥<rp>(</rp><rt>sù é</rt><rp>)</rp></ruby>何事多病，掩泪对孤<span class="rhyme-dot" data-annotation-target="ping" title="韵脚：屏">屏</span>。
+        </p>
+        <p class="post-ci__line">
+          料得玉阶凝伫，应念青衫零落，清梦绕江<span class="rhyme-dot" data-annotation-target="nan" title="韵脚：南">南</span>。
+        </p>
+        <p class="post-ci__line">
+          回首故山路，极目暮云<span class="rhyme-dot" data-annotation-target="ping2" title="韵脚：平">平</span>。
+        </p>
+        <p class="post-ci__line" style="margin-top: var(--space-6); font-size: var(--text-base); color: var(--ink-light);">
+          —— 过片 ——
+        </p>
+        <p class="post-ci__line">
+          溯流光，吹铁笛，醉中<span class="rhyme-dot" data-annotation-target="ting" title="韵脚：听">听</span>。
+        </p>
+        <p class="post-ci__line">
+          十年旧约何在？客舍冷青<span class="rhyme-dot" data-annotation-target="deng" title="韵脚：灯">灯</span>。
+        </p>
+        <p class="post-ci__line">
+          但使冰心依旧，休问流年虚度，天际看孤<span class="rhyme-dot" data-annotation-target="xing" title="韵脚：星">星</span>。
+        </p>
+        <p class="post-ci__line">
+          待得梅花发，再共<ruby data-annotation-target="chen-ying" style="cursor: pointer;">拂尘缨<rp>(</rp><rt>fú chén yīng</rt><rp>)</rp></ruby><span class="rhyme-dot" data-annotation-target="ying" title="韵脚：缨"></span>。
+        </p>
+      </div>
+      <!-- @end -->
+
+      <!-- 笺注区（悬停联动高亮） -->
+      <!-- @hexo: if page.annotations && page.annotations.length -->
+      <section class="post-ci__annotations" aria-label="词句笺注">
+        <h2 class="post-ci__annotations-title">笺注 · 赏析考据</h2>
+        <div class="ci-annotation-item" data-annotation-key="su-e">
+          <strong style="color: var(--ink);">素娥</strong>：月中嫦娥，古诗词常用借代明月或月中仙子。
+        </div>
+        <div class="ci-annotation-item" data-annotation-key="chen-ying">
+          <strong style="color: var(--ink);">拂尘缨</strong>：抖去冠缨上的尘垢，语出《楚辞·渔父》「沧浪之水清兮，可以濯吾缨」，表超脱出尘之怀。
+        </div>
+      </section>
+      <!-- @end -->
+
+      <!-- 平仄折叠收纳（默认折叠） -->
+      <details class="ci-meter-details">
+        <summary>平仄图谱 · 词林正韵第七部检视（展开查验）</summary>
+        <div class="ci-meter-content">
+<strong>水调歌头定格（双调九十五字）：</strong>
+仄仄仄平仄，平仄仄平平（韵）。中平平仄平仄，平仄仄平平（韵）。
+仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。平仄仄平仄，仄仄仄平平（韵）。
+
+平中仄，中中仄，仄平平（韵）。中平平仄，平仄平仄仄平平（韵）。
+仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。中仄仄平仄，平仄仄平平（韵）。
+        </div>
+      </details>
+
+      <!-- 文章末尾落款（右对齐作者印章 110px + 记） -->
+      <div class="post-signature">
+        <div class="post-signature__meta">
+          <p class="post-signature__author">春唇语冬 记</p>
+          <time datetime="2026-10-10">丙午秋月 霜降前夕</time>
+        </div>
+        <div class="seal seal--signature" aria-label="春唇语冬钤印">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <span>春唇语冬</span>
+      </div>
+      <p class="site-footer__copy">© 2026 春唇语冬 · 词重仪式 · 技术重效率</p>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/ci-annotations.js"></script>
+  <script src="./js/seal.js"></script>
+</body>
+</html>

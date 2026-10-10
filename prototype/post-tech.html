@@ -1,0 +1,257 @@
+<!--
+  @page: post-tech
+  @hexo-layout: layout/post.ejs
+  @hexo-partial: _partial/post/tech.ejs, _partial/post/tech-notes.ejs, _partial/code-block.ejs
+  @description: 技术文章页：现代双栏、左侧正文、右侧悬浮折角札记栏（系列/难度/阅读时长/标签）、代码块一键复制、落款印章
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hexo 主题架构与从零发布指南 · 春唇语冬</title>
+  <meta name="description" content="剖析 Hexo 渲染管道、Filter 扩展与分卷多模型架构设计，从 tokens 规范到无框架原生交互的工程化落地。">
+  <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
+  <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
+  <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
+  <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
+  <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+</head>
+<body>
+
+  <!-- 页头 Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./index.html" class="site-header__brand" title="返回卷首">
+        <span class="seal site-header__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title">春唇语冬</span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li>
+          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
+          <li><a href="./post-tech.html" class="site-header__nav-link site-header__nav-link--active">技术</a></li>
+          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+          <li><a href="./archive.html" class="site-header__nav-link">归档</a></li>
+          <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="tech-container">
+
+      <!-- 左侧：正文区域 -->
+      <article class="tech-main">
+        <header class="tech-header">
+          <span style="font-family: var(--font-title); font-size: var(--text-xs); color: var(--ink-light); letter-spacing: 0.1em;">
+            技术札记 · 现代纸笺
+          </span>
+
+          <!-- @hexo: page.title -->
+          <h1 class="post-title enter" style="margin-top: var(--space-2);">Hexo 主题架构与从零发布指南</h1>
+          <!-- @end -->
+
+          <div class="post-card__meta" style="margin-top: var(--space-3);">
+            <!-- @hexo: date(page.date, 'YYYY-MM-DD') -->
+            <time datetime="2026-10-10">2026-10-10</time>
+            <!-- @end -->
+            <span class="meta-separator">·</span>
+            <!-- @hexo: page.read_time -->
+            <span>预计阅读时长 6 分钟</span>
+            <!-- @end -->
+            <span class="meta-separator">·</span>
+            <!-- @hexo: page.level -->
+            <span>适用层级：进阶</span>
+            <!-- @end -->
+          </div>
+        </header>
+
+        <!-- @hexo: page.content -->
+        <div class="tech-body">
+          <p>
+            在传统静态博客开发中，设计与实现往往容易出现断层：要么追求炫目复杂的 JavaScript 框架引入沉重负担，要么排版简陋缺乏个性。松烟主题的核心哲学是<strong>「外古内今，分卷而治」</strong>——词卷重仪式与古风韵味，技术文则必须回归纯粹的现代阅读与工程效率。
+          </p>
+
+          <h2>一、分卷架构：scripts/type-mapping.js</h2>
+          <p>
+            Hexo 原生没有「分卷」或「多形态文章类型」的直接概念。通常需要借助 Front-matter 中的 <code>type</code> 字段，或通过主题 Filter 插件实现按目录层级映射（如 <code>ci/** -> ci</code>, <code>tech/** -> tech</code>）。
+          </p>
+
+          <p>
+            以下是主题中的类型映射插件完整实现：
+          </p>
+
+          <!-- 代码块组件（含语言标签与原生一键复制） -->
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">javascript</span>
+              <button type="button" class="copy-btn" aria-label="复制代码">复制</button>
+            </div>
+            <pre class="code-block__pre"><code>hexo.extend.filter.register('before_post_render', function (data) {
+  const map = hexo.theme.config.type_mapping || {};
+  const src = (data.source || '').replace(/\\/g, '/');
+
+  // 只在用户未显式声明时用路径兜底
+  if (!data.type) {
+    for (const [pattern, type] of Object.entries(map)) {
+      const prefix = pattern.replace(/\*\*.*$/, '').replace(/\*.*$/, '');
+      if (prefix && src.startsWith(prefix)) {
+        data.type = type;
+        break;
+      }
+    }
+  }
+
+  // 白名单兜底，任何情况都不让 type 失控
+  const valid = ['ci', 'essay', 'tech', 'project'];
+  if (!valid.includes(data.type)) data.type = 'tech';
+
+  return data;
+});</code></pre>
+          </div>
+
+          <h2>二、CSS 自定义属性与无框架原则</h2>
+          <p>
+            主题严禁使用任何外部 CDN 样式或重型 CSS 框架，所有设计令牌集中于 <code>tokens.css</code>。在技术文中，代码块使用深色独立上下文（<code>--code-bg: #1E1E1E</code>），而不向全站宣纸背景扩散。
+          </p>
+
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">css</span>
+              <button type="button" class="copy-btn" aria-label="复制代码">复制</button>
+            </div>
+            <pre class="code-block__pre"><code>:root {
+  color-scheme: light;
+  --paper:        #F7F2E7;
+  --ink:          #1F1F1F;
+  --cinnabar:     #B23A2F;
+  --bamboo:       #6B7F5E;
+  --ochre:        #B08D57;
+  --ease-ink:     cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-enter:    320ms;
+  --dur-feedback: 160ms;
+}</code></pre>
+          </div>
+
+          <h2>三、技术文右栏札记的折角纸笺</h2>
+          <p>
+            技术文右侧摒弃了冗余的目录浮窗（v0.1 不实现 TOC，静默忽略），取而代之的是纯 CSS 三角实现的「折角纸笺」札记栏。悬停时切角平滑展开 2px（<code>transition: 200ms</code>），在极度克制的前提下提供现代纸质触感。
+          </p>
+        </div>
+        <!-- @end -->
+
+        <!-- 文章末尾落款 -->
+        <div class="post-signature">
+          <div class="post-signature__meta">
+            <p class="post-signature__author">春唇语冬 记</p>
+            <time datetime="2026-10-10">2026年10月10日</time>
+          </div>
+          <div class="seal seal--signature" aria-label="春唇语冬钤印">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+              <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+              <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+              <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+                <text x="65" y="34">春</text>
+                <text x="65" y="66">唇</text>
+                <text x="35" y="34">语</text>
+                <text x="35" y="66">冬</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <!-- 右侧：悬浮札记栏（折角纸笺样式，折角展开 200ms 动效） -->
+      <aside class="tech-sidebar" aria-label="文章札记栏">
+
+        <!-- @hexo: if page.series -->
+        <div class="folded-note">
+          <h3 class="folded-note__title">专栏系列</h3>
+          <div class="folded-note__item">
+            <span class="folded-note__label">所属系列</span>
+            <span style="font-weight: 600; color: var(--cinnabar);">Hexo主题开发</span>
+          </div>
+          <div class="folded-note__item">
+            <span class="folded-note__label">阶段</span>
+            <span>第一讲 · 架构设计</span>
+          </div>
+        </div>
+        <!-- @end -->
+
+        <div class="folded-note">
+          <h3 class="folded-note__title">札记快览</h3>
+          <div class="folded-note__item">
+            <span class="folded-note__label">适用版本</span>
+            <span style="font-family: var(--font-code);">Node.js ≥ 18</span>
+          </div>
+          <div class="folded-note__item">
+            <span class="folded-note__label">阅读估时</span>
+            <!-- @hexo: page.read_time -->
+            <span>约 6 分钟</span>
+            <!-- @end -->
+          </div>
+          <div class="folded-note__item">
+            <span class="folded-note__label">难度评级</span>
+            <span>进阶架构</span>
+          </div>
+        </div>
+
+        <!-- @hexo: if page.tags && page.tags.length -->
+        <div class="folded-note">
+          <h3 class="folded-note__title">本文标签</h3>
+          <ul class="meta-tags">
+            <li class="meta-tags__item">Hexo</li>
+            <li class="meta-tags__item">EJS</li>
+            <li class="meta-tags__item">CSS-Tokens</li>
+            <li class="meta-tags__item">架构设计</li>
+          </ul>
+        </div>
+        <!-- @end -->
+
+      </aside>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <span>春唇语冬</span>
+      </div>
+      <p class="site-footer__copy">© 2026 春唇语冬 · 词重仪式 · 技术重效率</p>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/code-copy.js"></script>
+  <script src="./js/seal.js"></script>
+</body>
+</html>

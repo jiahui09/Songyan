@@ -1,0 +1,186 @@
+<!--
+  @page: post-essay
+  @hexo-layout: layout/post.ejs
+  @hexo-partial: _partial/post/essay.ejs
+  @description: 随笔页：时光轴布局、行高 1.8-1.9、大留白、气候地点心境元数据、图片水印、落款印章
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>钱塘江观潮杂记 · 春唇语冬</title>
+  <meta name="description" content="钱塘江观潮杂记：八月十八钱塘秋汛，晨起微凉，携清茶独登六和塔。">
+  <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
+  <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
+  <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
+  <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
+  <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+</head>
+<body>
+
+  <!-- 页头 Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./index.html" class="site-header__brand" title="返回卷首">
+        <span class="seal site-header__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title">春唇语冬</span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li>
+          <li><a href="./post-essay.html" class="site-header__nav-link site-header__nav-link--active">随笔</a></li>
+          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
+          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+          <li><a href="./archive.html" class="site-header__nav-link">归档</a></li>
+          <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <article class="essay-article">
+
+      <header class="essay-header">
+        <span style="font-family: var(--font-title); font-size: var(--text-xs); color: var(--bamboo); letter-spacing: 0.1em;">
+          随笔 · 岁月偶得
+        </span>
+
+        <!-- @hexo: page.title -->
+        <h1 class="post-title enter" style="margin-top: var(--space-2);">钱塘江观潮杂记</h1>
+        <!-- @end -->
+
+        <!-- 元数据条带（气候、地点、心境无字段时静默隐藏） -->
+        <div class="essay-meta-strip">
+          <!-- @hexo: date(page.date, 'YYYY年MM月DD日') -->
+          <time datetime="2026-10-10" style="font-family: var(--font-code); color: var(--ink);">2026年10月10日 15:30</time>
+          <!-- @end -->
+
+          <!-- @hexo: if page.location -->
+          <span class="meta-separator">·</span>
+          <span class="essay-meta-item">
+            <span style="color: var(--ink-faint);">驻足：</span>杭州 · 六和塔畔
+          </span>
+          <!-- @end -->
+
+          <!-- @hexo: if page.weather -->
+          <span class="meta-separator">·</span>
+          <span class="essay-meta-item">
+            <span style="color: var(--ink-faint);">天候：</span>晴
+          </span>
+          <!-- @end -->
+
+          <!-- @hexo: if page.mood -->
+          <span class="meta-separator">·</span>
+          <span class="essay-meta-item">
+            <span style="color: var(--ink-faint);">心境：</span>澄澈
+          </span>
+          <!-- @end -->
+        </div>
+      </header>
+
+      <!-- 随笔正文 -->
+      <!-- @hexo: page.content -->
+      <div class="essay-body">
+        <p>
+          八月十八，钱塘秋汛。晨起微凉，携一壶清茶独登六和塔。远眺江面，波澜未惊，水汽苍茫，数叶扁舟宛如落叶浮沉于沧溟之间。
+        </p>
+
+        <p>
+          约未申之交，天际隐有雷鸣，远若群车碾雪。俄见素练横江，疾若奔马，转瞬间涛头推拥数丈，轰訇震耳，临岸喷薄如万斛碎玉，游人相顾失色，衣袂皆被飞沫湿透。
+        </p>
+
+        <!-- 图片水印展示（规范 4.6） -->
+        <figure class="watermark-wrap">
+          <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='360' viewBox='0 0 800 360'%3E%3Crect width='800' height='360' fill='%23EFE9DC'/%3E%3Cpath d='M0 240 Q200 200 400 250 T800 230 L800 360 L0 360 Z' fill='%23D8CFBE'/%3E%3Cpath d='M0 270 Q180 230 380 280 T800 260 L800 360 L0 360 Z' fill='%23B08D57' opacity='0.3'/%3E%3Ctext x='400' y='140' font-family='serif' font-size='20' fill='%233F4E4F' text-anchor='middle'%3E六和塔江潮写意图%3C/text%3E%3C/svg%3E"
+               loading="lazy" decoding="async" alt="六和塔下钱塘潮意象图" width="800" height="360">
+          <span class="seal seal--watermark" aria-hidden="true">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+              <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+              <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+                <text x="65" y="34">春</text>
+                <text x="65" y="66">唇</text>
+                <text x="35" y="34">语</text>
+                <text x="35" y="66">冬</text>
+              </g>
+            </svg>
+          </span>
+          <figcaption style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs); color: var(--ink-faint); text-align: center;">
+            图一：六和塔下钱塘潮生（右下角附作者防伪朱砂印水印，透明度 0.18）
+          </figcaption>
+        </figure>
+
+        <p>
+          顷刻潮头已过，江水复归澄碧，唯岸侧细苇犹自摇颤。天地大观，奔雷与静默皆在须臾之间；古人坐看白浪茫茫，叹浮生如梦，今见之，信然不谬。
+        </p>
+
+        <p>
+          归舍烹水煮茶，细研松烟，记此断片。
+        </p>
+      </div>
+      <!-- @end -->
+
+      <!-- 文章末尾落款 -->
+      <div class="post-signature">
+        <div class="post-signature__meta">
+          <p class="post-signature__author">春唇语冬 记于钱塘客馆</p>
+          <time datetime="2026-10-10">岁次丙午 深秋客次</time>
+        </div>
+        <div class="seal seal--signature" aria-label="春唇语冬钤印">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34">春</text>
+              <text x="65" y="66">唇</text>
+              <text x="35" y="34">语</text>
+              <text x="35" y="66">冬</text>
+            </g>
+          </svg>
+        </span>
+        <span>春唇语冬</span>
+      </div>
+      <p class="site-footer__copy">© 2026 春唇语冬 · 词重仪式 · 技术重效率</p>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/seal.js"></script>
+</body>
+</html>
