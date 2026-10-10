@@ -22,7 +22,7 @@ color_scheme: "light"
 # 设计令牌与色彩系统映射
 style:
   paper_bg:  "#F7F2E7"  # 宣纸底
-  paper_deep:"#EFE9DC"  # 卡片深色底
+  paper_deep: "#EFE9DC"  # 卡片深色底
   ink_color: "#1F1F1F"  # 浓墨正文（对比度 ≥ 7:1）
   ink_light: "#3F4E4F"  # 黛青次要文字
   cinnabar:  "#B23A2F"  # 朱砂重点、韵脚、链接（对比度 ≥ 4.5:1）

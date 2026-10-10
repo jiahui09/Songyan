@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+dev-site/public/
+dev-site/db.json
+dev-site/.deploy_git/
