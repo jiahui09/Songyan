@@ -6,4 +6,5 @@
 - 模板 EJS；路径用 url_for；配置读 theme.*；颜色/间距用 CSS 变量。
 - 禁止：内联 style、!important、硬编码颜色/文本、死代码、改基线截图、新增 scripts/、发明 Hexo helper。
 - 功能与重构分开提交。重构不得改变视觉基线。
+- 视觉基线：每次移植完一个页面，为该页面刷新/新建 design/baseline/ 对应截图，纳入同 commit。未移植的页面不建基线。
 - 输出：git diff --stat + hexo generate 结果 + 是否影响基线。
