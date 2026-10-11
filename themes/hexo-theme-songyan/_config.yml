@@ -19,22 +19,23 @@ author:
 # 色彩模式（硬性锁定：宣纸暖调浅色主题，不做暗色模式）
 color_scheme: "light"
 
-# 设计令牌与色彩系统映射
+# 设计令牌与色彩系统映射（镜像 source/css/tokens.css，唯一实现以 tokens.css 为准）
 style:
-  paper_bg:  "#F7F2E7"  # 宣纸底
-  paper_deep: "#EFE9DC"  # 卡片深色底
-  ink_color: "#1F1F1F"  # 浓墨正文（对比度 ≥ 7:1）
-  ink_light: "#3F4E4F"  # 黛青次要文字
-  cinnabar:  "#B23A2F"  # 朱砂重点、韵脚、链接（对比度 ≥ 4.5:1）
-  bamboo:    "#6B7F5E"  # 竹青标签、维护中状态
-  ochre:     "#B08D57"  # 赭石细线、归档节点
+  paper_bg:      "#F7F2E7"  # 主宣纸底色
+  paper_subtle:  "#EFEAE0"  # 浅灰茶色（代码块/暗调引用块）
+  ink_primary:   "#2B2B2B"  # 浓松烟墨，主正文（对比度 ≥ 7:1）
+  ink_secondary: "#666055"  # 淡松烟墨，元数据与说明文字
+  cinnabar_red:  "#A8332A"  # 朱砂，分类题头与章印（对比度 ≥ 4.5:1）
+  bamboo_border: "#E2D9C8"  # 淡竹纸缝线/界线
+  bamboo:        "#6B7F5E"  # 竹青标签、维护中状态
+  ochre:         "#B08D57"  # 赭石细线、归档节点
 
 # 字体策略（系统字体优先，首版严禁 @import 外部 WebFont）
 font:
   use_cdn: false
   title_font: "LXGW WenKai"
   body_font:  "Noto Serif SC"
-  code_font:  "JetBrains Mono"
+  code_font:  "Fira Code"
 
 # 分卷路由与文件路径自动映射规则（由 scripts/type-mapping.js 处理）
 type_mapping:

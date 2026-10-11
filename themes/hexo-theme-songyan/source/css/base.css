@@ -15,8 +15,8 @@
 html {
   font-size: 16px;
   line-height: 1.75;
-  background-color: var(--paper);
-  color: var(--ink);
+  background-color: var(--paper-bg);
+  color: var(--ink-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -27,10 +27,10 @@ html {
 body {
   min-height: 100vh;
   font-family: var(--font-serif);
-  background-color: var(--paper);
+  background-color: var(--paper-bg);
   background-image: url("../images/paper-texture.png");
   background-repeat: repeat;
-  color: var(--ink);
+  color: var(--ink-primary);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -38,13 +38,13 @@ body {
 
 /* 链接规范（朱砂点染） */
 a {
-  color: var(--cinnabar);
+  color: var(--cinnabar-red);
   text-decoration: none;
   transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
 }
 
 a:hover, a:focus-visible {
-  color: var(--cinnabar-hover);
+  color: var(--cinnabar-red-hover);
 }
 
 a:focus-visible {
@@ -55,7 +55,7 @@ a:focus-visible {
 /* 标题规范（默认选用文楷/宋体） */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
-  color: var(--ink);
+  color: var(--ink-primary);
   line-height: 1.35;
   font-weight: 600;
   text-wrap: balance;
@@ -74,21 +74,21 @@ p {
 /* 强调与引用 */
 em, i {
   font-style: normal;
-  color: var(--ink-light);
+  color: var(--ink-secondary);
 }
 
 strong, b {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--ink-primary);
 }
 
 blockquote {
   margin: var(--space-6) 0;
   padding: var(--space-4) var(--space-6);
-  background: var(--paper-deep);
-  border: 1px solid var(--line);
+  background: var(--paper-subtle);
+  border: 1px solid var(--bamboo-border);
   border-radius: var(--radius-xs);
-  color: var(--ink-light);
+  color: var(--ink-secondary);
   font-family: var(--font-serif);
   font-style: normal;
 }
@@ -96,7 +96,7 @@ blockquote {
 hr {
   border: none;
   height: 1px;
-  background-color: var(--line);
+  background-color: var(--bamboo-border);
   margin: var(--space-8) 0;
 }
 
