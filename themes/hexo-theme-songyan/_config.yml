@@ -6,18 +6,33 @@
 
 theme_name: "松烟"
 
-# 作者信息（印章系统的唯一配置源）
+# 作者信息（印文/尺寸/刻法统一走下方 seal 块）
 author:
   name: "春唇语冬"
-  seal_chars: ["春", "唇", "语", "冬"]   # 2×2 排列，右上春、右下唇、左上语、左下冬
-  seal_style: "zhuwen"                    # zhuwen（元朱文，默认）| baiwen（汉白文）
-  seal_color: "#B03A2E"                   # 印泥红，严禁纯红 #FF0000
-  seal_texture: true                      # 手工钤盖肌理（默认开启）
-  seal_render: "font"                     # font（字体版）| path（纯矢量路径版，更锐利）
   homepage: "https://example.com"
 
 # 色彩模式（硬性锁定：宣纸暖调浅色主题，不做暗色模式）
 color_scheme: "light"
+
+# =========================================================
+# 纯矢量金石印章生成器 (Crisp Vector Seal Generator)
+# 构建期输出 SVG：蒙版剪切崩刃/飞白/砂眼，无滤镜无栅格化
+# =========================================================
+seal:
+  enable: true               # 是否开启印章模块
+  text: "春唇语冬"           # 默认印章文字（2~4 字；4 字按古法逆时针回文：右上→右下→左上→左下）
+  style: "yang"              # 默认刻法：yang（朱文/阳刻，细线红字）| yin（白文/阴刻，红底白字）
+  size: 34                   # 默认尺寸 (px)
+  rotate: -1.2               # 微倾斜角度 (deg)，模拟手盖印泥的自然微偏
+  density: 1.0               # 刀痕崩刃、金石飞白与砂眼颗粒密度 (0.5 ~ 1.5)
+  seed: 42                   # 随机种子（固定种子确保重建时刀痕完全一致）
+
+  # 位置控制（未移植版式留待各自模板接入）
+  locations:
+    navbar: true             # 导航栏站名处落印
+    post_header: false       # 文章题头是否落分类名印
+    post_footer: false       # 文章文末落款处加盖作者印章（post.ejs 移植时接入）
+    sidebar: false           # 侧边栏/名片区（暂无该版式）
 
 
 # 设计令牌与色彩系统映射（镜像 source/css/tokens.css，唯一实现以 tokens.css 为准）

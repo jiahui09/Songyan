@@ -31,13 +31,6 @@
   flex-shrink: 0;
 }
 
-.site-header__seal {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: inline-block;
-}
-
 .site-header__title-wrap {
   display: inline-flex;
   flex-direction: column;
@@ -131,9 +124,16 @@
   pointer-events: none;
 }
 
-/* 手工钤盖肌理层：以类替代原型中的内联 style */
-.seal__texture {
-  mix-blend-mode: multiply;
+/* 生成器印章（render_seal 输出）：尺寸由 SVG width/height 属性自带，禁 CSS 拉伸 */
+.seal-gen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seal-gen svg {
+  width: auto;
+  height: auto;
 }
 
 /* 水印容器 */

@@ -99,19 +99,8 @@
     <p class="hero-scroll__verse"><%= homeCfg.hero_verse %></p>
     <% } %>
     <div class="hero-scroll__seal-brand">
-      <span class="seal seal--brand seal-stamp-once" aria-hidden="true">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <% var sealChars = theme.author.seal_chars || []; %>
-          <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
-          <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
-          <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
-            <text x="65" y="34"><%= sealChars[0] %></text>
-            <text x="65" y="66"><%= sealChars[1] %></text>
-            <text x="35" y="34"><%= sealChars[2] %></text>
-            <text x="35" y="66"><%= sealChars[3] %></text>
-          </g>
-        </svg>
-      </span>
+      <!-- 卷首盖印：render_seal 构建期生成，动效由 main.js 给 .seal 加 seal-stamp-once -->
+      <%- render_seal(theme.seal.text, theme.seal.style, 48, 'seal--brand') %>
     </div>
     <% if (homeCfg.hero_tagline) { %>
     <p class="hero-scroll__sub"><%= homeCfg.hero_tagline %></p>
