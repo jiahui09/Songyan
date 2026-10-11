@@ -131,6 +131,11 @@
   pointer-events: none;
 }
 
+/* 手工钤盖肌理层：以类替代原型中的内联 style */
+.seal__texture {
+  mix-blend-mode: multiply;
+}
+
 /* 状态印章（复用方形印章形式） */
 .seal-status {
   display: inline-flex;
@@ -248,6 +253,23 @@
   font-size: var(--text-xs);
   color: var(--ink-faint);
   margin-top: var(--space-1);
+}
+
+/* 四卷序号四色（以类替代原型中的内联 style） */
+.nav-section-card__index--ci {
+  color: var(--cinnabar);
+}
+
+.nav-section-card__index--essay {
+  color: var(--bamboo);
+}
+
+.nav-section-card__index--tech {
+  color: var(--ink-light);
+}
+
+.nav-section-card__index--project {
+  color: var(--ochre);
 }
 
 /* 通用分卷栏目头 */
@@ -670,6 +692,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.site-footer__author {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  color: var(--ink);
 }
 
 .site-footer__links {

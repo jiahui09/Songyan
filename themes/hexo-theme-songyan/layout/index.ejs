@@ -1,7 +1,237 @@
-<!--
-  Hexo Layout 占位骨架：index.ejs
-  由本地 Agent 依据 prototype/index.html 机械转译实现
--->
-<div class="songyan-index-placeholder">
-  <!-- 待本地 Agent 机械转译 -->
-</div>
+<%
+  /**
+   * 首页（卷首 · 分卷流）：移植自静态原型 prototype/index.html
+   * 文案与路径全部来自 theme.* 配置；文章数据来自 Hexo site.posts
+   */
+  var homeCfg = theme.home || {};
+  var sectionsCfg = homeCfg.sections || {};
+  var labels = theme.labels || {};
+  var defaultLimit = homeCfg.per_section || 3;
+
+  // 分卷文章：按类型过滤 + 按日期倒序 + 按分卷限额截断
+  function sectionPosts(type, limit) {
+    return site.posts
+      .filter(function (post) { return post.type === type; })
+      .sort('-date')
+      .limit(limit || defaultLimit);
+  }
+
+  // 分卷入口/栏目头链接：复用 menu 的名称与路径
+  function sectionPath(cfg) {
+    return (cfg && theme.menu && theme.menu[cfg.menu]) || '/';
+  }
+
+  // 摘要：优先 Hexo excerpt，缺失时回退到正文截断（不伪造内容）
+  function cardExcerpt(post) {
+    var text = strip_html(post.excerpt || post.content || '');
+    return text ? truncate(text, { length: 72, separator: '' }) : '';
+  }
+
+  // 阅读时长：按主题约定 中文字数/300 + 英文单词/200
+  function readTimeLabel(post) {
+    var text = strip_html(post.content || '');
+    var cjk = text.match(/[\u3400-\u9fff]/g) || [];
+    var words = text.replace(/[\u3400-\u9fff]/g, ' ').split(/\s+/).filter(Boolean);
+    var minutes = Math.max(1, Math.round(cjk.length / 300 + words.length / 200));
+    return (labels.read_time || '%d').replace('%d', minutes);
+  }
+
+  var ciCfg = sectionsCfg.ci;
+  var ciPosts = ciCfg ? sectionPosts('ci', ciCfg.limit) : [];
+  var essayCfg = sectionsCfg.essay;
+  var essayPosts = essayCfg ? sectionPosts('essay', essayCfg.limit) : [];
+  var techCfg = sectionsCfg.tech;
+  var techPosts = techCfg ? sectionPosts('tech', techCfg.limit) : [];
+  var projectCfg = sectionsCfg.project;
+  var projectPosts = projectCfg ? sectionPosts('project', projectCfg.limit) : [];
+%>
+<main class="site-main">
+
+  <!-- 卷首 Header（典雅词句 + 盖下动效印章） -->
+  <section class="hero-scroll" aria-label="卷首词句">
+    <% if (homeCfg.hero_verse) { %>
+    <p class="hero-scroll__verse"><%= homeCfg.hero_verse %></p>
+    <% } %>
+    <div class="hero-scroll__seal-brand">
+      <span class="seal seal--brand seal-stamp-once" aria-hidden="true">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <% var sealChars = theme.author.seal_chars || []; %>
+          <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+          <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+          <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+            <text x="65" y="34"><%= sealChars[0] %></text>
+            <text x="65" y="66"><%= sealChars[1] %></text>
+            <text x="35" y="34"><%= sealChars[2] %></text>
+            <text x="35" y="66"><%= sealChars[3] %></text>
+          </g>
+        </svg>
+      </span>
+    </div>
+    <% if (homeCfg.hero_tagline) { %>
+    <p class="hero-scroll__sub"><%= homeCfg.hero_tagline %></p>
+    <% } %>
+  </section>
+
+  <!-- 四卷入口 -->
+  <nav class="nav-sections" aria-label="四卷分流">
+    <% ['ci', 'essay', 'tech', 'project'].forEach(function (type) {
+      var cfg = sectionsCfg[type];
+      if (!cfg) return;
+    %>
+    <a href="<%= url_for(sectionPath(cfg)) %>" class="nav-section-card enter">
+      <span class="nav-section-card__title"><%= cfg.menu %> <span class="nav-section-card__index--<%= type %>"><%= cfg.index %></span></span>
+      <span class="nav-section-card__desc"><%= cfg.desc %></span>
+    </a>
+    <% }); %>
+  </nav>
+
+  <!-- 第一卷：最新词选 -->
+  <% if (ciCfg && ciPosts.length) { %>
+  <section aria-labelledby="ci-section-title">
+    <div class="section-header">
+      <h2 id="ci-section-title" class="section-header__title">
+        <span><%= ciCfg.menu %></span>
+        <span class="section-header__tag"><%= ciCfg.tag %></span>
+      </h2>
+      <a href="<%= url_for(sectionPath(ciCfg)) %>" class="section-header__more"><%= ciCfg.more %></a>
+    </div>
+
+    <div class="home-grid-ci">
+      <% ciPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
+      <article class="post-card post-card--ci enter">
+        <header class="post-card__header">
+          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+          <div class="post-card__meta">
+            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+            <% if (post.cipai) { %>
+            <span class="meta-separator">/</span>
+            <span><%= labels.cipai %>：<%= post.cipai %></span>
+            <% } %>
+          </div>
+        </header>
+        <% if (excerpt) { %>
+        <p class="post-card__excerpt"><%= excerpt %></p>
+        <% } %>
+      </article>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- 第二卷：近作随笔（时光轴轻量） -->
+  <% if (essayCfg && essayPosts.length) { %>
+  <section aria-labelledby="essay-section-title">
+    <div class="section-header">
+      <h2 id="essay-section-title" class="section-header__title">
+        <span><%= essayCfg.menu %></span>
+        <span class="section-header__tag"><%= essayCfg.tag %></span>
+      </h2>
+      <a href="<%= url_for(sectionPath(essayCfg)) %>" class="section-header__more"><%= essayCfg.more %></a>
+    </div>
+
+    <div class="home-list-essay">
+      <% essayPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
+      <article class="post-card post-card--essay enter">
+        <header class="post-card__header">
+          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+          <div class="post-card__meta">
+            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+            <% if (post.location) { %>
+            <span class="meta-separator">·</span>
+            <span><%= post.location %></span>
+            <% } %>
+            <% if (post.weather) { %>
+            <span class="meta-separator">·</span>
+            <span><%= labels.weather %>：<%= post.weather %></span>
+            <% } %>
+            <% if (post.mood) { %>
+            <span class="meta-separator">·</span>
+            <span><%= labels.mood %>：<%= post.mood %></span>
+            <% } %>
+          </div>
+        </header>
+        <% if (excerpt) { %>
+        <p class="post-card__excerpt"><%= excerpt %></p>
+        <% } %>
+      </article>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- 第三卷：技术札记 -->
+  <% if (techCfg && techPosts.length) { %>
+  <section aria-labelledby="tech-section-title">
+    <div class="section-header">
+      <h2 id="tech-section-title" class="section-header__title">
+        <span><%= techCfg.menu %></span>
+        <span class="section-header__tag"><%= techCfg.tag %></span>
+      </h2>
+      <a href="<%= url_for(sectionPath(techCfg)) %>" class="section-header__more"><%= techCfg.more %></a>
+    </div>
+
+    <div class="home-grid-tech">
+      <% techPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
+      <article class="post-card enter">
+        <header class="post-card__header">
+          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+          <div class="post-card__meta">
+            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+            <% if (theme.tech && theme.tech.read_time) { %>
+            <span class="meta-separator">·</span>
+            <span><%= readTimeLabel(post) %></span>
+            <% } %>
+          </div>
+        </header>
+        <% if (excerpt) { %>
+        <p class="post-card__excerpt"><%= excerpt %></p>
+        <% } %>
+        <% if (post.tags && post.tags.length) { %>
+        <ul class="meta-tags">
+          <% post.tags.forEach(function (tag) { %>
+          <li class="meta-tags__item"><%= tag.name %></li>
+          <% }); %>
+        </ul>
+        <% } %>
+      </article>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- 第四卷：作品展柜 -->
+  <% if (projectCfg && projectPosts.length) { %>
+  <section aria-labelledby="project-section-title">
+    <div class="section-header">
+      <h2 id="project-section-title" class="section-header__title">
+        <span><%= projectCfg.menu %></span>
+        <span class="section-header__tag"><%= projectCfg.tag %></span>
+      </h2>
+      <a href="<%= url_for(sectionPath(projectCfg)) %>" class="section-header__more"><%= projectCfg.more %></a>
+    </div>
+
+    <div class="home-grid-projects">
+      <% projectPosts.forEach(function (post) {
+        var excerpt = cardExcerpt(post);
+        var statusLabel = post.status && theme.status ? theme.status[post.status] : null;
+      %>
+      <article class="project-card enter">
+        <div class="project-card__top">
+          <h3 class="project-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+          <% if (statusLabel) { %>
+          <span class="seal-status seal-status--<%= post.status %>"><%= statusLabel %></span>
+          <% } %>
+        </div>
+        <% if (excerpt) { %>
+        <p class="post-card__excerpt"><%= excerpt %></p>
+        <% } %>
+        <div class="project-card__links">
+          <a href="<%= url_for(post.path) %>"><%= labels.detail %></a>
+        </div>
+      </article>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+</main>

@@ -1,13 +1,26 @@
-<!--
-  Hexo Layout 占位骨架：layout.ejs
--->
 <!DOCTYPE html>
 <html lang="<%= config.language || 'zh-CN' %>">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= page.title ? page.title + ' · ' + config.title : config.title %></title>
+  <% if (config.description) { %>
+  <meta name="description" content="<%= config.description %>">
+  <% } %>
+  <link rel="icon" type="image/svg+xml" href="<%= url_for('/images/seal-favicon.svg') %>">
+  <link rel="stylesheet" href="<%= url_for('/css/tokens.css') %>">
+  <link rel="stylesheet" href="<%= url_for('/css/base.css') %>">
+  <link rel="stylesheet" href="<%= url_for('/css/components.css') %>">
+  <link rel="stylesheet" href="<%= url_for('/css/layouts.css') %>">
 </head>
 <body>
+  <%- partial('_partial/header') %>
+
   <%- body %>
+
+  <%- partial('_partial/footer') %>
+
+  <script src="<%= url_for('/js/main.js') %>"></script>
+  <script src="<%= url_for('/js/seal.js') %>"></script>
 </body>
 </html>

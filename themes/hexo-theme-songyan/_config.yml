@@ -70,6 +70,62 @@ project:
 home:
   per_section: 3           # 首页每个分卷默认展示最新文章数
   featured: false          # 精选置顶推荐（规划于 v0.2 启用）
+  hero_verse: "一研松烟分细墨 · 四卷清赏寄余年"   # 卷首词句
+  hero_tagline: "外古内今 · 分卷而治"             # 卷首副题
+  sections:                                 # 四卷入口与栏目头（文案取自静态原型）
+    ci:
+      menu: 词卷        # 引用下方 menu 的名称与路径
+      index: 一         # 入口序号（四卷四色）
+      desc: 旧调新填，韵脚笺注
+      tag: 最新词选
+      more: 查看全卷 →
+      limit: 3
+    essay:
+      menu: 随笔
+      index: 二
+      desc: 岁月偶得，行云流觞
+      tag: 岁月偶得
+      more: 查看全卷 →
+      limit: 3
+    tech:
+      menu: 技术
+      index: 三
+      desc: 代码札记，现代纸笺
+      tag: 现代纸笺
+      more: 查看全卷 →
+      limit: 3
+    project:
+      menu: 项目
+      index: 四
+      desc: 作品展柜，雕琢有物
+      tag: 作品展柜
+      more: 查看全部项目 →
+      limit: 2
+
+# 卡片元数据标签（禁止在模板中硬编码文本）
+labels:
+  cipai: 词牌
+  weather: 气候
+  mood: 心境
+  read_time: 预计 %d 分钟读完   # %d 为估算分钟数
+  detail: 详情 →
+  back_to_home: 返回卷首
+
+# 项目状态印章（key 同时用于 seal-status--{key} 类名）
+status:
+  maintaining: 维护中
+  archived: 已归档
+  experiment: 实验中
+
+# 页脚
+footer:
+  links:
+    归档时间线: /archives/
+    关于斋主: /about/
+    词卷竖排参考: /ci-vertical/
+    空笺样例: /404.html
+  copyright: "© 2026 春唇语冬 · 纯粹原笔 · 守此一砚松烟"
+  note: "基于 Hexo 主题「松烟」构建 · 宣纸暖色 · 系统字体"
 
 # 导航菜单
 menu:

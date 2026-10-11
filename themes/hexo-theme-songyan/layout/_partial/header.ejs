@@ -1,0 +1,43 @@
+  <!-- 页头 Header（印前名后） -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="<%= url_for('/') %>" class="site-header__brand" title="<%= theme.labels.back_to_home %>">
+        <span class="seal site-header__seal" aria-hidden="true">
+          <!-- 印章 SVG 字体版：印文取 author.seal_chars（印章系统唯一配置源） -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="<%= theme.author.name %>印">
+            <% var sealChars = theme.author.seal_chars || []; %>
+            <defs>
+              <filter id="header-seal-tex">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+                <feColorMatrix in="noise" type="saturate" values="0"/>
+                <feComponentTransfer><feFuncA type="linear" slope="0.06"/></feComponentTransfer>
+                <feComposite in2="SourceGraphic" operator="in"/>
+              </filter>
+            </defs>
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34"><%= sealChars[0] %></text>
+              <text x="65" y="66"><%= sealChars[1] %></text>
+              <text x="35" y="34"><%= sealChars[2] %></text>
+              <text x="35" y="66"><%= sealChars[3] %></text>
+            </g>
+            <rect class="seal__texture" x="6" y="6" width="88" height="88" rx="3" fill="var(--seal-color)" filter="url(#header-seal-tex)" opacity="0.5"/>
+          </svg>
+        </span>
+        <div class="site-header__title-wrap">
+          <span class="site-header__title"><%= config.title %></span>
+          <span class="site-header__title-line"></span>
+        </div>
+      </a>
+
+      <!-- 导航 Links -->
+      <nav aria-label="全局导航">
+        <ul class="site-header__nav">
+          <% Object.keys(theme.menu).forEach(function (label) { %>
+          <li><a href="<%= url_for(theme.menu[label]) %>" class="site-header__nav-link"><%= label %></a></li>
+          <% }); %>
+        </ul>
+      </nav>
+    </div>
+  </header>

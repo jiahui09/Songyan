@@ -1,0 +1,36 @@
+  <!-- 页脚 Footer（含 mini 印章 + 版权） -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="seal seal--mini" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <% var sealChars = theme.author.seal_chars || []; %>
+            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
+            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+              <text x="65" y="34"><%= sealChars[0] %></text>
+              <text x="65" y="66"><%= sealChars[1] %></text>
+              <text x="35" y="34"><%= sealChars[2] %></text>
+              <text x="35" y="66"><%= sealChars[3] %></text>
+            </g>
+          </svg>
+        </span>
+        <span class="site-footer__author"><%= theme.author.name || config.author %></span>
+      </div>
+
+      <ul class="site-footer__links">
+        <% var footerLinks = theme.footer && theme.footer.links ? theme.footer.links : {}; %>
+        <% Object.keys(footerLinks).forEach(function (label) { %>
+        <li><a href="<%= url_for(footerLinks[label]) %>"><%= label %></a></li>
+        <% }); %>
+      </ul>
+
+      <div class="site-footer__copy">
+        <% if (theme.footer && theme.footer.copyright) { %>
+        <p><%= theme.footer.copyright %></p>
+        <% } %>
+        <% if (theme.footer && theme.footer.note) { %>
+        <p><%= theme.footer.note %></p>
+        <% } %>
+      </div>
+    </div>
+  </footer>

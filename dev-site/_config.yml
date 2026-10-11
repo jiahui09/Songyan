@@ -3,17 +3,20 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
+## 站点标题与作者署名来源：themes/hexo-theme-songyan/_config.yml 的 theme_name / author.name
+title: 松烟 Songyan
 subtitle: ''
-description: ''
+description: 松烟墨晕，四卷清赏。外古内今，分卷而治。作者春唇语冬。
 keywords:
-author: John Doe
-language: en
+author: 春唇语冬
+language: zh-CN
 timezone: ''
 
 # URL
-## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: http://example.com
+## 本地开发配置：正式部署域名尚未确定，禁止填写虚构生产地址。
+## 上线前由维护者提供真实 url，root 需与部署路径保持一致。
+url: http://localhost:4000
+root: /
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
