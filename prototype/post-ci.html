@@ -2,7 +2,7 @@
   @page: post-ci
   @hexo-layout: layout/post.ejs
   @hexo-partial: _partial/post/ci.ejs
-  @description: 词卷单页（横排版，v0.1 基准）：居中横排、词牌、韵脚朱砂点、笺注高亮联动、平仄折叠、落款印章
+  @description: 词卷单页（横排版，v0.1 基准）：居中横排、词牌、韵脚朱砂点、落款印章、题笺分享（竖排诗笺卡片导出）
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -42,11 +42,8 @@
       </a>
 
       <nav aria-label="全局导航">
-        <ul class="site-header__nav">
-          <li><a href="./post-ci.html" class="site-header__nav-link site-header__nav-link--active">词卷</a></li>
-          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
-          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
-          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+                <ul class="site-header__nav">
+          <li><a href="./index.html" class="site-header__nav-link">首页</a></li>
           <li><a href="./archive.html" class="site-header__nav-link">归档</a></li>
           <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
         </ul>
@@ -59,6 +56,8 @@
 
       <!-- 头部：词牌名与元数据 -->
       <header class="post-ci__header">
+        <span class="post-category-tag">词卷</span>
+
         <!-- @hexo: if page.cipai -->
         <span class="post-ci__cipai-badge">词牌 · 水调歌头</span>
         <!-- @end -->
@@ -75,75 +74,53 @@
           <!-- @hexo: page.rhyme -->
           <span>词林正韵第七部（仄韵）</span>
           <!-- @end -->
-          <span class="meta-separator">·</span>
-          <a href="./post-ci-vertical.html" style="font-size: var(--text-xs); color: var(--ochre);">[查看竖排版参考]</a>
         </div>
       </header>
 
-      <!-- 词作正文（居中横排，含 ruby 注音与韵脚朱砂圆点） -->
+      <!-- 词作正文（居中横排，韵脚朱砂圆点） -->
       <!-- @hexo: page.content -->
       <div class="post-ci__body-horizontal">
         <p class="post-ci__line">
-          露下碧梧冷，风引画檐<span class="rhyme-dot" data-annotation-target="ling" title="韵脚：铃">铃</span>。
+          露下碧梧冷，风引画檐<span class="rhyme-dot" title="韵脚：铃">铃</span>。
         </p>
         <p class="post-ci__line">
-          <ruby data-annotation-target="su-e" style="cursor: pointer;">素娥<rp>(</rp><rt>sù é</rt><rp>)</rp></ruby>何事多病，掩泪对孤<span class="rhyme-dot" data-annotation-target="ping" title="韵脚：屏">屏</span>。
+          素娥何事多病，掩泪对孤<span class="rhyme-dot" title="韵脚：屏">屏</span>。
         </p>
         <p class="post-ci__line">
-          料得玉阶凝伫，应念青衫零落，清梦绕江<span class="rhyme-dot" data-annotation-target="nan" title="韵脚：南">南</span>。
+          料得玉阶凝伫，应念青衫零落，清梦绕江<span class="rhyme-dot" title="韵脚：南">南</span>。
         </p>
         <p class="post-ci__line">
-          回首故山路，极目暮云<span class="rhyme-dot" data-annotation-target="ping2" title="韵脚：平">平</span>。
+          回首故山路，极目暮云<span class="rhyme-dot" title="韵脚：平">平</span>。
         </p>
-        <p class="post-ci__line" style="margin-top: var(--space-6); font-size: var(--text-base); color: var(--ink-light);">
-          —— 过片 ——
-        </p>
-        <p class="post-ci__line">
-          溯流光，吹铁笛，醉中<span class="rhyme-dot" data-annotation-target="ting" title="韵脚：听">听</span>。
+        <!-- 下阕起句：上下阕之间只以留白承接过片，不设标记 -->
+        <p class="post-ci__line post-ci__line--lower-stanza">
+          溯流光，吹铁笛，醉中<span class="rhyme-dot" title="韵脚：听">听</span>。
         </p>
         <p class="post-ci__line">
-          十年旧约何在？客舍冷青<span class="rhyme-dot" data-annotation-target="deng" title="韵脚：灯">灯</span>。
+          十年旧约何在？客舍冷青<span class="rhyme-dot" title="韵脚：灯">灯</span>。
         </p>
         <p class="post-ci__line">
-          但使冰心依旧，休问流年虚度，天际看孤<span class="rhyme-dot" data-annotation-target="xing" title="韵脚：星">星</span>。
+          但使冰心依旧，休问流年虚度，天际看孤<span class="rhyme-dot" title="韵脚：星">星</span>。
         </p>
         <p class="post-ci__line">
-          待得梅花发，再共<ruby data-annotation-target="chen-ying" style="cursor: pointer;">拂尘缨<rp>(</rp><rt>fú chén yīng</rt><rp>)</rp></ruby><span class="rhyme-dot" data-annotation-target="ying" title="韵脚：缨"></span>。
+          待得梅花发，再共拂尘缨<span class="rhyme-dot" title="韵脚：缨"></span>。
         </p>
       </div>
       <!-- @end -->
 
-      <!-- 笺注区（悬停联动高亮） -->
-      <!-- @hexo: if page.annotations && page.annotations.length -->
-      <section class="post-ci__annotations" aria-label="词句笺注">
-        <h2 class="post-ci__annotations-title">笺注 · 赏析考据</h2>
-        <div class="ci-annotation-item" data-annotation-key="su-e">
-          <strong style="color: var(--ink);">素娥</strong>：月中嫦娥，古诗词常用借代明月或月中仙子。
-        </div>
-        <div class="ci-annotation-item" data-annotation-key="chen-ying">
-          <strong style="color: var(--ink);">拂尘缨</strong>：抖去冠缨上的尘垢，语出《楚辞·渔父》「沧浪之水清兮，可以濯吾缨」，表超脱出尘之怀。
-        </div>
-      </section>
-      <!-- @end -->
-
-      <!-- 平仄折叠收纳（默认折叠） -->
-      <details class="ci-meter-details">
-        <summary>平仄图谱 · 词林正韵第七部检视（展开查验）</summary>
-        <div class="ci-meter-content">
-<strong>水调歌头定格（双调九十五字）：</strong>
-仄仄仄平仄，平仄仄平平（韵）。中平平仄平仄，平仄仄平平（韵）。
-仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。平仄仄平仄，仄仄仄平平（韵）。
-
-平中仄，中中仄，仄平平（韵）。中平平仄，平仄平仄仄平平（韵）。
-仄仄中平平仄，仄仄平平平仄，中仄仄平平（韵）。中仄仄平仄，平仄仄平平（韵）。
-        </div>
-      </details>
-
-      <!-- 文章末尾落款（右对齐作者印章 110px + 记） -->
-      <div class="post-signature">
+      <!-- 文章末尾落款：题跋在上，朱印钤于年号左下 -->
+      <div class="post-signature post-signature--ci">
         <div class="post-signature__meta">
           <p class="post-signature__author">春唇语冬 记</p>
           <time datetime="2026-10-10">丙午秋月 霜降前夕</time>
+          <!-- 沉静入口：极细羽笔 + 雅致小字，点之成笺 -->
+          <span class="share-trigger" role="button" tabindex="0" data-poem-slip-open aria-label="题笺：将本词裁为竖排诗笺">
+            <svg class="feather-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M19.6 4.4c-6.4 0-11 4.1-12.5 9.1L4.6 19.8"/>
+              <path d="M19.6 4.4c.1 5-2.4 8.6-5.9 10.7"/>
+              <path d="M8.2 14.1l1.6-4.2"/>
+              <path d="M11.3 11.9l1.5-4"/>
+            </svg>题笺</span>
         </div>
         <div class="seal seal--signature" aria-label="春唇语冬钤印">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印">
@@ -182,8 +159,23 @@
     </div>
   </footer>
 
+  <!-- 题笺分享浮层（诗笺预览）：深墨遮罩之上，右起竖排素笺 -->
+  <div class="poem-slip-overlay" data-poem-slip>
+    <div class="poem-slip__stack" role="dialog" aria-modal="true" aria-label="题笺预览">
+      <div class="poem-slip">
+        <div class="poem-slip__cols" data-poem-slip-cols></div>
+        <span class="poem-slip__watermark">松烟</span>
+      </div>
+      <div class="poem-slip__actions">
+        <button type="button" class="poem-slip-action poem-slip-action--save" data-poem-slip-save>[ 存为诗笺 ]</button>
+        <button type="button" class="poem-slip-action" data-poem-slip-close>[ 阖卷 ]</button>
+      </div>
+      <p class="poem-slip__status" data-poem-slip-status aria-live="polite"></p>
+    </div>
+  </div>
+
   <script src="./js/main.js"></script>
-  <script src="./js/ci-annotations.js"></script>
   <script src="./js/seal.js"></script>
+  <script src="./js/poem-slip.js"></script>
 </body>
 </html>

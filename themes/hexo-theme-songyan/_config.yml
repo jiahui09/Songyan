@@ -19,6 +19,7 @@ author:
 # 色彩模式（硬性锁定：宣纸暖调浅色主题，不做暗色模式）
 color_scheme: "light"
 
+
 # 设计令牌与色彩系统映射（镜像 source/css/tokens.css，唯一实现以 tokens.css 为准）
 style:
   paper_bg:      "#F7F2E7"  # 主宣纸底色
@@ -37,12 +38,9 @@ font:
   body_font:  "Noto Serif SC"
   code_font:  "Fira Code"
 
-# 分卷路由与文件路径自动映射规则（由 scripts/type-mapping.js 处理）
+# 文章类型路径映射规则（由 scripts/type-mapping.js 处理；两轨制 ci / post）
 type_mapping:
   "ci/**":       "ci"
-  "essay/**":    "essay"
-  "tech/**":     "tech"
-  "projects/**": "project"
 
 # 词卷配置 (type: ci)
 ci:
@@ -50,89 +48,41 @@ ci:
   show_annotation: true    # 启用难词笺注悬停 1.5s 淡入联动
   show_rhyme: true         # 启用韵脚 2px 朱砂圆点标记
 
-# 随笔卷配置 (type: essay)
-essay:
-  timeline_layout: true    # 时光轴布局
-  watermark_seal: true     # 图片右下角 80px 防伪水印印章
-
-# 技术卷配置 (type: tech)
-tech:
-  sidebar: "notes"         # notes（折角札记栏）| none （v0.1 不实现 TOC）
-  code_copy: true          # 代码块一键复制按钮（160ms 原生反馈）
-  read_time: true          # 自动估算阅读时长（中文字数/300 + 英文单词/200）
-  series_nav: true         # 启用专栏系列前置导航
-
-# 项目卷配置 (type: project)
-project:
-  card_style: "seal"       # seal（带状态印章的卡片风格）
-  show_changelog: true     # 展开版本变更日志
-
 # 卷首首页配置
 home:
-  per_section: 3           # 首页每个分卷默认展示最新文章数
+  stream_limit: 9          # 首页归流单列文章流展示条数（诗文双轨）
   featured: false          # 精选置顶推荐（规划于 v0.2 启用）
   hero_verse: "一研松烟分细墨 · 四卷清赏寄余年"   # 卷首词句
   hero_tagline: "外古内今 · 分卷而治"             # 卷首副题
-  sections:                                 # 四卷入口与栏目头（文案取自静态原型）
+  sections:                                 # 词卷栏目头（文章页统一走 labels.post 回退）
     ci:
-      menu: 词卷        # 引用下方 menu 的名称与路径
+      menu: 词卷        # 首页元信息分类名回退文案
       index: 一         # 入口序号（四卷四色）
       desc: 旧调新填，韵脚笺注
       tag: 最新词选
       more: 查看全卷 →
       limit: 3
-    essay:
-      menu: 随笔
-      index: 二
-      desc: 岁月偶得，行云流觞
-      tag: 岁月偶得
-      more: 查看全卷 →
-      limit: 3
-    tech:
-      menu: 技术
-      index: 三
-      desc: 代码札记，现代纸笺
-      tag: 现代纸笺
-      more: 查看全卷 →
-      limit: 3
-    project:
-      menu: 项目
-      index: 四
-      desc: 作品展柜，雕琢有物
-      tag: 作品展柜
-      more: 查看全部项目 →
-      limit: 2
 
 # 卡片元数据标签（禁止在模板中硬编码文本）
 labels:
   cipai: 词牌
+  post: 文稿            # 无分类文章的元信息/题头回退文案
   weather: 气候
   mood: 心境
-  read_time: 预计 %d 分钟读完   # %d 为估算分钟数
   detail: 详情 →
   back_to_home: 返回卷首
-
-# 项目状态印章（key 同时用于 seal-status--{key} 类名）
-status:
-  maintaining: 维护中
-  archived: 已归档
-  experiment: 实验中
 
 # 页脚
 footer:
   links:
     归档时间线: /archives/
     关于斋主: /about/
-    词卷竖排参考: /ci-vertical/
     空笺样例: /404.html
   copyright: "© 2026 春唇语冬 · 纯粹原笔 · 守此一砚松烟"
   note: "基于 Hexo 主题「松烟」构建 · 宣纸暖色 · 系统字体"
 
 # 导航菜单
 menu:
-  词卷: /categories/ci/
-  随笔: /categories/essay/
-  技术: /categories/tech/
-  项目: /projects/
+  首页: /
   归档: /archives/
   关于: /about/

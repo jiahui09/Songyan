@@ -3,18 +3,12 @@ theme_name: "松烟"
 
 sections:
   ci: "词卷"
-  essay: "随笔"
-  tech: "技术"
-  project: "项目"
+  post: "文稿"
 
 meta:
   author: "春唇语冬"
-  read_time_format: "预计阅读 %d 分钟"
   meter_legend: "词林正韵平仄检视"
   annotations: "笺注 · 赏析考据"
-  status_maintaining: "维护中"
-  status_archived: "已归档"
-  status_experiment: "实验中"
   empty_paper_title: "一纸空笺"
   empty_paper_verse: "此处无字。或已被收进别的卷里。"
   back_to_home: "回卷首"

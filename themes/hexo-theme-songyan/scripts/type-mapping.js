@@ -1,7 +1,10 @@
 /**
- * 「松烟」Hexo 分卷类型自动映射插件 (type-mapping.js)
- * 优先级：Front-matter 显式 type > type_mapping 路径规则 > 默认 tech
- * 兜底原则：严格白名单机制，任何未知或异常类型均降级为 tech
+ * 「松烟」Hexo 文章类型映射插件 (type-mapping.js)
+ * 两轨制：type ∈ {ci, post}（诗词页 / 文章页）
+ * 优先级：Front-matter 显式 type > type_mapping 路径规则 > 默认 post
+ * 兜底原则：严格白名单机制，任何未知或异常类型均降级为 post（文章页）；
+ *          旧分卷归属（随笔/技术/项目）不再参与渲染，降级为 front-matter
+ *          categories 元信息文字。
  */
 
 /* global hexo */
@@ -24,10 +27,10 @@ hexo.extend.filter.register('before_post_render', function (data) {
     }
   }
 
-  // 白名单校验，确保类型安全受控
-  const validTypes = ['ci', 'essay', 'tech', 'project'];
+  // 白名单校验，确保类型安全受控（两轨：ci / post）
+  const validTypes = ['ci', 'post'];
   if (!validTypes.includes(data.type)) {
-    data.type = 'tech';
+    data.type = 'post';
   }
 
   return data;

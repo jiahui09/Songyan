@@ -2,15 +2,15 @@
   @page: archive
   @hexo-layout: layout/archive.ejs
   @hexo-partial: _partial/archive/timeline.ejs
-  @description: 归档页：卷轴时间线、一条竖向赭石细线、四卷四色小圆点（词朱砂/随笔竹青/技术黛青/项目赭石）、年份大号楷体节点、落墨动效
+  @description: 归档页「岁时笺纸」：横向历日轴（右新左旧），轴上竖排公元年与斜置月日，轴下干支年（宋）与朱红题头·题目一列直下；曲面滑动（view() 滚动驱动，两端起翘收窄，降级落墨入场）+ 左右淡入淡出；无原生滚动条，轴下同曲度朱线以朱点示全轴位置；页头分卷图例点按筛选
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>四卷归档 · 岁月长卷 · 春唇语冬</title>
-  <meta name="description" content="春唇语冬四卷归档：词卷、随笔、技术、项目岁月长卷。">
+  <title>岁时笺纸 · 历年归档 · 春唇语冬</title>
+  <meta name="description" content="春唇语冬岁时笺纸：词卷、随笔、技术、项目历日横轴归档。">
   <link rel="icon" type="image/svg+xml" href="./assets/seal-favicon.svg"> <!-- 待转 url_for('/assets/seal-favicon.svg') -->
   <link rel="stylesheet" href="./css/tokens.css"> <!-- 待转 url_for('/css/tokens.css') -->
   <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
@@ -42,11 +42,8 @@
       </a>
 
       <nav aria-label="全局导航">
-        <ul class="site-header__nav">
-          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li>
-          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li>
-          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li>
-          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li>
+                <ul class="site-header__nav">
+          <li><a href="./index.html" class="site-header__nav-link">首页</a></li>
           <li><a href="./archive.html" class="site-header__nav-link site-header__nav-link--active">归档</a></li>
           <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li>
         </ul>
@@ -55,119 +52,167 @@
   </header>
 
   <main class="site-main">
-    <header style="text-align: center; margin-bottom: var(--space-8);">
-      <h1 class="post-title enter" style="font-size: var(--text-3xl);">岁月卷轴 · 历年归档</h1>
-      <p style="font-size: var(--text-sm); color: var(--ink-light); margin-top: var(--space-2);">
+    <!-- 岁时笺纸页头 -->
+    <header class="archive-head">
+      <h1 class="archive-head__title enter">岁时笺纸 · 历年归档</h1>
+      <p class="archive-head__count">
         记录篇什总计：11 篇
       </p>
-
-      <!-- 四卷图例（四色小圆点） -->
-      <div class="archive-legend" style="justify-content: center; margin-top: var(--space-4);">
-        <span class="archive-legend__item">
-          <span class="archive-legend__dot" style="background-color: var(--cinnabar);"></span> 词卷
-        </span>
-        <span class="archive-legend__item">
-          <span class="archive-legend__dot" style="background-color: var(--bamboo);"></span> 随笔
-        </span>
-        <span class="archive-legend__item">
-          <span class="archive-legend__dot" style="background-color: var(--ink-light);"></span> 技术
-        </span>
-        <span class="archive-legend__item">
-          <span class="archive-legend__dot" style="background-color: var(--ochre);"></span> 项目
-        </span>
-      </div>
+      <!-- 分卷图例：默认灰墨点，悬停/选中还原彩墨；点按筛选轴体篇目（无 JS 时为静态标识） -->
+      <nav class="archive-legend" aria-label="按分卷筛选">
+        <button type="button" class="archive-legend__item" data-cat-filter="ci" aria-pressed="false">
+          <span class="archive-legend__dot archive-legend__dot--ci"></span>词卷
+        </button>
+        <button type="button" class="archive-legend__item" data-cat-filter="essay" aria-pressed="false">
+          <span class="archive-legend__dot archive-legend__dot--essay"></span>随笔
+        </button>
+        <button type="button" class="archive-legend__item" data-cat-filter="tech" aria-pressed="false">
+          <span class="archive-legend__dot archive-legend__dot--tech"></span>技术
+        </button>
+        <button type="button" class="archive-legend__item" data-cat-filter="project" aria-pressed="false">
+          <span class="archive-legend__dot archive-legend__dot--project"></span>项目
+        </button>
+      </nav>
     </header>
 
-    <!-- 卷轴时间线容器 -->
-    <div class="archive-timeline">
+    <!-- 岁时笺纸：横向历日轴 -->
+    <div class="chrono">
+      <!-- 横向滚动容器：row-reverse 版序右起为新、向左渐旧，初始停驻最新端（main.js） -->
+      <div class="chrono__rail" data-chrono-rail>
+        <div class="chrono__track">
 
-      <!-- @hexo: for year, posts in site.posts.groupBy('year') -->
-      <section class="archive-year-group">
-        <h2 class="archive-year-title">二〇二六 · 丙午年</h2>
+          <!-- @hexo: for year, posts in site.posts.groupBy('year') -->
+          <section class="chrono__year">
+            <!-- 年号分置：公元居轴上（楷），干支居轴下（宋，小一号）；两段各自竖列 nowrap -->
+            <h2 class="chrono__year-mark"><span class="chrono__year-greg">二〇二六</span><span class="chrono__year-gz">丙午年</span></h2>
 
-        <ul class="archive-items">
-          <!-- @hexo: for post in posts -->
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
-            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
-            <a href="./post-ci.html" class="archive-item__title">水调歌头·秋夜怀远</a>
-          </li>
+            <ul class="chrono__items">
+              <!-- @hexo: for post in posts -->
+              <li class="archive-item chrono__item" data-cat="ci">
+                <span class="chrono__dot chrono__dot--ci" title="词卷"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-10-10"><span class="chrono__mo">10</span><span class="chrono__slash">/</span><span class="chrono__day">10</span></time>
+                </div>
+                <a href="./post-ci.html" class="chrono__entry"><span class="chrono__rubric">词卷</span><span class="chrono__sep">·</span>水调歌头·秋夜怀远</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
-            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
-            <a href="./post-essay.html" class="archive-item__title">钱塘江观潮杂记</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="essay">
+                <span class="chrono__dot chrono__dot--essay" title="随笔"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-10-10"><span class="chrono__mo">10</span><span class="chrono__slash">/</span><span class="chrono__day">10</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">随笔</span><span class="chrono__sep">·</span>钱塘江观潮杂记</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
-            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
-            <a href="./post-tech.html" class="archive-item__title">Hexo 主题架构与从零发布指南</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="tech">
+                <span class="chrono__dot chrono__dot--tech" title="技术"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-10-10"><span class="chrono__mo">10</span><span class="chrono__slash">/</span><span class="chrono__day">10</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">技术</span><span class="chrono__sep">·</span>Hexo 主题架构与从零发布指南</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
-            <time class="archive-item__date" datetime="2026-10-10">10-10</time>
-            <a href="./post-project.html" class="archive-item__title">松烟 Hexo 主题发布</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="project">
+                <span class="chrono__dot chrono__dot--project" title="项目"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-10-10"><span class="chrono__mo">10</span><span class="chrono__slash">/</span><span class="chrono__day">10</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">项目</span><span class="chrono__sep">·</span>松烟 Hexo 主题发布</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
-            <time class="archive-item__date" datetime="2026-09-24">09-24</time>
-            <a href="./post-ci.html" class="archive-item__title">定风波·松烟煮雪</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="ci">
+                <span class="chrono__dot chrono__dot--ci" title="词卷"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-09-24"><span class="chrono__mo">09</span><span class="chrono__slash">/</span><span class="chrono__day">24</span></time>
+                </div>
+                <a href="./post-ci.html" class="chrono__entry"><span class="chrono__rubric">词卷</span><span class="chrono__sep">·</span>定风波·松烟煮雪</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
-            <time class="archive-item__date" datetime="2026-09-20">09-20</time>
-            <a href="./post-tech.html" class="archive-item__title">现代 CSS 自定义属性与中式古风色阶编排</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="tech">
+                <span class="chrono__dot chrono__dot--tech" title="技术"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-09-20"><span class="chrono__mo">09</span><span class="chrono__slash">/</span><span class="chrono__day">20</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">技术</span><span class="chrono__sep">·</span>现代 CSS 自定义属性与中式古风色阶编排</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
-            <time class="archive-item__date" datetime="2026-09-15">09-15</time>
-            <a href="./post-essay.html" class="archive-item__title">雨窗试研徽州油烟墨</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="essay">
+                <span class="chrono__dot chrono__dot--essay" title="随笔"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-09-15"><span class="chrono__mo">09</span><span class="chrono__slash">/</span><span class="chrono__day">15</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">随笔</span><span class="chrono__sep">·</span>雨窗试研徽州油烟墨</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--ci" title="词卷"></span>
-            <time class="archive-item__date" datetime="2026-09-08">09-08</time>
-            <a href="./post-ci.html" class="archive-item__title">临江仙·客舍听秋</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="ci">
+                <span class="chrono__dot chrono__dot--ci" title="词卷"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-09-08"><span class="chrono__mo">09</span><span class="chrono__slash">/</span><span class="chrono__day">08</span></time>
+                </div>
+                <a href="./post-ci.html" class="chrono__entry"><span class="chrono__rubric">词卷</span><span class="chrono__sep">·</span>临江仙·客舍听秋</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--tech" title="技术"></span>
-            <time class="archive-item__date" datetime="2026-09-02">09-02</time>
-            <a href="./post-tech.html" class="archive-item__title">前端动效克制律：落墨动词与 320ms 物理标尺</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="tech">
+                <span class="chrono__dot chrono__dot--tech" title="技术"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-09-02"><span class="chrono__mo">09</span><span class="chrono__slash">/</span><span class="chrono__day">02</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">技术</span><span class="chrono__sep">·</span>前端动效克制律：落墨动词与 320ms 物理标尺</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--essay" title="随笔"></span>
-            <time class="archive-item__date" datetime="2026-08-30">08-30</time>
-            <a href="./post-essay.html" class="archive-item__title">夜读《随园食单》偶感</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="essay">
+                <span class="chrono__dot chrono__dot--essay" title="随笔"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-08-30"><span class="chrono__mo">08</span><span class="chrono__slash">/</span><span class="chrono__day">30</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">随笔</span><span class="chrono__sep">·</span>夜读《随园食单》偶感</a>
+              </li>
 
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
-            <time class="archive-item__date" datetime="2026-08-18">08-18</time>
-            <a href="./post-project.html" class="archive-item__title">词林谱正 · 律绝平仄自动校对器</a>
-          </li>
+              <li class="archive-item chrono__item" data-cat="project">
+                <span class="chrono__dot chrono__dot--project" title="项目"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2026-08-18"><span class="chrono__mo">08</span><span class="chrono__slash">/</span><span class="chrono__day">18</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">项目</span><span class="chrono__sep">·</span>词林谱正 · 律绝平仄自动校对器</a>
+              </li>
+              <!-- @end -->
+            </ul>
+          </section>
+
+          <section class="chrono__year">
+            <h2 class="chrono__year-mark"><span class="chrono__year-greg">二〇二五</span><span class="chrono__year-gz">乙巳年</span></h2>
+            <ul class="chrono__items">
+              <li class="archive-item chrono__item" data-cat="project">
+                <span class="chrono__dot chrono__dot--project" title="项目"></span>
+                <div class="chrono__head">
+                  <time class="chrono__date" datetime="2025-12-20"><span class="chrono__mo">12</span><span class="chrono__slash">/</span><span class="chrono__day">20</span></time>
+                </div>
+                <a href="./post-essay.html" class="chrono__entry"><span class="chrono__rubric">项目</span><span class="chrono__sep">·</span>古印文矢量字模引擎（封存）</a>
+              </li>
+            </ul>
+          </section>
           <!-- @end -->
-        </ul>
-      </section>
 
-      <section class="archive-year-group">
-        <h2 class="archive-year-title">二〇二五 · 乙巳年</h2>
-        <ul class="archive-items">
-          <li class="archive-item enter">
-            <span class="archive-item__dot archive-item__dot--project" title="项目"></span>
-            <time class="archive-item__date" datetime="2025-12-20">12-20</time>
-            <a href="./post-project.html" class="archive-item__title">古印文矢量字模引擎（封存）</a>
-          </li>
-        </ul>
-      </section>
-      <!-- @end -->
+        </div>
+      </div>
 
+      <!-- 拱弧轴线：覆盖层不随内容横移，端点在 --chrono-top、中点拱起，
+           与轴下朱线弧上下镜像；路径由 main.js 按像素宽构建。
+           篇目列与年号随 cover 相位做曲面透视：字号中凸（≈1.115）边凹（≈0.827），
+           以当前字号为平均水平，投影锚定轴线行故墨点恒在弧上 -->
+      <div class="chrono__axis" aria-hidden="true">
+        <svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg">
+          <path class="chrono__axis-line"/>
+        </svg>
+      </div>
+
+      <!-- 进度朱线：不随内容滚动，朱点示全轴位置（右端＝最新） -->
+      <div class="chrono__progress" aria-hidden="true">
+        <svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg">
+          <path class="chrono__curve-line"/>
+          <circle class="chrono__curve-dot"/>
+        </svg>
+      </div>
     </div>
   </main>
 

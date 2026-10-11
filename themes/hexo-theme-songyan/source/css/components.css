@@ -136,37 +136,6 @@
   mix-blend-mode: multiply;
 }
 
-/* 状态印章（复用方形印章形式） */
-.seal-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-width: 1px;
-  border-style: solid;
-  border-radius: var(--radius-xs);
-  font-family: var(--font-title);
-  font-size: var(--text-xs);
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  background: var(--paper-subtle);
-}
-
-.seal-status--maintaining {
-  color: var(--bamboo);
-  border-color: var(--bamboo);
-}
-
-.seal-status--archived {
-  color: var(--ochre);
-  border-color: var(--ochre);
-}
-
-.seal-status--experiment {
-  color: var(--ink-secondary);
-  border-color: var(--ink-secondary);
-}
-
 /* 水印容器 */
 .watermark-wrap {
   position: relative;
@@ -214,107 +183,41 @@
   color: var(--ink-primary);
 }
 
+
 /* =========================================================
-   3. 分卷流入口与卡片系统
+   3. 通用卡片系统（供归档页复用；首页已改走 .stream-item 归流双轨）
    ========================================================= */
-.nav-sections {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
-  margin-bottom: var(--space-10);
-}
-
-.nav-section-card {
-  background: var(--paper-subtle);
-  border: 1px solid var(--bamboo-border);
-  border-radius: var(--radius-xs);
-  padding: var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  transition: border-color var(--dur-feedback) var(--ease-ink), background-color var(--dur-feedback) var(--ease-ink);
-}
-
-.nav-section-card:hover {
-  border-color: var(--ochre);
-  background-color: var(--paper-card);
-}
-
-.nav-section-card__title {
-  font-family: var(--font-title);
-  font-size: var(--text-lg);
-  color: var(--ink-primary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-section-card__desc {
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  margin-top: var(--space-1);
-}
-
-/* 四卷序号四色（以类替代原型中的内联 style） */
-.nav-section-card__index--ci {
-  color: var(--cinnabar-red);
-}
-
-.nav-section-card__index--essay {
-  color: var(--bamboo);
-}
-
-.nav-section-card__index--tech {
-  color: var(--ink-secondary);
-}
-
-.nav-section-card__index--project {
-  color: var(--ochre);
-}
-
-/* 通用分卷栏目头 */
-.section-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--ochre);
-  padding-bottom: var(--space-2);
-  margin-bottom: var(--space-6);
-}
-
-.section-header__title {
-  font-family: var(--font-title);
-  font-size: var(--text-xl);
-  color: var(--ink-primary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.section-header__tag {
-  font-size: var(--text-xs);
-  color: var(--ink-secondary);
-  font-weight: normal;
-}
-
-.section-header__more {
-  font-size: var(--text-sm);
-  font-family: var(--font-title);
-  color: var(--cinnabar-red);
-}
-
-/* 基础卡片样式 */
+/* 去硬框基础卡片：不设方框、不设底色，仅以水墨微晕细线分层（计白当黑） */
 .post-card {
-  background: var(--paper-card);
-  border: 1px solid var(--bamboo-border);
-  border-radius: var(--radius-xs);
-  padding: var(--space-6);
+  padding: var(--space-5) 0;
   position: relative;
-  transition: border-color var(--dur-feedback) var(--ease-ink);
 }
 
-.post-card:hover {
-  border-color: var(--ochre);
+/* 古籍刊本式行气留白：两端透明淡出、中央微显淡墨，严禁灰色实线 */
+.post-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bamboo-border) 18%,
+    var(--ink-wash-mid) 50%,
+    var(--bamboo-border) 82%,
+    transparent
+  );
+}
+
+.post-card:last-child::after {
+  display: none;
+}
+
+/* 悬浮克制：仅浓墨转微朱的字色过渡，禁弹跳、禁阴影浮起、不改线色 */
+.post-card__title a {
+  transition: color var(--dur-feedback) var(--ease-ink);
 }
 
 .post-card__header {
@@ -352,102 +255,36 @@
   margin-bottom: var(--space-3);
 }
 
-/* 词卷卡片特定微调 */
-.post-card--ci {
-  border-left: 2px solid var(--cinnabar-red);
-}
-
-.post-card--ci .post-card__lines {
+/* 朱笔点题：分类作淡红上标前缀（去竖线、去方括号，微小精致），非链接非按钮 */
+.post-category-tag {
+  color: var(--cinnabar-red-light);
   font-family: var(--font-serif);
-  font-size: var(--text-sm);
-  color: var(--ink-primary);
-  line-height: 1.8;
-  margin: var(--space-3) 0;
-  padding: var(--space-3);
-  background: var(--paper-subtle);
-  border-radius: var(--radius-xs);
+  font-weight: 400;
+  font-size: var(--text-tag);
+  letter-spacing: var(--tracking-tag);
+  vertical-align: super;
+  line-height: 0;
+  margin-right: var(--space-1);
 }
 
-/* 随笔卡片轻量 */
-.post-card--essay {
-  background: transparent;
-  border: none;
-  border-bottom: 1px dashed var(--bamboo-border);
-  border-radius: 0;
-  padding: var(--space-4) 0;
-}
-
-.post-card--essay:hover {
-  border-color: var(--bamboo);
+/* 文章页题头：分类上标居中于标题之上 */
+.post-ci__header .post-category-tag,
+.essay-header .post-category-tag {
+  display: block;
+  text-align: center;
+  margin: 0 0 var(--space-2);
+  vertical-align: baseline;
 }
 
 /* =========================================================
-   4. 折角纸笺（技术文札记栏与特色卡片）
-   ========================================================= */
-.folded-note {
-  position: relative;
-  background: var(--paper-card);
-  border: 1px solid var(--ochre);
-  border-radius: var(--radius-xs);
-  padding: var(--space-5);
-  margin-bottom: var(--space-6);
-  /* 右上角切角 */
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-  transition: clip-path var(--dur-render) var(--ease-ink);
-}
-
-/* 右上角折角三角（CSS border 纯色实现，不引入图片） */
-.folded-note::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 14px 14px 0;
-  border-color: transparent transparent var(--ochre) transparent;
-  transition: border-width var(--dur-render) var(--ease-ink);
-}
-
-.folded-note:hover {
-  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
-}
-
-.folded-note:hover::before {
-  border-width: 0 16px 16px 0;
-}
-
-.folded-note__title {
-  font-family: var(--font-title);
-  font-size: var(--text-base);
-  color: var(--ink-primary);
-  margin-bottom: var(--space-3);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--bamboo-border-light);
-}
-
-.folded-note__item {
-  font-size: var(--text-xs);
-  color: var(--ink-secondary);
-  margin-bottom: var(--space-2);
-  display: flex;
-  justify-content: space-between;
-}
-
-.folded-note__label {
-  color: var(--ink-faint);
-}
-
-/* =========================================================
-   5. 代码块组件 (Code Blocks)
+   4. 代码块组件 (Code Blocks) —— 文人化：宣纸浅调纸笺，摒弃深黑 IDE 风
    ========================================================= */
 .code-block {
   margin: var(--space-6) 0;
   background: var(--code-bg);
   border-radius: var(--radius-xs);
   overflow: hidden;
-  border: 1px solid #333333;
+  border: 1px solid var(--code-border);
 }
 
 .code-block__header {
@@ -456,21 +293,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--code-border);
 }
 
 .code-block__lang {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: #A0AEC0;
+  color: var(--ink-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .copy-btn {
   background: transparent;
-  border: 1px solid #4A5568;
-  color: #CBD5E0;
+  border: 1px solid var(--bamboo-border);
+  color: var(--ink-secondary);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
   padding: 2px 8px;
@@ -480,15 +317,15 @@
 }
 
 .copy-btn:hover {
-  background: #2D3748;
-  color: #FFFFFF;
-  border-color: #718096;
+  background: var(--bamboo-border);
+  color: var(--ink-primary);
+  border-color: var(--bamboo);
 }
 
 .copy-btn--copied {
   background: var(--bamboo);
   border-color: var(--bamboo);
-  color: #FFFFFF;
+  color: var(--paper-card);
 }
 
 .code-block__pre {
@@ -501,8 +338,152 @@
   color: var(--code-text);
 }
 
+/* ---- Hexo 渲染产物：figure.highlight 代码纸笺 ---- */
+figure.highlight {
+  position: relative;
+  margin: var(--space-6) 0;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-xs);
+  transition: max-height var(--dur-render) var(--ease-ink);
+}
+
+figure.highlight table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+figure.highlight td {
+  padding: 0;
+  vertical-align: top;
+}
+
+figure.highlight td.gutter {
+  padding: 0 var(--space-3);
+  border-right: 1px solid var(--bamboo-border-light);
+  color: var(--ink-faint);
+  text-align: right;
+  user-select: none;
+}
+
+figure.highlight td.code {
+  overflow-x: auto;
+}
+
+figure.highlight pre {
+  margin: 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--code-text);
+  background: transparent;
+}
+
+figure.highlight code {
+  font-family: inherit;
+  background: transparent;
+  padding: 0;
+}
+
+figure.highlight ::selection {
+  background: var(--code-selection);
+}
+
+/* 高亮降维：单色/三色阶素雅配色（浓墨 · 朱砂 · 竹青），禁高饱和霓虹 */
+figure.highlight .comment,
+figure.highlight .quote,
+figure.highlight .formula {
+  color: var(--code-comment);
+  font-style: normal;
+}
+
+figure.highlight .keyword,
+figure.highlight .selector-tag,
+figure.highlight .literal,
+figure.highlight .type,
+figure.highlight .built_in,
+figure.highlight .doctag,
+figure.highlight .meta,
+figure.highlight .symbol {
+  color: var(--code-keyword);
+}
+
+figure.highlight .string,
+figure.highlight .regexp,
+figure.highlight .attr,
+figure.highlight .attribute,
+figure.highlight .number,
+figure.highlight .bullet,
+figure.highlight .link,
+figure.highlight .variable {
+  color: var(--code-string);
+}
+
+figure.highlight .title,
+figure.highlight .name,
+figure.highlight .section,
+figure.highlight .params,
+figure.highlight .property {
+  color: var(--code-func);
+  font-weight: 600;
+}
+
+/* ---- 长代码块默认折叠：折角纸笺展卷 ---- */
+figure.highlight.is-code-folded {
+  max-height: var(--code-fold-max);
+  overflow: hidden;
+  /* 右上角切角，与折角纸笺同语言 */
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+
+/* 右上角折角三角（CSS border 纯色实现，不引入图片） */
+figure.highlight.is-code-folded::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 14px 14px 0;
+  border-color: transparent transparent var(--ochre) transparent;
+}
+
+.code-fold__bar {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background: var(--code-bg-alt);
+  border: 0;
+  border-bottom: 1px solid var(--bamboo-border-light);
+  color: var(--ink-secondary);
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--dur-feedback) var(--ease-ink);
+}
+
+.code-fold__bar:hover {
+  color: var(--cinnabar-red);
+}
+
+/* 打印时强制展卷：纸面不折叠，全文呈现 */
+@media print {
+  figure.highlight.is-code-folded {
+    max-height: none;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+
 /* =========================================================
-   6. 词卷特色：笺注、韵脚朱砂点、平仄折叠
+   5. 词卷特色：笺注、韵脚朱砂点、平仄折叠
    ========================================================= */
 /* 韵脚朱砂小圆点 */
 .rhyme-dot {
@@ -538,7 +519,6 @@
 
 .ci-annotation-item--highlight {
   background-color: var(--seal-bg-light);
-  border-left: 2px solid var(--cinnabar-red);
 }
 
 /* 平仄折叠收纳器 */
@@ -568,68 +548,9 @@
   padding-top: var(--space-3);
 }
 
-/* =========================================================
-   7. 标签与元数据（Zero-Pill 规范）
-   ========================================================= */
-.meta-tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  list-style: none;
-  padding: 0;
-  margin: var(--space-2) 0;
-}
-
-.meta-tags__item {
-  font-size: var(--text-xs);
-  color: var(--bamboo);
-}
-
-.meta-tags__item::before {
-  content: "#";
-  opacity: 0.6;
-}
-
 .meta-separator {
   color: var(--bamboo-border);
   padding: 0 4px;
-}
-
-/* =========================================================
-   8. 分页与按钮
-   ========================================================= */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  margin: var(--space-10) 0;
-  list-style: none;
-  padding: 0;
-}
-
-.pagination__item a,
-.pagination__item span {
-  display: inline-block;
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  border: 1px solid var(--bamboo-border);
-  border-radius: var(--radius-xs);
-  color: var(--ink-secondary);
-  background: var(--paper-card);
-}
-
-.pagination__item a:hover {
-  border-color: var(--ochre);
-  color: var(--cinnabar-red);
-}
-
-.pagination__item--current span {
-  border-color: var(--cinnabar-red);
-  color: var(--cinnabar-red);
-  background: var(--seal-bg-light);
 }
 
 .btn {
@@ -666,7 +587,7 @@
 }
 
 /* =========================================================
-   9. 页脚 (Footer)
+   6. 页脚 (Footer)
    ========================================================= */
 .site-footer {
   margin-top: auto;

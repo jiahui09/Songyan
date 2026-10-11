@@ -16,9 +16,12 @@
   --ink-secondary:            #666055;  /* 淡松烟墨（元数据、说明文字） */
   --ink-faint:                #7A8485;  /* 淡墨，时间戳、无字提示 */
   --cinnabar-red:             #A8332A;  /* 凝重朱砂红（专用于分类题头、章印，对比度 ≥ 4.5:1） */
+  --cinnabar-eyebrow:         #BD2B1B;  /* 朱红题头（首页条目 eyebrow 专用，12px 装饰性） */
+  --cinnabar-red-light:       #C56A5E;  /* 淡红上标（分类前缀，装饰性、非正文，≥ 3:1） */
   --cinnabar-red-hover:       #8C2A21;  /* 朱砂深色悬停态 */
   --bamboo-border:            #E2D9C8;  /* 淡竹纸缝线/界线 */
   --bamboo-border-light:      #E8E0D2;  /* 极淡界线 */
+  --ink-wash-mid:             #C9C2B3;  /* 水墨微晕细线中段：两端透明淡出、中央微显淡墨 */
   --bamboo:                   #6B7F5E;  /* 竹青，标签、维护中状态（对比度 ≥ 4.5:1） */
   --ochre:                    #B08D57;  /* 赭石，装饰细线、归档时间轴、已归档状态 */
 
@@ -27,16 +30,18 @@
   --seal-bg-light:         rgba(176, 58, 46, 0.08); /* 极淡印泥衬底 */
   --seal-texture-strength: 0.06;     /* 手工钤盖肌理强度 */
 
-  /* 代码块专用（降级为必备通用能力，局限在代码容器内部，不扩散至全站） */
-  --code-bg:               #1E1E1E;
-  --code-bg-alt:           #25282A;
-  --code-text:             #E8E0D0;
-  --code-selection:        #3B4252;
-  --code-comment:          #7F8C8D;
-  --code-keyword:          #D08770;
-  --code-string:           #A3BE8C;
-  --code-func:             #EBCB8B;
-  --code-num:              #B48EAD;
+  /* 代码块专用（文人化：融入宣纸暖调，高亮降维为浓墨·朱砂·竹青三色阶，禁霓虹高饱和） */
+  --code-bg:               var(--paper-subtle);        /* 灰茶纸底，消解深色黑洞压迫感 */
+  --code-bg-alt:           var(--bamboo-border-light); /* 题头笺色 */
+  --code-border:           var(--bamboo-border);       /* 纸缝线界 */
+  --code-text:             var(--ink-primary);         /* 浓墨：正文与函数名 */
+  --code-selection:        var(--bamboo-border);
+  --code-comment:          var(--ink-faint);           /* 淡墨：注释 */
+  --code-keyword:          var(--cinnabar-red);        /* 朱砂：关键字、选择器 */
+  --code-string:           var(--bamboo);              /* 竹青：字符串、数字 */
+  --code-func:             var(--ink-primary);         /* 浓墨加粗：函数与标题 */
+  --code-num:              var(--bamboo);
+  --code-fold-max:         300px;                      /* 超过此高度的代码块默认折叠展卷 */
 
   /* 字体族定义（系统字体优先，首版禁止外部 WebFont） */
   --font-title: "LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", serif;
@@ -44,6 +49,7 @@
   --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono:  "Fira Code", "Source Code Pro", monospace;
   --font-seal:  "FZShuTi", "STKaiti", "KaiTi", serif;
+  --font-date:  Georgia, "Times New Roman", serif;  /* 公历数字衬线西文体 */
 
   /* 字号阶梯 */
   --text-xs:    0.75rem;    /* 12px */
@@ -54,6 +60,10 @@
   --text-2xl:   1.5rem;     /* 24px */
   --text-3xl:   1.875rem;   /* 30px */
   --text-4xl:   2.25rem;    /* 36px */
+
+  /* 文人排版规范（朱红题头 eyebrow 固定排印参数） */
+  --text-tag:     0.75rem;   /* 朱红题头字号（12px） */
+  --tracking-tag: 0.25em;    /* 朱红题头字距（tracking-widest） */
 
   /* 间距尺寸 */
   --space-1:    0.25rem;    /* 4px */

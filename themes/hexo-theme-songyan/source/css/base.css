@@ -96,7 +96,15 @@ blockquote {
 hr {
   border: none;
   height: 1px;
-  background-color: var(--bamboo-border);
+  /* 古籍刊本式行气留白：两端透明淡出、中央微显淡墨，严禁灰色实线 */
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bamboo-border) 18%,
+    var(--ink-wash-mid) 50%,
+    var(--bamboo-border) 82%,
+    transparent
+  );
   margin: var(--space-8) 0;
 }
 
@@ -175,11 +183,9 @@ img {
 
   .site-header,
   .site-footer,
-  .nav-sections,
-  .post-tech__sidebar,
   .code-block__header,
+  .code-fold__bar,
   .copy-btn,
-  .pagination,
   .watermark-wrap .seal--watermark {
     display: none !important;
   }
@@ -190,7 +196,6 @@ img {
   }
 
   .post-card,
-  .post-tech__main,
   article {
     border: none !important;
     box-shadow: none !important;

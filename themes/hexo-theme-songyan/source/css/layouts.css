@@ -24,9 +24,26 @@
 .hero-scroll {
   text-align: center;
   padding: var(--space-12) 0 var(--space-10);
-  border-bottom: 1px solid var(--bamboo-border);
   margin-bottom: var(--space-10);
   position: relative;
+}
+
+/* 卷首与归流之间：水墨微晕细线（两端透明淡出、中央微显淡墨），严禁灰色实线 */
+.hero-scroll::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bamboo-border) 18%,
+    var(--ink-wash-mid) 50%,
+    var(--bamboo-border) 82%,
+    transparent
+  );
 }
 
 .hero-scroll__verse {
@@ -53,32 +70,155 @@
   margin-top: var(--space-2);
 }
 
-.home-grid-ci {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
-  margin-bottom: var(--space-12);
-}
-
-.home-list-essay {
+/* ============================================================
+   首页归流（诗文双轨）：四板块拼盘 → 一条自然展开的单列文章流
+   全站文章按日期归流，仅分【诗词体】与【文章体】两轨呈现
+   条目间不设方框，仅以水墨微晕细线分层（计白当黑）
+   ============================================================ */
+.home-stream {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
   margin-bottom: var(--space-12);
 }
 
-.home-grid-tech {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
-  margin-bottom: var(--space-12);
+/* ---- 归流条目：两轨共用的骨架（分隔线见 .ink-rule） ---- */
+.stream-item {
+  position: relative;
+  padding: var(--space-6) 0;
 }
 
-.home-grid-projects {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-6);
-  margin-bottom: var(--space-12);
+.stream-item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bamboo-border) 18%,
+    var(--ink-wash-mid) 50%,
+    var(--bamboo-border) 82%,
+    transparent
+  );
+}
+
+/* 末项不画线，留白收束 */
+.stream-item:last-child::after {
+  display: none;
+}
+
+.stream-item__head {
+  margin-bottom: var(--space-3);
+}
+
+.stream-item__title {
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
+  font-weight: normal;
+  color: var(--ink-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.stream-item__title a {
+  color: var(--ink-primary);
+  text-decoration: none;
+  transition: color var(--dur-feedback) var(--ease-ink);
+}
+
+/* 悬浮克制：仅浓墨转微朱的温润过渡，禁弹跳、禁阴影浮起 */
+.stream-item__title a:hover,
+.stream-item__title a:focus-visible {
+  color: var(--cinnabar-red);
+}
+
+/* ---- 汉字古风元信息：以间隔号自然流淌，禁胶囊禁色块 ---- */
+.stream-item__meta {
+  font-size: var(--text-xs);
+  color: var(--ink-secondary);
+  letter-spacing: 0.05em;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.stream-item__meta .meta-separator {
+  margin: 0 var(--space-2);
+  color: var(--ink-faint);
+  user-select: none;
+}
+
+/* 公历数字：衬线西文优化（Georgia / Times 族） */
+.stream-item__date-gregorian {
+  font-family: var(--font-date, Georgia, "Times New Roman", serif);
+  letter-spacing: 0.02em;
+}
+
+/* 标签墨痕：纯文本细点缀，无药丸无边框 */
+.stream-item__tag-item {
+  margin-right: var(--space-2);
+  color: var(--ink-secondary);
+  opacity: 0.85;
+}
+
+.stream-item__excerpt {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+  line-height: 1.9;
+  margin: var(--space-3) 0 0;
+  letter-spacing: 0.02em;
+}
+
+/* ---- 朱红题头 Eyebrow：每条必有、固定高度，压阵标题之上 ---- */
+.stream-item__eyebrow {
+  font-family: var(--font-serif);
+  font-size: var(--text-tag);
+  font-weight: 500;
+  color: var(--cinnabar-eyebrow);
+  letter-spacing: var(--tracking-tag);
+  text-indent: var(--tracking-tag);
+  margin: 0 0 var(--space-2);
+  line-height: 1.4;
+  height: 1.4em; /* 固定高度：无题头文案时占位齐整 */
+}
+
+/* ============================================================
+   【诗词体】词牌朱砂细体 · 居中宋式版式 · 摘句断句留白
+   ============================================================ */
+.stream-item--ci {
+  text-align: center;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+/* 诗词轨题头居中：词牌名沿用朱红题头排印参数 */
+.stream-item--ci .stream-item__eyebrow {
+  text-indent: 0;
+}
+
+.stream-item--ci .stream-item__title {
+  font-size: var(--text-2xl);
+  letter-spacing: 0.06em;
+}
+
+/* 宋式摘句：居中断句，逐句成行，行间留白舒朗 */
+.stream-item__verse {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--ink-primary);
+  line-height: 2;
+  letter-spacing: 0.14em;
+}
+
+.stream-item--ci .stream-item__meta {
+  margin-top: var(--space-5);
 }
 
 /* =========================================================
@@ -253,116 +393,6 @@
 }
 
 /* =========================================================
-   5. 技术文页 (type: tech) 版式（双栏 + 札记栏）
-   ========================================================= */
-.tech-container {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: var(--space-8);
-  align-items: start;
-}
-
-.tech-main {
-  min-width: 0;
-  max-width: var(--prose-max);
-}
-
-.tech-header {
-  margin-bottom: var(--space-6);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--bamboo-border);
-}
-
-.tech-body {
-  font-family: var(--font-serif);
-  font-size: var(--text-base);
-  line-height: 1.8;
-}
-
-.tech-body h2 {
-  margin: var(--space-8) 0 var(--space-4);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--bamboo-border-light);
-}
-
-.tech-body h3 {
-  margin: var(--space-6) 0 var(--space-3);
-}
-
-.tech-sidebar {
-  position: sticky;
-  top: var(--space-6);
-}
-
-/* =========================================================
-   6. 项目页 (type: project) 版式
-   ========================================================= */
-.project-container {
-  max-width: var(--container-max);
-  margin: 0 auto;
-}
-
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-6);
-}
-
-.project-card {
-  background: var(--paper-card);
-  border: 1px solid var(--bamboo-border);
-  border-radius: var(--radius-xs);
-  padding: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  transition: border-color var(--dur-feedback) var(--ease-ink);
-}
-
-.project-card:hover {
-  border-color: var(--ochre);
-}
-
-.project-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-3);
-}
-
-.project-card__title {
-  font-family: var(--font-title);
-  font-size: var(--text-xl);
-  color: var(--ink-primary);
-}
-
-.project-card__stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-3) 0;
-  list-style: none;
-  padding: 0;
-}
-
-.project-card__stack-item {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--ink-secondary);
-  background: var(--paper-subtle);
-  padding: 1px 6px;
-  border-radius: var(--radius-xs);
-}
-
-.project-card__links {
-  margin-top: auto;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--bamboo-border-light);
-  display: flex;
-  gap: var(--space-4);
-  font-size: var(--text-sm);
-}
-
-/* =========================================================
    7. 归档页 (archive.html) 卷轴时间线
    ========================================================= */
 .archive-timeline {
@@ -521,25 +551,6 @@
 /* =========================================================
    9. 响应式适配
    ========================================================= */
-@media (max-width: 900px) {
-  .nav-sections {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .home-grid-ci,
-  .home-grid-tech,
-  .home-grid-projects,
-  .project-grid {
-    grid-template-columns: 1fr;
-  }
-  .tech-container {
-    grid-template-columns: 1fr;
-  }
-  .tech-sidebar {
-    position: static;
-    margin-top: var(--space-8);
-  }
-}
-
 @media (max-width: 640px) {
   .site-header__inner {
     flex-direction: column;
@@ -550,7 +561,9 @@
     justify-content: center;
     gap: var(--space-3);
   }
-  .nav-sections {
-    grid-template-columns: 1fr;
+  /* 归流双轨：窄屏词条距收紧，词体居中版式不变 */
+  .stream-item {
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-5);
   }
 }

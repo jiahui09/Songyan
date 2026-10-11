@@ -1,25 +1,17 @@
 <%
   /**
-   * 首页（卷首 · 分卷流）：移植自静态原型 prototype/index.html
+   * 首页（卷首 · 归流双轨）：移植自静态原型 prototype/index.html
    * 文案与路径全部来自 theme.* 配置；文章数据来自 Hexo site.posts
+   * 取消四板块拼盘：全站文章按日期归为一条单列流，
+   * 仅按「诗词体 / 文章体」两轨呈现（诗文双轨）。
    */
   var homeCfg = theme.home || {};
   var sectionsCfg = homeCfg.sections || {};
   var labels = theme.labels || {};
-  var defaultLimit = homeCfg.per_section || 3;
+  var streamLimit = homeCfg.stream_limit || 9;
 
-  // 分卷文章：按类型过滤 + 按日期倒序 + 按分卷限额截断
-  function sectionPosts(type, limit) {
-    return site.posts
-      .filter(function (post) { return post.type === type; })
-      .sort('-date')
-      .limit(limit || defaultLimit);
-  }
-
-  // 分卷入口/栏目头链接：复用 menu 的名称与路径
-  function sectionPath(cfg) {
-    return (cfg && theme.menu && theme.menu[cfg.menu]) || '/';
-  }
+  // 归流：全部文章按日期倒序，统一限额截断（不分卷）
+  var streamPosts = site.posts.sort('-date').limit(streamLimit);
 
   // 摘要：优先 Hexo excerpt，缺失时回退到正文截断（不伪造内容）
   function cardExcerpt(post) {
@@ -27,23 +19,77 @@
     return text ? truncate(text, { length: 72, separator: '' }) : '';
   }
 
-  // 阅读时长：按主题约定 中文字数/300 + 英文单词/200
-  function readTimeLabel(post) {
-    var text = strip_html(post.content || '');
-    var cjk = text.match(/[\u3400-\u9fff]/g) || [];
-    var words = text.replace(/[\u3400-\u9fff]/g, ' ').split(/\s+/).filter(Boolean);
-    var minutes = Math.max(1, Math.round(cjk.length / 300 + words.length / 200));
-    return (labels.read_time || '%d').replace('%d', minutes);
+  // 干支纪年：以立春（近似 2/4）为界换算年柱（纯计算，不依赖外部历法库）
+  var STEMS = '甲乙丙丁戊己庚辛壬癸';
+  var BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
+  function ganzhiYear(d) {
+    var y = d.getFullYear();
+    var lichun = Math.floor(y * 0.2422 + 3.87) - Math.floor((y - 1) / 4);
+    if (d.getMonth() < 1 || (d.getMonth() === 1 && d.getDate() < lichun)) y -= 1;
+    var i = (y - 4) % 60;
+    if (i < 0) i += 60;
+    return STEMS.charAt(i % 10) + BRANCHES.charAt(i % 12) + '年';
   }
 
-  var ciCfg = sectionsCfg.ci;
-  var ciPosts = ciCfg ? sectionPosts('ci', ciCfg.limit) : [];
-  var essayCfg = sectionsCfg.essay;
-  var essayPosts = essayCfg ? sectionPosts('essay', essayCfg.limit) : [];
-  var techCfg = sectionsCfg.tech;
-  var techPosts = techCfg ? sectionPosts('tech', techCfg.limit) : [];
-  var projectCfg = sectionsCfg.project;
-  var projectPosts = projectCfg ? sectionPosts('project', projectCfg.limit) : [];
+  // 二十四节气：21 世纪近似公式（day = [Y*0.2422+C] - [(Y-1)/4]，适用 2000–2099）
+  var TERMS = ['小寒','大寒','立春','雨水','惊蛰','春分','清明','谷雨',
+               '立夏','小满','芒种','夏至','小暑','大暑','立秋','处暑',
+               '白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'];
+  var TERM_C = [5.4055,20.12,3.87,18.73,5.63,20.646,4.81,20.1,5.52,21.04,5.678,21.37,
+                7.108,22.83,7.5,23.13,7.646,23.042,8.318,23.438,7.438,22.36,7.18,21.94];
+  function solarTerm(d) {
+    var y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+    var Y = y - 1900;
+    var t1 = Math.floor(Y * 0.2422 + TERM_C[m * 2]) - Math.floor((Y - 1) / 4);
+    var t2 = Math.floor(Y * 0.2422 + TERM_C[m * 2 + 1]) - Math.floor((Y - 1) / 4);
+    if (day >= t2) return TERMS[m * 2 + 1];
+    if (day >= t1) return TERMS[m * 2];
+    // 当日早于本月首节气：归上月「气」（每月第二个节气名）
+    var pm = (m + 11) % 12;
+    return TERMS[pm * 2 + 1];
+  }
+
+  // 朱红题头：词牌名最高优先级 → 主分类 → 文稿兜底（每条必有，压阵标题）
+  function eyebrowLabel(post) {
+    if (post.cipai) return post.cipai;
+    if (post.categories && post.categories.length) {
+      return post.categories.data[0].name;
+    }
+    if (post.type === 'ci') {
+      var ciCfg = sectionsCfg.ci;
+      return (ciCfg && ciCfg.menu) || labels.post || '';
+    }
+    return labels.post || '';
+  }
+
+  // 元信息分类：诗词归「词卷」聚合，文章显示主分类，兜底 labels.post
+  function metaCategory(post) {
+    if (post.type === 'ci') {
+      var ciCfg = sectionsCfg.ci;
+      return (ciCfg && ciCfg.menu) || labels.post || '';
+    }
+    if (post.categories && post.categories.length) {
+      return post.categories.data[0].name;
+    }
+    return labels.post || '';
+  }
+
+  // 诗词体摘句：正文按句读切分，取前三句（不伪造内容，不足则少显示）
+  function ciVerseLines(post) {
+    var text = strip_html(post.content || '').replace(/\s+/g, '');
+    if (!text) return [];
+    return text
+      .split(/[，。？！；、…]+/)
+      .map(function (s) { return s.trim(); })
+      .filter(Boolean)
+      .slice(0, 3);
+  }
+
+
+  // 诗文双轨判定：ci 且有词牌走诗词体，其余（随笔/技术/项目）统一文章体
+  function isVerse(post) {
+    return post.type === 'ci' && !!post.cipai;
+  }
 %>
 <main class="site-main">
 
@@ -72,166 +118,81 @@
     <% } %>
   </section>
 
-  <!-- 四卷入口 -->
-  <nav class="nav-sections" aria-label="四卷分流">
-    <% ['ci', 'essay', 'tech', 'project'].forEach(function (type) {
-      var cfg = sectionsCfg[type];
-      if (!cfg) return;
+  <!-- 归流：单列双轨（诗词体 ci / 文章体 post），如一卷自然展开 -->
+  <section class="home-stream" aria-label="文章归流">
+    <% streamPosts.forEach(function (post) {
+      var isCi = isVerse(post);
+      var dateStr = date(post.date, 'YYYY-MM-DD');
+      var dateDot = date(post.date, 'YYYY.MM.DD');
+      var eyebrow = eyebrowLabel(post);
+      var cat = metaCategory(post);
+      var ganzhi = ganzhiYear(post.date.toDate()) + ' ' + solarTerm(post.date.toDate());
+      var tags = (post.tags && post.tags.length) ? post.tags.toArray() : [];
+      var verse = isCi ? ciVerseLines(post) : [];
+      var excerpt = isCi ? '' : cardExcerpt(post);
     %>
-    <a href="<%= url_for(sectionPath(cfg)) %>" class="nav-section-card enter">
-      <span class="nav-section-card__title"><%= cfg.menu %> <span class="nav-section-card__index--<%= type %>"><%= cfg.index %></span></span>
-      <span class="nav-section-card__desc"><%= cfg.desc %></span>
-    </a>
-    <% }); %>
-  </nav>
-
-  <!-- 第一卷：最新词选 -->
-  <% if (ciCfg && ciPosts.length) { %>
-  <section aria-labelledby="ci-section-title">
-    <div class="section-header">
-      <h2 id="ci-section-title" class="section-header__title">
-        <span><%= ciCfg.menu %></span>
-        <span class="section-header__tag"><%= ciCfg.tag %></span>
-      </h2>
-      <a href="<%= url_for(sectionPath(ciCfg)) %>" class="section-header__more"><%= ciCfg.more %></a>
-    </div>
-
-    <div class="home-grid-ci">
-      <% ciPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
-      <article class="post-card post-card--ci enter">
-        <header class="post-card__header">
-          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
-          <div class="post-card__meta">
-            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
-            <% if (post.cipai) { %>
-            <span class="meta-separator">/</span>
-            <span><%= labels.cipai %>：<%= post.cipai %></span>
-            <% } %>
-          </div>
-        </header>
-        <% if (excerpt) { %>
-        <p class="post-card__excerpt"><%= excerpt %></p>
+    <% if (isCi) { %>
+    <!-- 【诗词体】朱红词牌题头 + 居中宋式摘句断句留白 -->
+    <article class="stream-item stream-item--ci enter">
+      <header class="stream-item__head">
+        <p class="stream-item__eyebrow"><%= eyebrow %></p>
+        <h3 class="stream-item__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+      </header>
+      <% if (verse.length) { %>
+      <div class="stream-item__verse">
+        <% verse.forEach(function (line) { %>
+        <span class="stream-item__verse-line"><%= line %></span>
+        <% }); %>
+      </div>
+      <% } %>
+      <p class="stream-item__meta">
+        <time datetime="<%= dateStr %>"><span class="stream-item__date-gregorian"><%= dateDot %></span></time>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= ganzhi %></span>
+        <% if (cat) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= cat %></span>
         <% } %>
-      </article>
-      <% }); %>
-    </div>
-  </section>
-  <% } %>
-
-  <!-- 第二卷：近作随笔（时光轴轻量） -->
-  <% if (essayCfg && essayPosts.length) { %>
-  <section aria-labelledby="essay-section-title">
-    <div class="section-header">
-      <h2 id="essay-section-title" class="section-header__title">
-        <span><%= essayCfg.menu %></span>
-        <span class="section-header__tag"><%= essayCfg.tag %></span>
-      </h2>
-      <a href="<%= url_for(sectionPath(essayCfg)) %>" class="section-header__more"><%= essayCfg.more %></a>
-    </div>
-
-    <div class="home-list-essay">
-      <% essayPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
-      <article class="post-card post-card--essay enter">
-        <header class="post-card__header">
-          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
-          <div class="post-card__meta">
-            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
-            <% if (post.location) { %>
-            <span class="meta-separator">·</span>
-            <span><%= post.location %></span>
-            <% } %>
-            <% if (post.weather) { %>
-            <span class="meta-separator">·</span>
-            <span><%= labels.weather %>：<%= post.weather %></span>
-            <% } %>
-            <% if (post.mood) { %>
-            <span class="meta-separator">·</span>
-            <span><%= labels.mood %>：<%= post.mood %></span>
-            <% } %>
-          </div>
-        </header>
-        <% if (excerpt) { %>
-        <p class="post-card__excerpt"><%= excerpt %></p>
-        <% } %>
-      </article>
-      <% }); %>
-    </div>
-  </section>
-  <% } %>
-
-  <!-- 第三卷：技术札记 -->
-  <% if (techCfg && techPosts.length) { %>
-  <section aria-labelledby="tech-section-title">
-    <div class="section-header">
-      <h2 id="tech-section-title" class="section-header__title">
-        <span><%= techCfg.menu %></span>
-        <span class="section-header__tag"><%= techCfg.tag %></span>
-      </h2>
-      <a href="<%= url_for(sectionPath(techCfg)) %>" class="section-header__more"><%= techCfg.more %></a>
-    </div>
-
-    <div class="home-grid-tech">
-      <% techPosts.forEach(function (post) { var excerpt = cardExcerpt(post); %>
-      <article class="post-card enter">
-        <header class="post-card__header">
-          <h3 class="post-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
-          <div class="post-card__meta">
-            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
-            <% if (theme.tech && theme.tech.read_time) { %>
-            <span class="meta-separator">·</span>
-            <span><%= readTimeLabel(post) %></span>
-            <% } %>
-          </div>
-        </header>
-        <% if (excerpt) { %>
-        <p class="post-card__excerpt"><%= excerpt %></p>
-        <% } %>
-        <% if (post.tags && post.tags.length) { %>
-        <ul class="meta-tags">
-          <% post.tags.forEach(function (tag) { %>
-          <li class="meta-tags__item"><%= tag.name %></li>
+        <% if (tags.length) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span class="stream-item__tags">
+          <% tags.forEach(function (tag) { %>
+          <span class="stream-item__tag-item">#<%= tag.name %></span>
           <% }); %>
-        </ul>
+        </span>
         <% } %>
-      </article>
-      <% }); %>
-    </div>
-  </section>
-  <% } %>
-
-  <!-- 第四卷：作品展柜 -->
-  <% if (projectCfg && projectPosts.length) { %>
-  <section aria-labelledby="project-section-title">
-    <div class="section-header">
-      <h2 id="project-section-title" class="section-header__title">
-        <span><%= projectCfg.menu %></span>
-        <span class="section-header__tag"><%= projectCfg.tag %></span>
-      </h2>
-      <a href="<%= url_for(sectionPath(projectCfg)) %>" class="section-header__more"><%= projectCfg.more %></a>
-    </div>
-
-    <div class="home-grid-projects">
-      <% projectPosts.forEach(function (post) {
-        var excerpt = cardExcerpt(post);
-        var statusLabel = post.status && theme.status ? theme.status[post.status] : null;
-      %>
-      <article class="project-card enter">
-        <div class="project-card__top">
-          <h3 class="project-card__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
-          <% if (statusLabel) { %>
-          <span class="seal-status seal-status--<%= post.status %>"><%= statusLabel %></span>
-          <% } %>
-        </div>
-        <% if (excerpt) { %>
-        <p class="post-card__excerpt"><%= excerpt %></p>
+      </p>
+    </article>
+    <% } else { %>
+    <!-- 【文章体】随笔/技术/项目等一视同仁（type: post）：朱红题头 · 汉字元信息 · 纯文本摘要 -->
+    <article class="stream-item stream-item--prose enter">
+      <header class="stream-item__head">
+        <p class="stream-item__eyebrow"><%= eyebrow %></p>
+        <h3 class="stream-item__title"><a href="<%= url_for(post.path) %>"><%= post.title %></a></h3>
+      </header>
+      <p class="stream-item__meta">
+        <time datetime="<%= dateStr %>"><span class="stream-item__date-gregorian"><%= dateDot %></span></time>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= ganzhi %></span>
+        <% if (cat) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= cat %></span>
         <% } %>
-        <div class="project-card__links">
-          <a href="<%= url_for(post.path) %>"><%= labels.detail %></a>
-        </div>
-      </article>
-      <% }); %>
-    </div>
+        <% if (tags.length) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span class="stream-item__tags">
+          <% tags.forEach(function (tag) { %>
+          <span class="stream-item__tag-item">#<%= tag.name %></span>
+          <% }); %>
+        </span>
+        <% } %>
+      </p>
+      <% if (excerpt) { %>
+      <p class="stream-item__excerpt"><%= excerpt %></p>
+      <% } %>
+    </article>
+    <% } %>
+    <% }); %>
   </section>
-  <% } %>
 
 </main>

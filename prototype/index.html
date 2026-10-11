@@ -1,8 +1,8 @@
 <!--
   @page: index
   @hexo-layout: layout/index.ejs
-  @hexo-partial: _partial/header.ejs, _partial/sections-nav.ejs, _partial/footer.ejs
-  @description: 首页（卷首 · 分卷流）：经典词句、春唇语冬印章（盖下动效）、四卷入口、最新词选、近作随笔、技术札记、作品展柜、页脚
+  @hexo-partial: _partial/header.ejs, _partial/footer.ejs
+  @description: 首页（卷首 · 归流双轨）：经典词句、春唇语冬印章（盖下动效）、文章归流（诗词体 / 文章体双轨单列流）、页脚
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -55,12 +55,9 @@
 
       <!-- 导航 Links -->
       <nav aria-label="全局导航">
-        <ul class="site-header__nav">
+                <ul class="site-header__nav">
           <!-- @hexo: for name, path in theme.menu -->
-          <li><a href="./post-ci.html" class="site-header__nav-link">词卷</a></li> <!-- 待转 url_for('/categories/ci/') -->
-          <li><a href="./post-essay.html" class="site-header__nav-link">随笔</a></li> <!-- 待转 url_for('/categories/essay/') -->
-          <li><a href="./post-tech.html" class="site-header__nav-link">技术</a></li> <!-- 待转 url_for('/categories/tech/') -->
-          <li><a href="./post-project.html" class="site-header__nav-link">项目</a></li> <!-- 待转 url_for('/projects/') -->
+          <li><a href="./index.html" class="site-header__nav-link site-header__nav-link--active">首页</a></li> <!-- 待转 url_for('/') -->
           <li><a href="./archive.html" class="site-header__nav-link">归档</a></li> <!-- 待转 url_for('/archives/') -->
           <li><a href="./page-about.html" class="site-header__nav-link">关于</a></li> <!-- 待转 url_for('/about/') -->
           <!-- @end -->
@@ -72,305 +69,349 @@
   <!-- 主体内容 -->
   <main class="site-main">
 
-    <!-- 卷首 Header（典雅词句 + 盖下动效印章） -->
-    <section class="hero-scroll" aria-label="卷首词句">
-      <p class="hero-scroll__verse">一研松烟分细墨 · 四卷清赏寄余年</p>
-      <div class="hero-scroll__seal-brand">
-        <span class="seal seal--brand seal-stamp-once" aria-hidden="true">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <rect x="6" y="6" width="88" height="88" rx="3" fill="none" stroke="var(--seal-color)" stroke-width="1.5"/>
-            <rect x="10" y="10" width="80" height="80" rx="2" fill="none" stroke="var(--seal-color)" stroke-width="0.6" opacity="0.5"/>
-            <g fill="var(--seal-color)" font-family="var(--font-seal)" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central">
-              <text x="65" y="34">春</text>
-              <text x="65" y="66">唇</text>
-              <text x="35" y="34">语</text>
-              <text x="35" y="66">冬</text>
-            </g>
-          </svg>
-        </span>
-      </div>
-      <p class="hero-scroll__sub">外古内今 · 分卷而治</p>
+    <!-- 卷首题词（Epigraph）：核心诗句 + 出处 + 淡墨界线，全站视觉定海神针 -->
+    <section class="home-epigraph" aria-label="卷首题词">
+      <!-- @hexo: config.subtitle || 主题题词 -->
+      <p class="home-epigraph__text">一研松烟分细墨 · 四卷清赏寄余年</p>
+      <!-- @end -->
+      <!-- @hexo: theme.author.name + 斋号 -->
+      <p class="home-epigraph__source">春唇语冬 · 卷首自题</p>
+      <!-- @end -->
     </section>
 
-    <!-- 四卷入口 -->
-    <nav class="nav-sections" aria-label="四卷分流">
-      <a href="./post-ci.html" class="nav-section-card enter"> <!-- 待转 url_for('/categories/ci/') -->
-        <span class="nav-section-card__title">词卷 <span style="color: var(--cinnabar);">一</span></span>
-        <span class="nav-section-card__desc">旧调新填，韵脚笺注</span>
-      </a>
-      <a href="./post-essay.html" class="nav-section-card enter"> <!-- 待转 url_for('/categories/essay/') -->
-        <span class="nav-section-card__title">随笔 <span style="color: var(--bamboo);">二</span></span>
-        <span class="nav-section-card__desc">岁月偶得，行云流觞</span>
-      </a>
-      <a href="./post-tech.html" class="nav-section-card enter"> <!-- 待转 url_for('/categories/tech/') -->
-        <span class="nav-section-card__title">技术 <span style="color: var(--ink-light);">三</span></span>
-        <span class="nav-section-card__desc">代码札记，现代纸笺</span>
-      </a>
-      <a href="./post-project.html" class="nav-section-card enter"> <!-- 待转 url_for('/projects/') -->
-        <span class="nav-section-card__title">项目 <span style="color: var(--ochre);">四</span></span>
-        <span class="nav-section-card__desc">作品展柜，雕琢有物</span>
-      </a>
-    </nav>
+    <!-- 归流：《词韵》统一流式骨架——诗词与文章同一垂直骨骼，绝不折行散排 -->
+    <!-- @hexo: for post in site.posts.sort('-date').limit(theme.home.stream_limit || 9) -->
+    <section class="home-stream" aria-label="文章归流">
 
-    <!-- 第一卷：最新词选 (首版取最新 3 篇) -->
-    <section aria-labelledby="ci-section-title">
-      <div class="section-header">
-        <h2 id="ci-section-title" class="section-header__title">
+
+      <!-- 【诗词体】与文章完全一致的垂直骨骼：朱红词牌题头 + 题名 + 元信息 + 单段摘句 + 阅读本文 -->
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai（词牌最高优先级，压阵题名） -->
+        <span class="post-item__eyebrow">水调歌头</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-ci.html">秋夜怀远</a></h2> <!-- 待转 url_for(post.path) -->
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-10-10"><span class="post-meta__date-gregorian">2026.10.10</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 寒露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
           <span>词卷</span>
-          <span class="section-header__tag">最新词选</span>
-        </h2>
-        <a href="./category.html?type=ci" class="section-header__more">查看全卷 →</a> <!-- 待转 url_for('/categories/ci/') -->
-      </div>
-
-      <div class="home-grid-ci">
-        <!-- @hexo: for post in site.posts.filter(p => p.type === 'ci').limit(theme.home.per_section || 3) -->
-        <article class="post-card post-card--ci enter">
-          <header class="post-card__header">
-            <!-- @hexo: post.title -->
-            <h3 class="post-card__title"><a href="./post-ci.html">水调歌头·秋夜怀远</a></h3> <!-- 待转 url_for(post.path) -->
-            <!-- @end -->
-            <div class="post-card__meta">
-              <!-- @hexo: date(post.date, 'YYYY-MM-DD') -->
-              <time datetime="2026-10-10">2026-10-10</time>
-              <!-- @end -->
-              <span class="meta-separator">/</span>
-              <!-- @hexo: post.cipai -->
-              <span>词牌：水调歌头</span>
-              <!-- @end -->
-            </div>
-          </header>
-          <!-- @hexo: post.excerpt -->
-          <p class="post-card__excerpt">露下碧梧冷，风引画檐铃。素娥何事多病，掩泪对孤屏。料得玉阶凝伫，应念青衫零落，清梦绕江南。</p>
           <!-- @end -->
-        </article>
-
-        <article class="post-card post-card--ci enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-ci.html">定风波·松烟煮雪</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-09-24">2026-09-24</time>
-              <span class="meta-separator">/</span>
-              <span>词牌：定风波</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">莫向窗前数暮鸦，柴扉虚掩试烹茶。一研松烟分细墨，何必，纸边小字记韶华。</p>
-        </article>
-
-        <article class="post-card post-card--ci enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-ci.html">临江仙·客舍听秋</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-09-08">2026-09-08</time>
-              <span class="meta-separator">/</span>
-              <span>词牌：临江仙</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">落拓江湖知几度，江南秋尽难休。夜凉竹几覆轻裘。烛花频落尽，细雨打空楼。</p>
-        </article>
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#秋思</span><span class="post-meta__tag-item">#怀远</span></span>
+          <!-- @end -->
+        </div>
+        <!-- @hexo: 词之正文不折行展开，合为单段摘句（不伪造内容，超长由 line-clamp 截断） -->
+        <p class="post-excerpt">露下碧梧冷，风引画檐铃。素娥何事多病，掩泪对孤屏。料得玉阶凝伫，应念此夜长亭。</p>
         <!-- @end -->
-      </div>
-    </section>
+        <div class="read-more-wrapper">
+          <a href="./post-ci.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
 
-    <!-- 第二卷：近作随笔 (时光轴轻量 3 篇) -->
-    <section aria-labelledby="essay-section-title">
-      <div class="section-header">
-        <h2 id="essay-section-title" class="section-header__title">
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">随笔</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">钱塘江观潮杂记</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-10-10"><span class="post-meta__date-gregorian">2026.10.10</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 寒露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
           <span>随笔</span>
-          <span class="section-header__tag">岁月偶得</span>
-        </h2>
-        <a href="./category.html?type=essay" class="section-header__more">查看全卷 →</a> <!-- 待转 url_for('/categories/essay/') -->
-      </div>
-
-      <div class="home-list-essay">
-        <!-- @hexo: for post in site.posts.filter(p => p.type === 'essay').limit(theme.home.per_section || 3) -->
-        <article class="post-card post-card--essay enter">
-          <header class="post-card__header">
-            <!-- @hexo: post.title -->
-            <h3 class="post-card__title"><a href="./post-essay.html">钱塘江观潮杂记</a></h3> <!-- 待转 url_for(post.path) -->
-            <!-- @end -->
-            <div class="post-card__meta">
-              <!-- @hexo: date(post.date, 'YYYY-MM-DD') -->
-              <time datetime="2026-10-10">2026-10-10</time>
-              <!-- @end -->
-              <!-- @hexo: if post.location -->
-              <span class="meta-separator">·</span>
-              <span>杭州 · 六和塔畔</span>
-              <!-- @end -->
-              <!-- @hexo: if post.weather -->
-              <span class="meta-separator">·</span>
-              <span>气候：晴</span>
-              <!-- @end -->
-              <!-- @hexo: if post.mood -->
-              <span class="meta-separator">·</span>
-              <span>心境：澄澈</span>
-              <!-- @end -->
-            </div>
-          </header>
-          <!-- @hexo: post.excerpt -->
-          <p class="post-card__excerpt">是日江风劲冽，初见白练一线横亘天际，俄顷如雪山奔涌，万马摧山倒海而至。坐塔下小筑，烹龙井，听潮声渐远，天地归寂。</p>
           <!-- @end -->
-        </article>
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#钱塘</span><span class="post-meta__tag-item">#游记</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">是日江风劲冽，初见白练一线横亘天际，俄顷如雪山奔涌，万马摧山倒海而至。坐塔下小筑，烹龙井，听潮声渐远，天地归寂。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
 
-        <article class="post-card post-card--essay enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-essay.html">雨窗试研徽州油烟墨</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-09-15">2026-09-15</time>
-              <span class="meta-separator">·</span>
-              <span>松下斋</span>
-              <span class="meta-separator">·</span>
-              <span>气候：霖雨</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">案头歙砚蓄水数滴，执墨锭缓缓旋磨。油烟细腻如脂，泛紫玉光泽。落笔宣纸，渗而不溃，浓淡自成丘壑。</p>
-        </article>
-
-        <article class="post-card post-card--essay enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-essay.html">夜读《随园食单》偶感</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-08-30">2026-08-30</time>
-              <span class="meta-separator">·</span>
-              <span>松下斋</span>
-              <span class="meta-separator">·</span>
-              <span>心境：幽趣</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">袁子才论厨事，重本味而斥虚饰。所谓物各有性，制各有法，与作文、治事无异。繁冗堆砌者，实则乏真醇也。</p>
-        </article>
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">技术</span>
         <!-- @end -->
-      </div>
-    </section>
-
-    <!-- 第三卷：技术札记 (3 篇，含阅读时长与技术标签) -->
-    <section aria-labelledby="tech-section-title">
-      <div class="section-header">
-        <h2 id="tech-section-title" class="section-header__title">
+        <h2 class="post-title"><a href="./post-essay.html">Hexo 主题架构与从零发布指南</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-10-10"><span class="post-meta__date-gregorian">2026.10.10</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 寒露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
           <span>技术</span>
-          <span class="section-header__tag">现代纸笺</span>
-        </h2>
-        <a href="./category.html?type=tech" class="section-header__more">查看全卷 →</a> <!-- 待转 url_for('/categories/tech/') -->
-      </div>
-
-      <div class="home-grid-tech">
-        <!-- @hexo: for post in site.posts.filter(p => p.type === 'tech').limit(theme.home.per_section || 3) -->
-        <article class="post-card enter">
-          <header class="post-card__header">
-            <!-- @hexo: post.title -->
-            <h3 class="post-card__title"><a href="./post-tech.html">Hexo 主题架构与从零发布指南</a></h3> <!-- 待转 url_for(post.path) -->
-            <!-- @end -->
-            <div class="post-card__meta">
-              <!-- @hexo: date(post.date, 'YYYY-MM-DD') -->
-              <time datetime="2026-10-10">2026-10-10</time>
-              <!-- @end -->
-              <span class="meta-separator">·</span>
-              <!-- @hexo: post.read_time -->
-              <span>预计 6 分钟读完</span>
-              <!-- @end -->
-            </div>
-          </header>
-          <!-- @hexo: post.excerpt -->
-          <p class="post-card__excerpt">剖析 Hexo 渲染管道、Filter 扩展与分卷多模型架构设计，从 tokens 规范到无框架原生交互的工程化落地最佳实践。</p>
           <!-- @end -->
-          <!-- @hexo: if post.tags && post.tags.length -->
-          <ul class="meta-tags">
-            <li class="meta-tags__item">Hexo</li>
-            <li class="meta-tags__item">EJS</li>
-            <li class="meta-tags__item">架构设计</li>
-          </ul>
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#Hexo</span><span class="post-meta__tag-item">#工程化</span></span>
           <!-- @end -->
-        </article>
+        </div>
+        <p class="post-excerpt">剖析 Hexo 渲染管道、Filter 扩展与分卷多模型架构设计，从 tokens 规范到无框架原生交互的工程化落地最佳实践。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
 
-        <article class="post-card enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-tech.html">现代 CSS 自定义属性与中式古风色阶编排</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-09-20">2026-09-20</time>
-              <span class="meta-separator">·</span>
-              <span>预计 4 分钟读完</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">如何利用 CSS Custom Properties 搭建宣纸暖色温、浓墨高对比度（WCAG AA ≥ 7:1）以及朱砂、竹青、赭石的色彩约束与分层。</p>
-          <ul class="meta-tags">
-            <li class="meta-tags__item">CSS-Tokens</li>
-            <li class="meta-tags__item">色板体系</li>
-          </ul>
-        </article>
-
-        <article class="post-card enter">
-          <header class="post-card__header">
-            <h3 class="post-card__title"><a href="./post-tech.html">前端动效克制律：落墨动词与 320ms 物理标尺</a></h3>
-            <div class="post-card__meta">
-              <time datetime="2026-09-02">2026-09-02</time>
-              <span class="meta-separator">·</span>
-              <span>预计 5 分钟读完</span>
-            </div>
-          </header>
-          <p class="post-card__excerpt">解析全站单一动词「落墨」的物理模型，杜绝过度动效与无谓浮华，在 320ms 内完成透明度、微位移与模糊收敛的仪式感。</p>
-          <ul class="meta-tags">
-            <li class="meta-tags__item">动画规范</li>
-            <li class="meta-tags__item">无障碍</li>
-          </ul>
-        </article>
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai（词牌最高优先级，压阵题名） -->
+        <span class="post-item__eyebrow">定风波</span>
         <!-- @end -->
-      </div>
-    </section>
+        <h2 class="post-title"><a href="./post-ci.html">松烟煮雪</a></h2> <!-- 待转 url_for(post.path) -->
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-09-24"><span class="post-meta__date-gregorian">2026.09.24</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 秋分</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>词卷</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#咏雪</span><span class="post-meta__tag-item">#冬意</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">松火初红，雪瓯初满，一缕茶烟绕砚生寒。夜深谁共，窗外竹声三两竿。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-ci.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
 
-    <!-- 第四卷：作品展柜 (卡片 + 状态印章) -->
-    <section aria-labelledby="project-section-title">
-      <div class="section-header">
-        <h2 id="project-section-title" class="section-header__title">
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">技术</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">现代 CSS 自定义属性与中式古风色阶编排</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-09-20"><span class="post-meta__date-gregorian">2026.09.20</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 白露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>技术</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#CSS</span><span class="post-meta__tag-item">#色彩</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">以 tokens 为一色之宗，宣纸、松烟、朱砂、淡竹四色分层，构建可维护的东方文人色彩体系与语义化变量命名法。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">随笔</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">雨窗试研徽州油烟墨</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-09-15"><span class="post-meta__date-gregorian">2026.09.15</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 白露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>随笔</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#徽墨</span><span class="post-meta__tag-item">#考据</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">取歙县老油烟一锭，新汲雨水研之。墨色沉而不滞，紫光隐隐，试于生宣，五色层次立现。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai（词牌最高优先级，压阵题名） -->
+        <span class="post-item__eyebrow">临江仙</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-ci.html">客舍听秋</a></h2> <!-- 待转 url_for(post.path) -->
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-09-08"><span class="post-meta__date-gregorian">2026.09.08</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 白露</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>词卷</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#羁旅</span><span class="post-meta__tag-item">#秋思</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">一夜西风吹客梦，小窗疏雨梧桐。故园千里月明中。雁声随断角，灯影落残红。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-ci.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">技术</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">前端动效克制律：落墨动词与 320ms 物理标尺</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-09-02"><span class="post-meta__date-gregorian">2026.09.02</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 处暑</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>技术</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#动效</span><span class="post-meta__tag-item">#克制</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">全站只允许一种入场动效「落墨」：320ms cubic-bezier(0.22,1,0.36,1)，以时长与缓动为尺，度量每一处交互反馈的分寸。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">随笔</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">夜读《随园食单》偶感</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: date(post.date, 'YYYY.MM.DD') -->
+          <time datetime="2026-08-30"><span class="post-meta__date-gregorian">2026.08.30</span></time>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: ganzhiYear(post.date) + ' ' + solarTerm(post.date) -->
+          <span>丙午年 处暑</span>
+          <!-- @end -->
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>随笔</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#读书</span><span class="post-meta__tag-item">#随笔</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">袁子才论味，贵在本真。戒穿凿、戒勉强，知味者一箸可知山林之趣，作文章亦如是。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">项目</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">松烟 Hexo 主题</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
           <span>项目</span>
-          <span class="section-header__tag">作品展柜</span>
-        </h2>
-        <a href="./post-project.html" class="section-header__more">查看全部项目 →</a> <!-- 待转 url_for('/projects/') -->
-      </div>
-
-      <div class="home-grid-projects">
-        <!-- @hexo: for post in site.posts.filter(p => p.type === 'project').limit(2) -->
-        <article class="project-card enter">
-          <div class="project-card__top">
-            <!-- @hexo: post.title -->
-            <h3 class="project-card__title"><a href="./post-project.html">松烟 Hexo 主题</a></h3> <!-- 待转 url_for(post.path) -->
-            <!-- @end -->
-            <!-- @hexo: post.status -->
-            <span class="seal-status seal-status--maintaining">维护中</span>
-            <!-- @end -->
-          </div>
-          <!-- @hexo: post.excerpt -->
-          <p class="post-card__excerpt">外古内今，分卷而治。专为词家、行者与工程师打造的宣纸暖调 Hexo 博客主题。</p>
           <!-- @end -->
-          <ul class="project-card__stack">
-            <li class="project-card__stack-item">Hexo</li>
-            <li class="project-card__stack-item">EJS</li>
-            <li class="project-card__stack-item">CSS3 Tokens</li>
-            <li class="project-card__stack-item">Vanilla JS</li>
-          </ul>
-          <div class="project-card__links">
-            <a href="https://github.com/user/hexo-theme-songyan" target="_blank" rel="noopener">仓库 →</a>
-            <a href="./post-project.html">详情 →</a>
-          </div>
-        </article>
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#Hexo</span><span class="post-meta__tag-item">#主题</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">外古内今，分卷而治。专为词家、行者与工程师打造的宣纸暖调 Hexo 博客主题。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
 
-        <article class="project-card enter">
-          <div class="project-card__top">
-            <h3 class="project-card__title"><a href="./post-project.html">词林谱正 · 律绝平仄自动校对器</a></h3>
-            <span class="seal-status seal-status--maintaining">维护中</span>
-          </div>
-          <p class="post-card__excerpt">基于词林正韵与平水韵数据库的古诗词韵律检索与平仄辅助检校工具。</p>
-          <ul class="project-card__stack">
-            <li class="project-card__stack-item">TypeScript</li>
-            <li class="project-card__stack-item">Rust-WASM</li>
-            <li class="project-card__stack-item">PWA</li>
-          </ul>
-          <div class="project-card__links">
-            <a href="https://github.com/user/cilin-puzheng" target="_blank" rel="noopener">仓库 →</a>
-            <a href="./post-project.html">详情 →</a>
-          </div>
-        </article>
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">项目</span>
         <!-- @end -->
-      </div>
+        <h2 class="post-title"><a href="./post-essay.html">词林谱正 · 律绝平仄自动校对器</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>项目</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#诗词</span><span class="post-meta__tag-item">#工具</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">基于词林正韵与平水韵数据库的古诗词韵律检索与平仄辅助检校工具。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">项目</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">纸墨录 · 个人双向链接札记本</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>项目</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#知识管理</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">离线优先的本地双链知识卡片工具，排版借鉴宋刻本版心与鱼尾留白设计。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post-item enter">
+        <!-- @hexo: post.cipai 缺失时取主分类（eyebrowLabel(post)） -->
+        <span class="post-item__eyebrow">项目</span>
+        <!-- @end -->
+        <h2 class="post-title"><a href="./post-essay.html">古印文矢量字模引擎</a></h2>
+        <div class="post-meta">
+          <!-- @hexo: metaCategory(post)（诗词归「词卷」聚合） -->
+          <span>项目</span>
+          <!-- @end -->
+          <span class="sep" aria-hidden="true">·</span>
+          <!-- @hexo: post.tags → #标签墨痕（纯文本，禁药丸） -->
+          <span class="post-meta__tags"><span class="post-meta__tag-item">#篆刻</span><span class="post-meta__tag-item">#矢量</span></span>
+          <!-- @end -->
+        </div>
+        <p class="post-excerpt">元朱文与汉白文印章自动化排版与手工钤盖噪点合成原型实验。</p>
+        <div class="read-more-wrapper">
+          <a href="./post-essay.html" class="read-more-btn"><span>阅读本文</span><span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
     </section>
+    <!-- @end -->
 
   </main>
 
@@ -397,7 +438,6 @@
       <ul class="site-footer__links">
         <li><a href="./archive.html">归档时间线</a></li> <!-- 待转 url_for('/archives/') -->
         <li><a href="./page-about.html">关于斋主</a></li> <!-- 待转 url_for('/about/') -->
-        <li><a href="./post-ci-vertical.html">词卷竖排参考</a></li> <!-- 待转 url_for('/ci-vertical/') -->
         <li><a href="./404.html">空笺样例</a></li> <!-- 待转 url_for('/404.html') -->
       </ul>
 

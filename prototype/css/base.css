@@ -96,7 +96,15 @@ blockquote {
 hr {
   border: none;
   height: 1px;
-  background-color: var(--line);
+  /* 古籍刊本式行气留白：两端透明淡出、中央微显淡墨，严禁灰色实线 */
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--line) 18%,
+    var(--line-wash) 50%,
+    var(--line) 82%,
+    transparent
+  );
   margin: var(--space-8) 0;
 }
 
@@ -134,21 +142,6 @@ img {
 }
 
 /* 首页唯一印章盖下动效（400ms，仅一次） */
-@keyframes seal-stamp {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.seal-stamp-once {
-  animation: seal-stamp var(--dur-seal) var(--ease-ink) both;
-}
-
 /* 尊重减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -157,7 +150,7 @@ img {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .enter, .seal-stamp-once {
+  .enter {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -175,22 +168,13 @@ img {
 
   .site-header,
   .site-footer,
-  .nav-sections,
-  .post-tech__sidebar,
   .code-block__header,
   .copy-btn,
-  .pagination,
   .watermark-wrap .seal--watermark {
     display: none !important;
   }
 
-  .post-ci__vertical-wrap {
-    writing-mode: horizontal-tb !important;
-    overflow: visible !important;
-  }
-
   .post-card,
-  .post-tech__main,
   article {
     border: none !important;
     box-shadow: none !important;
