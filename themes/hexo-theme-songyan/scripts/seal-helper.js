@@ -193,22 +193,31 @@ function renderSealSvg(options, themeConfig) {
 
 /** 模板 Helper：模板内直接调用 render_seal(text, style, size, extraClass) */
 hexo.extend.helper.register('render_seal', function (customText, style, size, extraClass) {
+  const theme = this.theme || {};
+  // enable 关闭时全站熄印：页头/页脚/卷首统一由本入口短路
+  if (theme.seal && theme.seal.enable === false) return '';
   return renderSealSvg({
     text: customText,
     style: style,
     size: size,
     className: extraClass
-  }, this.theme || {});
+  }, theme);
 });
 
-/** 正文 Tag：{% seal 春唇语冬 yang 36 %} 或 {% seal 词韵 yin %} */
+/** 正文 Tag：{% seal 春唇语冬 yang 36 %} 或 {% seal 词韵 yin %}；省参时回退本页 front-matter */
 hexo.extend.tag.register('seal', function (args) {
   const theme = hexo.theme.config || {};
   // enable 关闭时静默不落印（不产出空占位）
   if (theme.seal && theme.seal.enable === false) return '';
+  // 文章级独立覆盖：显式参数 > 本页 front-matter（seal: 对象或纯字符串）> 主题默认
+  // tag 回调的 this 即 post 数据对象（hexo post.js → tag.render(content, data)），front-matter 直读
+  const pageSeal = this && this.seal;
+  const fmText = typeof pageSeal === 'string' ? pageSeal : pageSeal && pageSeal.text;
+  const fmStyle = pageSeal && typeof pageSeal === 'object' ? pageSeal.style : undefined;
+  const fmSize = pageSeal && typeof pageSeal === 'object' ? pageSeal.size : undefined;
   return renderSealSvg({
-    text: args[0],
-    style: args[1] || undefined,
-    size: args[2] ? parseInt(args[2], 10) : undefined
+    text: args[0] || fmText,
+    style: args[1] || fmStyle || undefined,
+    size: args[2] ? parseInt(args[2], 10) : (fmSize ? parseInt(fmSize, 10) : undefined)
   }, theme);
 }, { ends: false });
