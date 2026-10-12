@@ -13,11 +13,13 @@
   --paper-card:            #FDFBF7;  /* 悬浮卡片高亮底 */
   --ink:                   #1F1F1F;  /* 浓墨正文（对比度 ≥ 7:1） */
   --ink-light:             #3F4E4F;  /* 黛青，次要文字、辅助信息 */
+  --ink-secondary:         #666055;  /* 淡松烟墨（元数据、说明文字） */
   --ink-faint:             #7A8485;  /* 淡墨，时间戳、无字提示 */
   --ink-annotation:        #8C8275;  /* 淡烟灰，题笺入口小字 */
   --cinnabar:              #B23A2F;  /* 朱砂，重点、韵脚、链接（对比度 ≥ 4.5:1） */
   --cinnabar-light:        #C9776B;  /* 淡红上标（分类前缀，装饰性、非正文，≥ 3:1） */
   --cinnabar-hover:        #8E2B21;  /* 朱砂深色悬停态 */
+  --cinnabar-eyebrow:      #BD2B1B;  /* 朱红题头（首页条目 eyebrow 专用，12px 装饰性） */
   --bamboo:                #6B7F5E;  /* 竹青，标签、维护中状态（对比度 ≥ 4.5:1） */
   --ochre:                 #B08D57;  /* 赭石，装饰细线、归档时间轴、已归档状态 */
   --line:                  #D8CFBE;  /* 细分割线 */

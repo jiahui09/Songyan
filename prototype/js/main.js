@@ -50,7 +50,8 @@ function initCodeFold() {
 
     bar.addEventListener('click', () => {
       const folded = block.classList.toggle('is-code-folded');
-      bar.setAttribute('aria-expanded', String(folded));
+      // aria-expanded 反映展卷后的可见态：收卷(false) → 展卷(true)
+      bar.setAttribute('aria-expanded', String(!folded));
       bar.textContent = folded
         ? '［附录：代码手稿 / 点击展卷］'
         : '［附录：代码手稿 / 点击收卷］';
