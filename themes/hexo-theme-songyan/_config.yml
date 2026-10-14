@@ -21,11 +21,16 @@ color_scheme: "light"
 seal:
   enable: true               # 是否开启印章模块
   text: "春唇语冬"           # 默认印章文字（2~4 字；4 字按古法直读：右上→右下→左上→左下）
-  style: "yang"              # 默认刻法：yang（朱文/阳刻，细线红字）| yin（白文/阴刻，红底白字）
+  style: "yang"              # 默认刻法：yang（朱文/阳刻，细线红字）| yin（白文/阴刻，红底白字）| mixed（朱白相间，逐格相间）
   size: 34                   # 默认尺寸 (px)
   rotate: -1.2               # 微倾斜角度 (deg)，模拟手盖印泥的自然微偏
   density: 1.0               # 刀痕崩刃、金石飞白与砂眼颗粒密度 (0.5 ~ 1.5)
   seed: 42                   # 随机种子（固定种子确保重建时刀痕完全一致）
+  alias: true                # 缺字时按 lib/seal-alias.json 回填篆法正字/繁体（1316 条，
+                             #   取自「篆印 Zhuanyin」ALIAS 表，Apache-2.0）；false 则缺字直接走楷体回退链
+  shape: "square"            # 形制：square（方印，默认）| round（圆印）| oblong（长方闲章）
+  order: "zhi"               # 四字章序：zhi（直读：右上→右下→左上→左下）| hui（回文：右上→左上→左下→右下）
+  ink: "cinnabar"            # 印泥色阶：cinnabar（鲜朱，默认）| zhubiao（朱磦）| shenha（深赭）
 
   # 位置控制（未移植版式留待各自模板接入）
   locations:

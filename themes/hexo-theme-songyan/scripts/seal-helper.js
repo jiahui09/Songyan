@@ -45,28 +45,52 @@ function hashString(str) {
 }
 
 /**
- * 金石颗粒三件套：
+ * 金石颗粒三件套 + 印泥漏印斑：
  *  notches —— 边框崩刀折角（蒙版里挖掉的三角缺口）
  *  slashes —— 飞白发丝与刀口断笔
- *  pores   —— 矿物砂眼微孔（0.4~0.85 直径，肉眼可见的锐利小点）
+ *  pores   —— 矿物砂眼微孔
+ *  blobs   —— 低频大块漏印斑（印泥未及，2~3 处）
+ * cells: 印文字格 [{cx,cy,half}]——供「聚笔」加权（印泥不匀先及笔画）
+ * detail: 尺寸分档系数（≥96px 全量 / 48~96 ×0.6 / <48 ×0.35），杜绝亚像素噪点
  */
-function generateSealGranulation(seed, style, density) {
+function generateSealGranulation(seed, style, density, cells, detail) {
   const rnd = createPrng(typeof seed === 'number' ? seed : hashString(String(seed)));
+  const d = detail === undefined ? 1 : detail;
   const pores = [];
   const slashes = [];
   const notches = [];
+  const blobs = [];
+
+  // 聚笔权重：采样点到最近字格中心的距离 → 印泥不匀向笔画聚集（衰减权重）
+  const strokeWeight = (x, y) => {
+    if (!cells || cells.length === 0) return 0.5;
+    let best = Infinity;
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i];
+      const dx = x - c.cx;
+      const dy = y - c.cy;
+      const dist = Math.sqrt(dx * dx + dy * dy) / c.half;
+      if (dist < best) best = dist;
+    }
+    // 字格内最高（1.0），一格开外衰减趋零——聚笔而非撒胡椒面
+    return Math.max(0, 1 - best * 0.55);
+  };
 
   // 1. 边框崩刀折角：先定一条重灾边（钤盖受力面），其上缺口更密更深；
-  //    位置六成聚向两端印角（印角受磕最重），其余均布——崩口成组、聚边聚角
+  //    位置六成聚向两端印角（印角受磕最重），其余均布——崩口成组、聚边聚角。
+  //    小尺寸精简：只保留重灾边与各边最深一刀，避免边栏被啃成锯齿
   const sides = ['top', 'bottom', 'left', 'right'];
   const heavySide = sides[Math.floor(rnd() * 4)];
   sides.forEach((side) => {
-    const count = 2 + Math.floor(rnd() * 2) + (side === heavySide ? 1 : 0);
+    const isHeavy = side === heavySide;
+    const count = 2 + Math.floor(rnd() * 2) + (isHeavy ? 1 : 0);
     for (let k = 0; k < count; k++) {
+      if (d < 0.5 && !isHeavy && k > 0) continue;
+      if (d < 0.5 && isHeavy && k > 1) continue;
       const atCorner = rnd() < 0.6;
       const pos = atCorner ? (rnd() < 0.5 ? 6 + rnd() * 14 : 80 + rnd() * 14) : 22 + rnd() * 56;
-      const w = 2.0 + rnd() * 2.8 + (side === heavySide ? 1.1 : 0);
-      const depth = 1.8 + rnd() * 2.4 + (side === heavySide ? 1.5 : 0);
+      const w = 2.0 + rnd() * 2.8 + (isHeavy ? 1.1 : 0);
+      const depth = 1.8 + rnd() * 2.4 + (isHeavy ? 1.5 : 0);
       let pts = '';
       if (side === 'top') {
         pts = `${(pos - w / 2).toFixed(1)},4.5 ${(pos + w / 2).toFixed(1)},4.5 ${(pos + (rnd() - 0.5) * w).toFixed(1)},${(4.5 + depth).toFixed(1)}`;
@@ -82,13 +106,32 @@ function generateSealGranulation(seed, style, density) {
   });
 
   // 2. 飞白发丝与刀口细微断笔（阴刻更密，盖印受力更重）；
-  //    六成半落在边缘磨损带（磨蚀先及印缘），其余以平方根分布淡入内部
-  const slashCount = Math.floor((style === 'yin' ? 12 : 8) * density);
+  //    六成半落边缘磨损带，其余按「聚笔」权重淡入内部——磨蚀循着笔画走
+  const slashCount = Math.floor((style === 'yin' ? 12 : 8) * density * d);
   for (let i = 0; i < slashCount; i++) {
-    const band = rnd() < 0.65 ? 26 + rnd() * 19 : Math.sqrt(rnd()) * 24;
-    const ang = rnd() * Math.PI * 2;
-    const cx = Math.min(92, Math.max(8, 50 + Math.cos(ang) * band * 1.15));
-    const cy = Math.min(92, Math.max(8, 50 + Math.sin(ang) * band * 1.15));
+    let cx, cy;
+    if (rnd() < 0.65) {
+      const band = 26 + rnd() * 19;
+      const ang = rnd() * Math.PI * 2;
+      cx = 50 + Math.cos(ang) * band * 1.15;
+      cy = 50 + Math.sin(ang) * band * 1.15;
+    } else {
+      // 加权落点：按聚笔权重做 6 次拒绝采样，仍不中则均匀兜底
+      let picked = false;
+      for (let t = 0; t < 6; t++) {
+        const px = 8 + rnd() * 84;
+        const py = 8 + rnd() * 84;
+        if (rnd() < strokeWeight(px, py)) { cx = px; cy = py; picked = true; break; }
+      }
+      if (!picked) {
+        const band = Math.sqrt(rnd()) * 24;
+        const ang = rnd() * Math.PI * 2;
+        cx = 50 + Math.cos(ang) * band;
+        cy = 50 + Math.sin(ang) * band;
+      }
+    }
+    cx = Math.min(92, Math.max(8, cx));
+    cy = Math.min(92, Math.max(8, cy));
     const angle = rnd() * Math.PI;
     const len = 2.5 + rnd() * 4.5;
     const dx = Math.cos(angle) * (len / 2);
@@ -102,23 +145,94 @@ function generateSealGranulation(seed, style, density) {
     });
   }
 
-  // 3. 矿物砂眼清晰微孔：半数向印缘聚集（印泥堆积先及边缘）
-  const poreCount = Math.floor((style === 'yin' ? 32 : 20) * density);
+  // 3. 矿物砂眼微孔：半数向印缘聚集（印泥堆积先及边缘），半数循聚笔权重；
+  //    尺寸分档下限抬高——小印只留肉眼可辨的砂眼，杜绝针尖噪点
+  const poreMinR = d >= 1 ? 0.4 : d >= 0.6 ? 0.55 : 0.7;
+  const poreCount = Math.floor((style === 'yin' ? 32 : 20) * density * d);
   for (let i = 0; i < poreCount; i++) {
-    const band = rnd() < 0.5 ? 24 + rnd() * 22 : Math.sqrt(rnd()) * 24;
-    const ang = rnd() * Math.PI * 2;
+    let cx, cy;
+    if (rnd() < 0.5) {
+      const band = 24 + rnd() * 22;
+      const ang = rnd() * Math.PI * 2;
+      cx = 50 + Math.cos(ang) * band * 1.1;
+      cy = 50 + Math.sin(ang) * band * 1.1;
+    } else {
+      cx = 7 + rnd() * 86;
+      cy = 7 + rnd() * 86;
+      if (rnd() > 0.35 + strokeWeight(cx, cy) * 0.65) {
+        const band = Math.sqrt(rnd()) * 24;
+        const ang = rnd() * Math.PI * 2;
+        cx = 50 + Math.cos(ang) * band;
+        cy = 50 + Math.sin(ang) * band;
+      }
+    }
     pores.push({
-      cx: Math.min(93, Math.max(7, 50 + Math.cos(ang) * band * 1.1)).toFixed(1),
-      cy: Math.min(93, Math.max(7, 50 + Math.sin(ang) * band * 1.1)).toFixed(1),
-      r: (0.4 + rnd() * 0.45).toFixed(1)
+      cx: Math.min(93, Math.max(7, cx)).toFixed(1),
+      cy: Math.min(93, Math.max(7, cy)).toFixed(1),
+      r: (poreMinR + rnd() * 0.45).toFixed(1)
     });
   }
 
-  return { notches, slashes, pores };
+  // 4. 低频大块漏印斑：钤盖时印泥未及的留白（1~2 处，聚向重灾边一侧）。
+  //    每斑由 3 枚偏心小圆叠成不规则云状——禁规则圆点（一眼假）
+  const blobCount = rnd() < 0.55 ? 1 : 2;
+  const heavyAngMap = { top: -Math.PI / 2, bottom: Math.PI / 2, left: Math.PI, right: 0 };
+  for (let i = 0; i < blobCount; i++) {
+    const nearHeavy = rnd() < 0.65;
+    const base = nearHeavy ? heavyAngMap[heavySide] : rnd() * Math.PI * 2;
+    const ang = base + (rnd() - 0.5) * 1.2;
+    const dist = 30 + rnd() * 12;
+    const bcx = 50 + Math.cos(ang) * dist;
+    const bcy = 50 + Math.sin(ang) * dist;
+    const coreR = 1.6 + rnd() * 1.4;
+    const lobes = 2 + Math.floor(rnd() * 2);
+    for (let k = 0; k < lobes; k++) {
+      const off = coreR * (0.5 + rnd() * 0.6);
+      const a2 = rnd() * Math.PI * 2;
+      blobs.push({
+        cx: (bcx + Math.cos(a2) * off).toFixed(1),
+        cy: (bcy + Math.sin(a2) * off).toFixed(1),
+        r: (coreR * (0.55 + rnd() * 0.5)).toFixed(1)
+      });
+    }
+  }
+
+  return { notches, slashes, pores, blobs };
 }
 
-/** 金石篆刻字形映射：常用简体印文转繁体（印谱以繁体为正） */
-const TRAD_MAP = { '春': '春', '唇': '唇', '语': '語', '冬': '冬', '词': '詞', '韵': '韻', '东': '東' };
+/* ── 篆法正字/繁体回填表（缺字时才生效，不改已有字形语义）──────────────
+ * lib/seal-alias.json：今字 → 說文正字/繁体对照，1316 条，取自「篆印 Zhuanyin」
+ * ALIAS 表（github.com/AKSA0397/zhuanyin，数据源自 shuowen.org 的說文正字，
+ * Apache License 2.0），并按「源字不在开元小篆字库 ∧ 替换目标在字库」过滤。
+ * 例：语→語、词→詞、韵→韻、东→東、书→書、砚→硯；仅当源字缺字时回填。
+ */
+const SEAL_ALIAS_FILE = path.join(__dirname, '..', 'lib', 'seal-alias.json');
+
+let sealAliasMap; // undefined=未加载  false=缺席  object=就绪
+
+function loadSealAliasMap() {
+  if (sealAliasMap === undefined) {
+    try {
+      sealAliasMap = JSON.parse(fs.readFileSync(SEAL_ALIAS_FILE, 'utf8'));
+    } catch (err) {
+      sealAliasMap = false;
+    }
+  }
+  return sealAliasMap;
+}
+
+/**
+ * 印文单字定字：字库直查 → 缺字时回填正字（且目标须在字库）→ 原样交回退链。
+ * aliasEnabled=false 时跳过回填，全站逐字回退与字库直查行为同旧版。
+ */
+function resolveSealChar(font, ch, aliasEnabled) {
+  if (!font || !aliasEnabled) return ch;
+  if (sealGlyphForChar(font, ch) !== null) return ch;
+  const alias = loadSealAliasMap();
+  const target = alias ? alias[ch] : undefined;
+  if (target !== undefined && sealGlyphForChar(font, target) !== null) return target;
+  return ch;
+}
 
 // KaiyuanSeal 全字集墨面重心（字体坐标系，adv=upem=1000 时实测 16 字偏差 ±5 内）
 const SEAL_INK_CX = 592;
@@ -287,6 +401,151 @@ function glyphPlace(font, ch, em, cx, cy) {
   return `<path d="${d}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${k.toFixed(5)})" />`;
 }
 
+/* ── 程序化印缘（全缘微毛糙）：沿周长采样折线 + 种子抖动───────────────
+ * 替代固定贝塞尔轮廓：低频整段起伏 + 高频逐点毛刺，同一 activeSeed 同一印缘。
+ * gaps: 阳刻边栏断口窗口（周长比例 [start,end)），窗口内不落笔。
+ */
+function edgeRuns(pts, n, gaps) {
+  const inGap = (t) => gaps && gaps.some((g) => t >= g[0] && t < g[1]);
+  const runs = [];
+  let run = [];
+  for (let i = 0; i <= n; i++) {
+    if (i < n && inGap(i / n)) {
+      if (run.length > 1) runs.push(run);
+      run = [];
+    } else {
+      run.push(pts[i]);
+    }
+  }
+  if (run.length > 1) runs.push(run);
+  return runs;
+}
+
+function pathOf(pts, close) {
+  return pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('') + (close ? 'Z' : '');
+}
+
+/** 方/长方圆角矩形印缘；rect {x0,y0,x1,y1} */
+function roughRectEdge(rnd, rect, amp) {
+  const { x0, y0, x1, y1 } = rect;
+  const w = x1 - x0;
+  const h = y1 - y0;
+  const per = 2 * (w + h);
+  const n = Math.max(60, Math.round(per * 1.2));
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const ii = i % n;
+    const s = (ii / n) * per;
+    let x, y, nx, ny;
+    if (s < w) { x = x0 + s; y = y0; nx = 0; ny = -1; }
+    else if (s < w + h) { x = x1; y = y0 + (s - w); nx = 1; ny = 0; }
+    else if (s < 2 * w + h) { x = x1 - (s - w - h); y = y1; nx = 0; ny = 1; }
+    else { x = x0; y = y1 - (s - 2 * w - h); nx = -1; ny = 0; }
+    const j = (rnd() - 0.5) * 2 * amp + Math.sin(ii * 0.9 + 1.3) * amp * 0.55;
+    pts.push([x + nx * j, y + ny * j]);
+  }
+  return pts;
+}
+
+/** 圆印印缘 */
+function roughCircleEdge(rnd, cx, cy, r, amp) {
+  const n = 96;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const ii = i % n;
+    const a = (ii / n) * Math.PI * 2;
+    const j = (rnd() - 0.5) * 2 * amp + Math.sin(ii * 1.1 + 0.7) * amp * 0.5;
+    pts.push([cx + Math.cos(a) * (r + j), cy + Math.sin(a) * (r + j)]);
+  }
+  return pts;
+}
+
+/** 阳刻断口窗口：1~3 处，落在四边中段附近（随机漂移）——断口贵少而精，忌碎 */
+function borderGaps(rnd) {
+  const gaps = [];
+  const centers = [0.125, 0.375, 0.625, 0.875];
+  for (let i = 0; i < centers.length; i++) {
+    if (rnd() < 0.45) continue;
+    const c = centers[i] + (rnd() - 0.5) * 0.04;
+    const half = 0.005 + rnd() * 0.008;
+    gaps.push([Math.max(0.01, c - half), Math.min(0.99, c + half)]);
+  }
+  return gaps;
+}
+
+/* ── 形制注册表（P1-C）：square 默认方印 / round 圆印 / oblong 长方闲章 ──
+ * 每个形制提供：edge（印缘几何）、centerline（阳刻边栏中心线矩形/圆）、
+ * slots（分制落位表）、grid（白文界格）。
+ */
+const SEAL_SHAPES = {
+  square: {
+    face: { x0: 5.6, y0: 5.2, x1: 94.8, y1: 94.5 },
+    centerline: { x0: 7.4, y0: 7.4, x1: 92.6, y1: 92.6 },
+    edge: (rnd, amp) => roughRectEdge(rnd, { x0: 5.6, y0: 5.2, x1: 94.8, y1: 94.5 }, amp),
+    slots(n, chars, order) {
+      // 直读(zhi)：右上[0]→右下[1]→左上[2]→左下[3]；回文(hui)：右上→左上→左下→右下
+      const pos = order === 'hui'
+        ? [[73, 28], [27, 28], [27, 73], [73, 73]]
+        : [[73, 28], [73, 73], [27, 28], [27, 73]];
+      if (n >= 4) return chars.slice(0, 4).map((ch, i) => [ch, 44, pos[i][0], pos[i][1]]);
+      if (n === 3) return [[chars[0], 30, 73, 28], [chars[1], 30, 73, 73], [chars[2], 44, 27, 50]];
+      if (n === 2) return [[chars[0], 44, 73, 50], [chars[1], 44, 27, 50]];
+      return n === 1 ? [[chars[0], 64, 50, 50]] : [];
+    },
+    grid(n, paper) {
+      const gl = (x1, y1, x2, y2, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${paper}" stroke-width="${w}" />`;
+      if (n >= 4) return gl(50, 10, 50, 44, 1.6) + gl(50, 56, 50, 90, 1.6) + gl(10, 50, 44, 50, 1.6) + gl(56, 50, 90, 50, 1.6);
+      if (n === 3) return gl(50, 10, 50, 90, 1.6) + gl(54, 50, 90, 50, 1.2);
+      if (n === 2) return gl(50, 10, 50, 90, 1.6);
+      return '';
+    }
+  },
+  round: {
+    face: { cx: 50, cy: 50, r: 44.5 },
+    centerline: { cx: 50, cy: 50, r: 42.4 },
+    edge: (rnd, amp) => roughCircleEdge(rnd, 50, 50, 44.5, amp),
+    slots(n, chars, order) {
+      const pos = order === 'hui'
+        ? [[66, 34], [34, 34], [34, 66], [66, 66]]
+        : [[66, 34], [66, 66], [34, 34], [34, 66]];
+      if (n >= 4) return chars.slice(0, 4).map((ch, i) => [ch, 30, pos[i][0], pos[i][1]]);
+      if (n === 3) return [[chars[0], 26, 66, 34], [chars[1], 26, 66, 66], [chars[2], 32, 32, 50]];
+      if (n === 2) return [[chars[0], 34, 50, 32], [chars[1], 34, 50, 68]];
+      return n === 1 ? [[chars[0], 52, 50, 50]] : [];
+    },
+    grid(n, paper) {
+      const gl = (x1, y1, x2, y2, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${paper}" stroke-width="${w}" />`;
+      if (n >= 4) return gl(50, 14, 50, 44, 1.5) + gl(50, 56, 50, 86, 1.5) + gl(14, 50, 44, 50, 1.5) + gl(56, 50, 86, 50, 1.5);
+      if (n === 3) return gl(48, 16, 48, 84, 1.5) + gl(66, 50, 86, 50, 1.1);
+      if (n === 2) return gl(14, 50, 86, 50, 1.5);
+      return '';
+    }
+  },
+  oblong: {
+    face: { x0: 5.6, y0: 24, x1: 94.4, y1: 76 },
+    centerline: { x0: 7.4, y0: 31.4, x1: 92.6, y1: 68.6 },
+    edge: (rnd, amp) => roughRectEdge(rnd, { x0: 5.6, y0: 24, x1: 94.4, y1: 76 }, amp),
+    slots(n, chars) {
+      // 长方闲章：横列平铺，等分落位
+      const count = Math.min(n, 4);
+      const em = count === 1 ? 40 : count === 2 ? 36 : count === 3 ? 28 : 22;
+      const step = 84 / count;
+      return chars.slice(0, 4).map((ch, i) => [ch, em, 50 + 42 - step * (i + 0.5), 50]);
+    },
+    grid(n, paper) {
+      const count = Math.min(n, 4);
+      if (count < 2) return '';
+      const step = 84 / count;
+      let s = '';
+      for (let i = 1; i < count; i++) {
+        const x = (50 + 42 - step * i).toFixed(1);
+        s += `<line x1="${x}" y1="30" x2="${x}" y2="70" stroke="${paper}" stroke-width="1.4" />`;
+      }
+      return s;
+    }
+  }
+};
+
 /**
  * 核心渲染：生成纯矢量印章 SVG 字符串
  * options: { text, style, size, rotate, density, seed, className }
@@ -300,77 +559,122 @@ function renderSealSvg(options, themeConfig) {
   const rotate = options.rotate !== undefined ? options.rotate : (cfg.rotate !== undefined ? cfg.rotate : -1.2);
   const density = options.density || cfg.density || 1.0;
   const className = options.className || '';
+  const shapeName = SEAL_SHAPES[options.shape || cfg.shape] ? (options.shape || cfg.shape) : 'square';
+  const shape = SEAL_SHAPES[shapeName];
+  const order = cfg.order === 'hui' ? 'hui' : 'zhi';
+  const inkTier = cfg.ink === 'zhubiao' || cfg.ink === 'shenha' ? cfg.ink : 'cinnabar';
 
-  const chars = text.split('').map((c) => TRAD_MAP[c] || c);
+  const font = loadSealFont();
+  const aliasEnabled = cfg.alias !== false;
+  const chars = text.split('').map((c) => resolveSealChar(font, c, aliasEnabled));
 
-  // 印色/纸色一律走 CSS 变量，JS 内不落硬编码色值
+  // 印色/纸色一律走 CSS 变量，JS 内不落硬编码色值。
+  // 色阶：朱磦/深红经 .seal-ink-* 覆盖类切换（P1-D），类挂在 <span> 上
   const cinnabar = 'var(--seal-color)';
   const paper = 'var(--paper-bg)';
   const isYin = style === 'yin';
+  const isMixed = style === 'mixed';
+  const inkClass = inkTier === 'cinnabar' ? '' : ` seal-ink-${inkTier}`;
 
-  // 种子 = 印文指纹 + 全局 seed：换字换刀痕，同字同刀痕
+  // 尺寸分档（P0-C）：≥96 全量细节 / 48~96 六成 / <48 三成半；杜绝亚像素噪点
+  const detail = size >= 96 ? 1 : size >= 48 ? 0.6 : 0.35;
+  // 特征尺寸像素钳制：viewBox 100 映射到 size px，一切特征 ≥ 0.8px
+  const minUnit = (0.8 * 100) / size;
+
+  // 种子 = 印文指纹 + 全局 seed + 形制：换字换刀痕，同字同刀痕
   const activeSeed = options.seed !== undefined
     ? options.seed
-    : (hashString(`${text}_${style}`) + (cfg.seed || 42));
-  const { notches, slashes, pores } = generateSealGranulation(activeSeed, style, density);
-  const maskId = 'seal_mk_' + Math.abs(hashString(`${text}_${style}_${activeSeed}`)).toString(36);
+    : (hashString(`${text}_${style}_${shapeName}`) + (cfg.seed || 42));
+  const maskId = 'seal_mk_' + Math.abs(hashString(`${text}_${style}_${shapeName}_${activeSeed}`)).toString(36);
 
-  // 蒙版：白透黑挖。缺口/飞白/砂眼皆为纯几何剪切，杜绝滤镜
+  // 界格与落位（先于颗粒：字格供聚笔加权）；白文/朱白相间均界格，纯朱文不界
+  const slots = shape.slots(chars.length, chars, order);
+  const grid = style === 'yang' ? '' : shape.grid(chars.length, paper);
+  const cells = slots.map(([, em, cx, cy]) => ({ cx, cy, half: em / 2 }));
+
+  const { notches, slashes, pores, blobs } = generateSealGranulation(activeSeed, isYin ? 'yin' : 'yang', density, cells, detail);
+
+  // 像素钳制：半径/线宽不足 minUnit 者抬到下限（崩口深度天然 ≥ 1.8，不受钳）
+  const clampPx = (v) => Math.max(v, minUnit);
   const maskDef = `<mask id="${maskId}" x="0" y="0" width="100" height="100" maskUnits="userSpaceOnUse">`
     + `<rect x="0" y="0" width="100" height="100" fill="#ffffff" />`
     + notches.map((pts) => `<polygon points="${pts}" fill="#000000" />`).join('')
-    + slashes.map((s) => `<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="#000000" stroke-width="${s.width}" stroke-linecap="round" />`).join('')
-    + pores.map((p) => `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" fill="#000000" />`).join('')
+    + blobs.map((b) => `<circle cx="${b.cx}" cy="${b.cy}" r="${b.r}" fill="#000000" />`).join('')
+    + slashes.map((s) => `<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="#000000" stroke-width="${clampPx(Number(s.width)).toFixed(1)}" stroke-linecap="round" />`).join('')
+    + pores.map((p) => `<circle cx="${p.cx}" cy="${p.cy}" r="${clampPx(Number(p.r)).toFixed(1)}" fill="#000000" />`).join('')
     + `</mask>`;
 
-  // 界格（分制，仅白文）：1 字无格 / 2 字日字格（中竖） / 3 字右二左一（中竖+右横） /
-  // 4 字田字格——白文格线为刻出的白线（阴刻故随印文用纸色）；
-  // 朱文（阳）不加界格，铁线细朱向来不界
-  const gridLine = (x1, y1, x2, y2, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${paper}" stroke-width="${w}" />`;
-  const gridTian = gridLine(50, 10, 50, 44, 1.6) + gridLine(50, 56, 50, 90, 1.6)
-    + gridLine(10, 50, 44, 50, 1.6) + gridLine(56, 50, 90, 50, 1.6);
-  const gridRi2 = gridLine(50, 10, 50, 90, 1.6);
-  const gridRi3 = gridLine(50, 10, 50, 90, 1.6) + gridLine(54, 50, 90, 50, 1.2);
+  // 印缘：程序化全缘毛糙（P0-B），种子确定性；阳刻边栏取中心线折线 + 断口窗口
+  const edgePts = shape.edge(createPrng(activeSeed ^ 0x5eed), 1.1);
+  const faceD = pathOf(edgePts.slice(0, -1), true);
 
-  // 印文落位（满白分制）：字入字格、按格取满；四字直读 右上[0] 右下[1] 左上[2] 左下[3]
-  const font = loadSealFont();
-  const slots = chars.length === 0 ? []
-    : chars.length >= 4
-      ? [[chars[0], 44, 73, 28], [chars[1], 44, 73, 73], [chars[2], 44, 27, 28], [chars[3], 44, 27, 73]]
-      : chars.length === 3
-        ? [[chars[0], 30, 73, 28], [chars[1], 30, 73, 73], [chars[2], 44, 27, 50]]
-        : chars.length === 2
-          ? [[chars[0], 44, 73, 50], [chars[1], 44, 27, 50]]
-          : [[chars[0], 64, 50, 50]];
-  const grid = chars.length >= 4 ? gridTian : chars.length === 3 ? gridRi3 : chars.length === 2 ? gridRi2 : '';
-
-  // 印文：篆书轮廓由构建期字库逐字内联（<path>）；缺字逐字回退楷体链（<text>）
+  // 印文：篆书轮廓由构建期字库逐字内联（<path>）；缺字逐字回退楷体链（<text>）。
+  // 阴刻白文并笔（P0-B）：字面加同色描边（约字面 4%），交叉处粘连成满白气象
   const textFont = `font-family="var(--font-seal), 'Noto Serif TC', 'Source Han Serif SC', 'Songti SC', serif" font-weight="900" text-anchor="middle" dominant-baseline="central"`;
-  const textBlock = `<g fill="${isYin ? paper : cinnabar}">`
-    + slots.map(([ch, em, cx, cy]) => {
-      const placed = font ? glyphPlace(font, ch, em, cx, cy) : null;
-      return placed !== null
-        ? placed
-        : `<text x="${cx}" y="${cy}" ${textFont} font-size="${em}">${ch}</text>`;
-    }).join('')
-    + `</g>`;
+  const mergeStroke = (em) => isYin ? ` stroke="${paper}" stroke-width="${(em * 0.04).toFixed(2)}" stroke-linejoin="round"` : '';
+  const cellFill = (slotIdx) => {
+    if (!isMixed) return isYin ? paper : cinnabar;
+    // 朱白相间（P1-B）：2 字上下相间，4 字对角相间——[0][3] 朱、[1][2] 白
+    const zhu = chars.length >= 4 ? (slotIdx === 0 || slotIdx === 3) : slotIdx === 0;
+    return zhu ? cinnabar : paper;
+  };
+  const textBlock = slots.map(([ch, em, cx, cy], i) => {
+    const fill = cellFill(i);
+    const placed = font ? glyphPlace(font, ch, em, cx, cy) : null;
+    return placed !== null
+      ? `<g fill="${fill}"${mergeStroke(em)}>${placed}</g>`
+      : `<text x="${cx}" y="${cy}" ${textFont} font-size="${em}" fill="${fill}"${mergeStroke(em)}>${ch}</text>`;
+  }).join('');
 
-  // 印面：阴刻（白文）朱砂底反白字 / 阳刻（朱文）铁线边栏红字
+  // 印面：阴刻朱砂底反白字 / 阳刻铁线边栏红字 / 朱白相间（白文地 + 朱文字相间）
   let body = '';
-  if (isYin) {
-    body = `<path d="M 6.5,12 C 6,7.5 7.5,6 12,5.5 L 48,5.2 L 87.5,5.5 C 92,6 94,8 94.5,12.5 L 94.8,51 L 94.2,87.5 C 93.8,92 91.5,94 87.5,94.5 L 53,94.8 L 12.5,94.2 C 8,93.8 6,91.5 5.5,87.5 L 5.2,49 Z" fill="${cinnabar}" />`
+  const yangBorder = () => {
+    // 边栏中心线：印缘向内缩 ~1.8 的程序化折线，保持 2~4 处断口结构
+    const borderSeed = activeSeed ^ 0xba1d;
+    const gaps = borderGaps(createPrng(borderSeed));
+    const inner = shape.centerline.r !== undefined
+      ? roughCircleEdge(createPrng(borderSeed ^ 0x11), shape.centerline.cx, shape.centerline.cy, shape.centerline.r, 0.9)
+      : roughRectEdge(createPrng(borderSeed ^ 0x11), shape.centerline, 0.9);
+    return edgeRuns(inner, inner.length - 1, gaps)
+      .map((run) => `<path d="${pathOf(run, false)}" fill="none" stroke="${cinnabar}" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round" />`)
+      .join('');
+  };
+  if (isMixed) {
+    // 朱白相间（P1-B）：先铺满朱砂地，再为每个「朱文格」挖纸色格（逐格分制）。
+    // 象限/竖条矩形经 clipPath 收进印缘，圆印/长方印不溢轮廓；长方按竖条列切，
+    // 字不跨纸/红交界（跨界则笔画断色）
+    const clipId = maskId + '_c';
+    let zhuCells;
+    if (shapeName === 'oblong') {
+      const count = Math.min(slots.length, 4);
+      const step = 84 / count;
+      zhuCells = slots.map(([, , cx], i) => ({ i, cx }))
+        .filter((s) => (slots.length >= 4 ? (s.i === 0 || s.i === 3) : s.i === 0))
+        .map((s) => `<rect x="${(s.cx - step / 2).toFixed(1)}" y="3" width="${step.toFixed(1)}" height="94" fill="${paper}" />`)
+        .join('');
+    } else {
+      zhuCells = slots.map(([, , cx, cy], i) => ({ i, cx, cy }))
+        .filter((s) => (slots.length >= 4 ? (s.i === 0 || s.i === 3) : s.i === 0))
+        .map((s) => `<rect x="${s.cx > 50 ? 50 : 3}" y="${s.cy > 50 ? 50 : 3}" width="47" height="47" fill="${paper}" />`)
+        .join('');
+    }
+    body = `<path d="${faceD}" fill="${cinnabar}" />`
+      + `<defs><clipPath id="${clipId}"><path d="${faceD}" /></clipPath></defs>`
+      + `<g clip-path="url(#${clipId})">${zhuCells}</g>`
+      + textBlock
+      + grid;
+  } else if (isYin) {
+    body = `<path d="${faceD}" fill="${cinnabar}" />`
       + textBlock
       + grid;
   } else {
     body = `<rect x="6" y="6" width="88" height="88" rx="2.5" fill="${cinnabar}" fill-opacity="0.04" />`
-      + `<path d="M 8.5,13 C 8.5,8.5 10.5,7 14.5,6.8 L 56,6.8 M 62,6.8 L 86,7 C 90,7.5 92.5,9.5 93,13.5 L 93.2,52" fill="none" stroke="${cinnabar}" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round" />`
-      + `<path d="M 93.2,58 L 93,86 C 92.5,90.5 90,92.5 85.5,93 L 42,93.2 M 35,93.2 L 14.5,93 C 10,92.5 8,90 7.5,85.5 L 7.2,48" fill="none" stroke="${cinnabar}" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round" />`
-      + `<path d="M 7.2,41 L 7.5,16 C 7.8,13 8.8,11 11,9.5" fill="none" stroke="${cinnabar}" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round" />`
+      + yangBorder()
       + textBlock;
   }
 
   // 尺寸走 SVG width/height 属性；微旋包一层 <g transform>（不落内联 style，兼容各浏览器）
-  return `<span class="seal seal-gen${className ? ' ' + className : ''}" role="img" aria-label="印章：${text}">`
+  return `<span class="seal seal-gen${inkClass}${className ? ' ' + className : ''}" role="img" aria-label="印章：${text}">`
     + `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">`
     + `<defs>${maskDef}</defs>`
     + `<g transform="rotate(${rotate} 50 50)"><g mask="url(#${maskId})">${body}</g></g>`

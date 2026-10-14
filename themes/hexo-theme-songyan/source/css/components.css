@@ -131,6 +131,15 @@
   justify-content: center;
 }
 
+/* 印泥色阶（seal.ink: zhubiao | shenha）：局部覆盖印色变量，JS 内不落色值 */
+.seal-ink-zhubiao {
+  --seal-color: var(--seal-color-zhubiao);
+}
+
+.seal-ink-shenha {
+  --seal-color: var(--seal-color-shenha);
+}
+
 .seal-gen svg {
   width: auto;
   height: auto;
