@@ -36,7 +36,7 @@ seal:
   locations:
     navbar: true             # 导航栏站名处落印
     post_header: false       # 文章题头是否落分类名印
-    post_footer: false       # 文章文末落款处加盖作者印章（post.ejs 移植时接入）
+    post_footer: true        # 文章文末落款处加盖作者印章
     sidebar: false           # 侧边栏/名片区（暂无该版式）
 
 
@@ -87,8 +87,7 @@ home:
 labels:
   cipai: 词牌
   post: 文稿            # 无分类文章的元信息/题头回退文案
-  weather: 气候
-  mood: 心境
+  location: 驻足        # 详情页元信息「驻足」槽位前缀（front-matter location 缺省即隐藏）
   detail: 详情 →
   back_to_home: 返回卷首
 

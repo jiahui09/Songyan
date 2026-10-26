@@ -1,0 +1,164 @@
+<%
+  /**
+   * 详情页共用骨架（article-head + 元信息 + 正文 + 落款）
+   * 两轨分发自 layout/post.ejs：
+   *   variant = 'post' → 文章体（随笔/技术/项目共用，左对齐）
+   *   variant = 'ci'   → 诗词体（居中宋式版式）
+   * 题头/题目/元信息与首页归流同参（朱红题头 → 题目 → 汉字元信息），
+   * 干支/节气/题头/分类算法自 index.ejs 平移，口径保持一致。
+   */
+  var v = (typeof variant !== 'undefined' && variant) ? variant : 'post';
+  var isCi = v === 'ci';
+  var labels = theme.labels || {};
+  var sectionsCfg = (theme.home && theme.home.sections) || {};
+
+  // 干支纪年：以立春（近似 2/4）为界换算年柱（纯计算，不依赖外部历法库）
+  var STEMS = '甲乙丙丁戊己庚辛壬癸';
+  var BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
+  function ganzhiYear(d) {
+    var y = d.getFullYear();
+    var lichun = Math.floor(y * 0.2422 + 3.87) - Math.floor((y - 1) / 4);
+    if (d.getMonth() < 1 || (d.getMonth() === 1 && d.getDate() < lichun)) y -= 1;
+    var i = (y - 4) % 60;
+    if (i < 0) i += 60;
+    return STEMS.charAt(i % 10) + BRANCHES.charAt(i % 12) + '年';
+  }
+
+  // 二十四节气：21 世纪近似公式（day = [Y*0.2422+C] - [(Y-1)/4]，适用 2000–2099）
+  var TERMS = ['小寒','大寒','立春','雨水','惊蛰','春分','清明','谷雨',
+               '立夏','小满','芒种','夏至','小暑','大暑','立秋','处暑',
+               '白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'];
+  var TERM_C = [5.4055,20.12,3.87,18.73,5.63,20.646,4.81,20.1,5.52,21.04,5.678,21.37,
+                7.108,22.83,7.5,23.13,7.646,23.042,8.318,23.438,7.438,22.36,7.18,21.94];
+  function solarTerm(d) {
+    var y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+    var Y = y - 1900;
+    var t1 = Math.floor(Y * 0.2422 + TERM_C[m * 2]) - Math.floor((Y - 1) / 4);
+    var t2 = Math.floor(Y * 0.2422 + TERM_C[m * 2 + 1]) - Math.floor((Y - 1) / 4);
+    if (day >= t2) return TERMS[m * 2 + 1];
+    if (day >= t1) return TERMS[m * 2];
+    // 当日早于本月首节气：归上月「气」（每月第二个节气名）
+    var pm = (m + 11) % 12;
+    return TERMS[pm * 2 + 1];
+  }
+
+  // 朱红题头：词牌名最高优先级 → 主分类 → 文稿兜底（每条必有，压阵标题）
+  function eyebrowLabel(post) {
+    if (post.cipai) return post.cipai;
+    if (post.categories && post.categories.length) {
+      return post.categories.data[0].name;
+    }
+    if (post.type === 'ci') {
+      var ciCfg = sectionsCfg.ci;
+      return (ciCfg && ciCfg.menu) || labels.post || '';
+    }
+    return labels.post || '';
+  }
+
+  // 元信息分类：诗词归「词卷」聚合，文章显示主分类，兜底 labels.post
+  function metaCategory(post) {
+    if (post.type === 'ci') {
+      var ciCfg = sectionsCfg.ci;
+      return (ciCfg && ciCfg.menu) || labels.post || '';
+    }
+    if (post.categories && post.categories.length) {
+      return post.categories.data[0].name;
+    }
+    return labels.post || '';
+  }
+
+  var dateStr = date(page.date, 'YYYY-MM-DD');
+  var dateDot = date(page.date, 'YYYY.MM.DD');
+  var eyebrow = eyebrowLabel(page);
+  var cat = metaCategory(page);
+  var ganzhi = ganzhiYear(page.date.toDate()) + ' ' + solarTerm(page.date.toDate());
+  var tags = (page.tags && page.tags.length) ? page.tags.toArray() : [];
+  // 元信息第 5/6 槽：天候/驻足读 front-matter，字段缺省静默隐藏不留多余分隔符
+  var weather = page.weather || '';
+  var place = page.location || '';
+
+  // 落款印：页面 front-matter seal: 覆盖印文/刻法，缺省回退主题默认
+  var pageSeal = page.seal;
+  var sealText = typeof pageSeal === 'string' ? pageSeal : (pageSeal && pageSeal.text) || undefined;
+  var sealStyle = (pageSeal && typeof pageSeal === 'object' && pageSeal.style) || undefined;
+  var sealFooterOn = !!(theme.seal && theme.seal.locations && theme.seal.locations.post_footer);
+%>
+
+<% if (isCi) { %>
+<!-- 【诗词体】居中宋式版式：朱红词牌题头 → 题目 → 汉字元信息 → 词作正文 -->
+<main class="site-main site-main--narrow">
+  <article class="post-ci">
+    <header class="post-ci__header">
+      <p class="post-detail__eyebrow"><%= eyebrow %></p>
+      <h1 class="post-title enter"><%= page.title %></h1>
+      <p class="post-detail__meta">
+        <time datetime="<%= dateStr %>"><span class="post-detail__date"><%= dateDot %></span></time>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= ganzhi %></span>
+        <% if (weather) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= weather %></span>
+        <% } %>
+        <% if (cat) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= cat %></span>
+        <% } %>
+        <% if (place) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= labels.location %>：<%= place %></span>
+        <% } %>
+        <% if (tags.length) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <% tags.forEach(function (tag) { %>
+        <span class="post-detail__tag">#<%= tag.name %></span>
+        <% }); %>
+        <% } %>
+      </p>
+    </header>
+    <div class="post-ci__body-horizontal"><%- page.content %></div>
+<% } else { %>
+<!-- 【文章体】随笔/技术/项目一视同仁：朱红题头 → 题目 → 汉字元信息 → 正文 -->
+<main class="site-main">
+  <article class="essay-article">
+    <header class="essay-header">
+      <p class="post-detail__eyebrow"><%= eyebrow %></p>
+      <h1 class="post-title enter"><%= page.title %></h1>
+      <p class="post-detail__meta">
+        <time datetime="<%= dateStr %>"><span class="post-detail__date"><%= dateDot %></span></time>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= ganzhi %></span>
+        <% if (weather) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= weather %></span>
+        <% } %>
+        <% if (cat) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= cat %></span>
+        <% } %>
+        <% if (place) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span><%= labels.location %>：<%= place %></span>
+        <% } %>
+        <% if (tags.length) { %>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <% tags.forEach(function (tag) { %>
+        <span class="post-detail__tag">#<%= tag.name %></span>
+        <% }); %>
+        <% } %>
+      </p>
+    </header>
+    <div class="essay-body"><%- page.content %></div>
+<% } %>
+
+    <!-- 文末落款：署名在上、干支纪时在下，朱印钤于右下（seal.locations.post_footer 控制） -->
+    <div class="post-signature">
+      <div class="post-signature__meta">
+        <p class="post-signature__author"><%= theme.author && theme.author.name %></p>
+        <time datetime="<%= dateStr %>"><%= ganzhi %></time>
+      </div>
+      <% if (sealFooterOn) { %>
+      <%- render_seal(sealText, sealStyle, 110, 'seal--signature') %>
+      <% } %>
+    </div>
+  </article>
+</main>

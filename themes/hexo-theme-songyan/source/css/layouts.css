@@ -135,7 +135,9 @@
 }
 
 /* ---- 汉字古风元信息：以间隔号自然流淌，禁胶囊禁色块 ---- */
-.stream-item__meta {
+/* 汉字古风元信息：详情页与首页归流同参（间隔号自然流淌，禁胶囊禁色块） */
+.stream-item__meta,
+.post-detail__meta {
   font-size: var(--text-xs);
   color: var(--ink-secondary);
   letter-spacing: 0.05em;
@@ -143,20 +145,28 @@
   line-height: 1.6;
 }
 
-.stream-item__meta .meta-separator {
+/* 详情页元信息：压于题目之下 */
+.post-detail__meta {
+  margin-top: var(--space-3);
+}
+
+.stream-item__meta .meta-separator,
+.post-detail__meta .meta-separator {
   margin: 0 var(--space-2);
   color: var(--ink-faint);
   user-select: none;
 }
 
 /* 公历数字：衬线西文优化（Georgia / Times 族） */
-.stream-item__date-gregorian {
+.stream-item__date-gregorian,
+.post-detail__date {
   font-family: var(--font-date, Georgia, "Times New Roman", serif);
   letter-spacing: 0.02em;
 }
 
 /* 标签墨痕：纯文本细点缀，无药丸无边框 */
-.stream-item__tag-item {
+.stream-item__tag-item,
+.post-detail__tag {
   margin-right: var(--space-2);
   color: var(--ink-secondary);
   opacity: 0.85;
@@ -171,8 +181,9 @@
   letter-spacing: 0.02em;
 }
 
-/* ---- 朱红题头 Eyebrow：每条必有、固定高度，压阵标题之上 ---- */
-.stream-item__eyebrow {
+/* ---- 朱红题头 Eyebrow：每条必有、固定高度，压阵标题之上（首页归流与详情页同参） ---- */
+.stream-item__eyebrow,
+.post-detail__eyebrow {
   font-family: var(--font-serif);
   font-size: var(--text-tag);
   font-weight: 500;
@@ -232,13 +243,23 @@
   border-bottom: 1px solid var(--bamboo-border);
 }
 
-.post-ci__cipai-badge {
-  display: inline-block;
+/* 居中轨道题头：眉批取消首字缩进（缩进为左对齐轨道的视觉补偿） */
+.post-ci__header .post-detail__eyebrow {
+  text-indent: 0;
+}
+
+/* 题目：文楷中字常规字重（与首页归流同参），词轨加字距 */
+.essay-header .post-title,
+.post-ci__header .post-title {
   font-family: var(--font-title);
-  color: var(--cinnabar-red);
-  font-size: var(--text-sm);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: normal;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.post-ci__header .post-title {
+  letter-spacing: 0.06em;
 }
 
 .post-ci__body-horizontal {
@@ -250,7 +271,9 @@
   line-height: 2.2;
 }
 
-.post-ci__line {
+/* 词作正文行：横排段落与行类同参（Hexo 按段落切 <p>，不再手工逐行标注） */
+.post-ci__line,
+.post-ci__body-horizontal p {
   margin-bottom: var(--space-3);
   letter-spacing: 0.06em;
 }
@@ -362,22 +385,6 @@
   margin-bottom: var(--space-8);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--bamboo-border);
-}
-
-.essay-meta-strip {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--ink-secondary);
-  margin-top: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.essay-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
 }
 
 .essay-body {

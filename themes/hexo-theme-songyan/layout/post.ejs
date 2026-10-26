@@ -1,10 +1,11 @@
 <!--
-  Hexo Layout 占位骨架：post.ejs
+  Hexo Layout：post.ejs
   两轨分发契约（勿删）：
     type ∈ {ci, post}；缺失或非法 → post
     分发：partial('_partial/post/' + t)
     ci → 诗词页；post → 文章页（随笔/技术/项目共用）
 -->
-<main class="site-main">
-  <!-- 待本地 Agent 机械转译 -->
-</main>
+<%
+  var t = (page.type === 'ci' || page.type === 'post') ? page.type : 'post';
+%>
+<%- partial('_partial/post/' + t) %>

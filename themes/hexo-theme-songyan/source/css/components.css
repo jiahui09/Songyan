@@ -276,15 +276,6 @@
   margin-right: var(--space-1);
 }
 
-/* 文章页题头：分类上标居中于标题之上 */
-.post-ci__header .post-category-tag,
-.essay-header .post-category-tag {
-  display: block;
-  text-align: center;
-  margin: 0 0 var(--space-2);
-  vertical-align: baseline;
-}
-
 /* =========================================================
    4. 代码块组件 (Code Blocks) —— 文人化：宣纸浅调纸笺，摒弃深黑 IDE 风
    ========================================================= */
