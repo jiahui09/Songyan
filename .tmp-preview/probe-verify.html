@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  iframe { width: 900px; height: 400px; border: 0; }
+</style>
+</head>
+<body>
+<iframe id="f0" src="../prototype/css/layouts.css"></iframe>
+<iframe id="f1" src="../prototype/css/tokens.css"></iframe>
+<iframe id="f2" src="../prototype/css/components.css"></iframe>
+<iframe id="f3" src="../prototype/css/base.css"></iframe>
+<pre id="out">pending</pre>
+<script>
+window.addEventListener('load', () => {
+  const out = [];
+  const doc = document.getElementById('f0').contentDocument; // about:blank doc of css iframe? no
+  // css loaded as iframe renders as text doc; instead fetch via XHR-less trick: use contentDocument stylesheets
+  const files = ['layouts', 'tokens', 'components', 'base'];
+  let pending = files.length;
+  const results = {};
+  files.forEach((name, i) => {
+    const idoc = document.getElementById('f' + i).contentDocument;
+    let parsedSelectors = [];
+    try {
+      const sheet = idoc.styleSheets[0];
+      const walk = (rules) => {
+        for (const r of rules) {
+          if (r.selectorText) parsedSelectors.push(r.selectorText);
+          if (r.cssRules) walk(r.cssRules);
+        }
+      };
+      if (sheet) walk(sheet.cssRules);
+    } catch (e) { parsedSelectors = ['ERROR:' + e.message]; }
+    // raw text of the stylesheet from the iframe's <pre>-like text content
+    const raw = idoc.body ? idoc.body.textContent : '';
+    // extract raw top-level selector texts: text between } ( or start and { at brace-depth 0
+    const rawSelectors = [];
+    let depth = 0, buf = '', inComment = false;
+    for (let p = 0; p < raw.length; p++) {
+      const c = raw[p], n = raw[p+1];
+      if (inComment) { if (c === '*' && n === '/') { inComment = false; p++; } continue; }
+      if (c === '/' && n === '*') { inComment = true; p++; continue; }
+      if (depth === 0) {
+        if (c === '{') { if (buf.trim() && !buf.trim().startsWith('@')) rawSelectors.push(buf.trim()); buf = ''; depth++; continue; }
+        if (c === '}') { buf = ''; continue; }
+        buf += c;
+      } else {
+        if (c === '{') depth++;
+        if (c === '}') depth--;
+      }
+    }
+    // match: each raw selector should appear (as substring, comma-groups split) in parsed list
+    const parsedJoin = parsedSelectors.join(' || ');
+    const missing = [];
+    rawSelectors.forEach(sel => {
+      sel.split(',').map(s => s.trim()).filter(Boolean).forEach(one => {
+        if (parsedJoin.indexOf(one) === -1) missing.push(one);
+      });
+    });
+    results[name] = { rawCount: rawSelectors.length, parsedCount: parsedSelectors.length, missing: missing };
+    if (--pending === 0) finish();
+  });
+
+  function finish() {
+    out.push(JSON.stringify(results, null, 1));
+    // undefined var scan across all css text
+    const defined = new Set();
+    files.forEach((name, i) => {
+      const raw = document.getElementById('f' + i).contentDocument.body.textContent;
+      const re = /(--[a-zA-Z0-9-]+)\s*:/g;
+      let m; while ((m = re.exec(raw))) defined.add(m[1]);
+    });
+    const used = new Set();
+    files.forEach((name, i) => {
+      const raw = document.getElementById('f' + i).contentDocument.body.textContent;
+      const re = /var\(\s*(--[a-zA-Z0-9-]+)/g;
+      let m; while ((m = re.exec(raw))) used.add(m[1]);
+    });
+    const undef = [...used].filter(v => !defined.has(v));
+    out.push('UNDEF_IN_CSS: ' + JSON.stringify(undef));
+    document.getElementById('out').textContent = out.join('\n');
+  }
+});
+</script>
+</body></html>

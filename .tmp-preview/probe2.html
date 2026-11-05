@@ -1,0 +1,21 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<iframe id="f" src="../prototype/post-ci.html" style="width:1440px;height:800px"></iframe>
+<pre id="out"></pre>
+<script>
+window.addEventListener('load', () => {
+  const d = document.getElementById('f').contentDocument;
+  const lines = [];
+  try {
+    for (const ss of d.styleSheets) {
+      let rules; try { rules = ss.cssRules; } catch(e) { lines.push('BLOCKED ' + ss.href); continue; }
+      lines.push('FILE ' + (ss.href||'inline') + ' rules=' + rules.length);
+      for (const r of rules) {
+        if (r.selectorText && r.selectorText.includes('post-ci__header')) lines.push('  MATCH[' + ss.href.split('/').pop() + '] ' + r.selectorText + ' {' + r.style.cssText + '}');
+        if (r.media) lines.push('  MEDIA ' + r.conditionText + ' rules=' + r.cssRules.length);
+      }
+    }
+  } catch (e) { lines.push('ERR ' + e.message); }
+  document.getElementById('out').textContent = lines.join('\n');
+});
+</script>
+</body></html>

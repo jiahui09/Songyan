@@ -69,13 +69,12 @@ function initPoemSlip() {
 }
 
 /**
- * 取词：词牌 / 题注 / 词句 / 印面 / 水印，皆来自词页既有内容
+ * 取词：词牌 / 题注 / 词句 / 水印，皆来自词页既有内容
  * 落款文字不取——笺上以款印代署名，不再重复书写
  */
 function collectPoemSlipData() {
   const badge = document.querySelector('.post-ci__cipai-badge');
   const title = document.querySelector('.post-title');
-  const sealTexts = document.querySelectorAll('.post-signature .seal--signature text');
   const watermark = document.querySelector('.poem-slip__watermark');
   const lineEls = document.querySelectorAll('.post-ci__body-horizontal .post-ci__line');
 
@@ -93,11 +92,6 @@ function collectPoemSlipData() {
     tizhu: sepIndex > -1 ? titleText.slice(sepIndex + 1).trim() : '',
     lines: Array.prototype.map.call(lineEls, (el) => cleanCiLine(el)),
     lowerIndex: lowerIndex,
-    seal: Array.prototype.map.call(sealTexts, (t) => ({
-      text: t.textContent,
-      x: parseFloat(t.getAttribute('x')) || 50,
-      y: parseFloat(t.getAttribute('y')) || 50
-    })),
     watermark: watermark ? watermark.textContent.trim() : ''
   };
 }
@@ -167,25 +161,60 @@ function slipBlank() {
 
 /**
  * 印：克隆词页既有篆印（朱文双框与印文一并入笺）
+ * 克隆体与原件同页共存，mask id 须另起一名，免与原件抢引用
  */
 function buildSlipSeal() {
   const source = document.querySelector('.post-signature .seal--signature svg');
   if (!source) return null;
 
+  const svg = source.cloneNode(true);
+  const mask = svg.querySelector('mask[id]');
+  if (mask) {
+    const newId = mask.id + '-slip';
+    mask.id = newId;
+    Array.prototype.forEach.call(svg.querySelectorAll('[mask]'), (el) => {
+      el.setAttribute('mask', 'url(#' + newId + ')');
+    });
+  }
+
   const wrap = document.createElement('span');
   wrap.className = 'poem-slip__seal';
   wrap.setAttribute('aria-hidden', 'true');
-  wrap.appendChild(source.cloneNode(true));
+  wrap.appendChild(svg);
   return wrap;
+}
+
+/**
+ * 印：把词页既有印章 SVG 序列化为位图，供 Canvas 落盘
+ * 脱离文档后 var(--seal-color) 不再解析，须先内联为实际颜色
+ */
+function loadSlipSealImage() {
+  const source = document.querySelector('.post-signature .seal--signature svg');
+  if (!source) return Promise.resolve(null);
+
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--seal-color').trim();
+  const svg = source.cloneNode(true);
+  svg.setAttribute('width', '100');
+  svg.setAttribute('height', '100');
+
+  const markup = new XMLSerializer().serializeToString(svg).replace(/var\(--seal-color\)/g, color);
+  const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup);
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
 }
 
 /**
  * 导出：原生 Canvas 2× PNG 落盘；未能导出时留字提示
  */
-function exportPoemSlip(status) {
+async function exportPoemSlip(status) {
   try {
     const data = collectPoemSlipData();
-    const canvas = drawPoemSlip(data);
+    const canvas = await drawPoemSlip(data);
 
     if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable');
 
@@ -217,7 +246,7 @@ function exportPoemSlip(status) {
  * 无框：仅纸色、乌丝栏淡线、天地留白；题居右首，词句列居中均分天地，
  * 阕间空一列，款印沉底压角，句读不落点
  */
-function drawPoemSlip(data) {
+async function drawPoemSlip(data) {
   const W = 360;
   const H = 648;
   const SCALE = 2;
@@ -289,11 +318,12 @@ function drawPoemSlip(data) {
   });
 
   // 款印：以印代署名，沉底压角（.poem-slip__sealcol 之 text-align:end + padding-bottom 0.13W）
-  if (data.seal && data.seal.length) {
+  const sealImage = await loadSlipSealImage();
+  if (sealImage) {
     const m = metric.sealcol;
     const top = inset + areaH - m.size - m.padBottom * W;
     placeBox(m.size, top, (cx, y) => {
-      drawSlipSeal(ctx, data.seal, cx, y, m.size, token);
+      drawSlipSeal(ctx, sealImage, cx, y, m.size);
       return y + m.size;
     });
   }
@@ -364,30 +394,8 @@ function drawVerticalClauses(ctx, clauses, cx, top, metric) {
 }
 
 /**
- * 画印：复刻词页朱文双框与印文，印文取自词页既有 SVG 的坐标与字
+ * 画印：直取词页印章 SVG 的位图，边框、篆字与斑驳断口一并入笺
  */
-function drawSlipSeal(ctx, glyphs, cx, top, size, token) {
-  const unit = size / 100;   // 词页印面 viewBox 为 100
-
-  ctx.save();
-  ctx.translate(cx - size / 2, top);
-  ctx.scale(unit, unit);
-
-  ctx.strokeStyle = token('--seal-color');
-  ctx.lineJoin = 'miter';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(6, 6, 88, 88);
-
-  ctx.globalAlpha = 0.5;
-  ctx.lineWidth = 0.6;
-  ctx.strokeRect(10, 10, 80, 80);
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = token('--seal-color');
-  ctx.font = 'bold 28px ' + token('--font-seal');
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  glyphs.forEach((g) => ctx.fillText(g.text, g.x, g.y));
-
-  ctx.restore();
+function drawSlipSeal(ctx, image, cx, top, size) {
+  ctx.drawImage(image, cx - size / 2, top, size, size);
 }

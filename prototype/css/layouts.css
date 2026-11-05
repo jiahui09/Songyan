@@ -54,6 +54,7 @@
 
 .home-epigraph__source {
   font-size: var(--text-xs);
+  line-height: var(--leading-xs);
   color: var(--ink-faint);
   letter-spacing: 0.18em;
   margin: var(--space-3) 0 0;
@@ -90,8 +91,8 @@
   letter-spacing: var(--tracking-tag);
   text-indent: var(--tracking-tag);
   margin-bottom: var(--space-2);
-  line-height: 1.4;
-  height: 1.4em; /* 固定高度：无题头文案时占位齐整 */
+  line-height: var(--leading-xs);
+  height: var(--leading-xs); /* 固定高度：无题头文案时占位齐整 */
 }
 
 /* 题名：宋体中字，悬浮仅浓墨转微朱（禁阴影禁浮起） */
@@ -125,7 +126,7 @@
   font-size: var(--text-xs);
   color: var(--ink-secondary);
   letter-spacing: 0.05em;
-  line-height: 1.6;
+  line-height: var(--leading-xs);
   margin-top: var(--space-2);
 }
 
@@ -162,7 +163,7 @@
   overflow: hidden;
 }
 
-/* 阅读本文：素笺微边细线按钮，hover 仅转微朱，禁投影禁浮起 */
+/* 阅读本文：纯文字入口，无边框无底色无内边距，hover 仅转朱，禁投影禁浮起 */
 .read-more-wrapper {
   margin-top: var(--space-4);
 }
@@ -172,21 +173,16 @@
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-xs);
+  line-height: var(--leading-xs);
   letter-spacing: 0.1em;
   color: var(--ink-light);
   text-decoration: none;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background-color: var(--slip-paper);
-  transition: color var(--dur-feedback) var(--ease-ink),
-              border-color var(--dur-feedback) var(--ease-ink);
+  transition: color var(--dur-feedback) var(--ease-ink);
 }
 
 .read-more-btn:hover,
 .read-more-btn:focus-visible {
   color: var(--cinnabar);
-  border-color: var(--cinnabar);
 }
 
 .read-more-btn .arrow {
@@ -210,6 +206,7 @@
   font-family: var(--font-title);
   color: var(--cinnabar);
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   letter-spacing: 0.1em;
   margin-bottom: var(--space-2);
 }
@@ -220,10 +217,12 @@
   text-align: center;
   font-family: var(--font-serif);
   font-size: var(--text-lg);
-  line-height: 2.2;
+  line-height: 1.7778; /* 18px × 1.7778 = 32px，落在 4px 网格 */
 }
 
 .post-ci__line {
+  /* 全局 p 规则会重置行高，词句行显式跟随容器 */
+  line-height: inherit;
   margin-bottom: var(--space-3);
   letter-spacing: 0.06em;
 }
@@ -245,13 +244,27 @@
   margin-bottom: var(--space-8);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+
+/* 文章题头：front-matter header 字段，与词牌同定位（标题上方一行朱砂小字），缺省静默隐藏 */
+.essay-header .post-detail__eyebrow {
+  display: block;
+  font-family: var(--font-title);
+  color: var(--cinnabar);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-2);
 }
 
 .essay-meta-strip {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   color: var(--ink-light);
   margin-top: var(--space-3);
   flex-wrap: wrap;
@@ -263,23 +276,35 @@
   gap: var(--space-1);
 }
 
+.essay-meta-strip time {
+  font-family: var(--font-code);
+  color: var(--ink);
+}
+
+/* 元信息前缀（驻足 / 天候 / 心境）：淡墨小字 */
+.essay-meta-label {
+  color: var(--ink-faint);
+}
+
 .essay-body {
   font-family: var(--font-serif);
   font-size: var(--text-base);
-  line-height: 1.9;
+  line-height: 1.75;
   letter-spacing: 0.02em;
 }
 
 .essay-body p {
+  /* 全局 p 规则会重置行高，正文段落显式跟随容器 */
+  line-height: inherit;
   text-indent: 2em;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 /* =========================================================
    5. 归档页 (archive.html)「岁时笺纸」横向历日轴
    ---------------------------------------------------------
-   结构：.chrono（外框，含进度朱线）> .chrono__rail（横向滚动）
-        > .chrono__track（轴体）> .chrono__year（年份组）；拱弧轴线 .chrono__axis 为覆盖层
+   结构：.chrono（外框）> .chrono__rail（横向滚动）
+        > .chrono__track（轴体）> .chrono__year（年份组）；双弧覆盖层 .chrono__axis（赭线 + 朱线朱点）
         > .archive-item（日列：轴上月日 + 轴下题头题目）
    右端为新、向左渐旧；无原生滚动条，代偿：朱线朱点 + 边缘渐隐 + 抓手
    ========================================================= */
@@ -308,8 +333,10 @@
   cursor: grabbing;
 }
 
-/* 拱弧轴线（覆盖层）：与轴下朱线弧同曲率、反方向，上下镜像呼应；
-   --chrono-sag 为两弧唯一曲率来源，路径由 main.js 按像素宽构建 */
+/* 双弧覆盖层：一条轴线、一个 SVG 坐标系承载两弧——
+   赭石弧端点在 --chrono-top（拱起），朱线弧端点在 --chrono-top + --chrono-bottom（下沉），
+   两弧同 sag 反向、关于内容区中线精确镜像；--chrono-sag 为唯一曲率来源，
+   路径由 main.js 按像素宽构建，不随内容横移 */
 .chrono__axis {
   position: absolute;
   inset: 0;
@@ -327,7 +354,7 @@
   /* 两端留白：停驻位不落入渐隐区，滚动亦有呼吸程 */
   padding-inline: var(--chrono-breath);
   /* 底部投影余量：中央列放大（≈1.115）后题字底外扩 ≤51px，
-     留 3rem 供 overflow-y:hidden 裁切前缓冲，朱线弧随之下移 */
+     留 3rem 供 overflow-y:hidden 裁切前缓冲（朱线在覆盖层中，另行定位） */
   padding-bottom: 3rem;
 }
 
@@ -485,6 +512,7 @@
 .chrono__rubric {
   color: var(--cinnabar);
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   letter-spacing: 0.1em;
 }
 
@@ -548,13 +576,8 @@
   }
 }
 
-/* 进度朱线：与拱弧轴线上下镜像（同曲率反向），朱点示全轴位置（右端＝最新）
-   弧路径由 main.js 按像素宽构建，端点内缩 ≥ 朱点半径防裁切 */
-.chrono__progress {
-  height: calc(var(--chrono-sag) + 1.25rem);
-  margin-top: var(--space-4);
-}
-
+/* 进度朱线（画在 .chrono__axis 同一 SVG 坐标系内）：与赭石弧同曲率反向、
+   上下镜像，朱点示全轴位置（右端＝最新）；弧路径由 main.js 按像素宽构建 */
 .chrono__curve {
   display: block;
   width: 100%;
@@ -603,6 +626,7 @@
   background: none;
   font: inherit;
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   color: var(--ink-faint);
   cursor: pointer;
   transition: color var(--dur-feedback) ease;
@@ -659,6 +683,7 @@
 .archive-head__count {
   margin-top: var(--space-2);
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   color: var(--ink-light);
 }
 
@@ -678,13 +703,55 @@
 }
 
 /* =========================================================
-   6. 404 页（一纸空笺）
+   6. 独立页面（关于 / about）版式
+   ========================================================= */
+.page-about__header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+
+.page-about__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.page-about__name {
+  font-family: var(--font-title);
+  font-size: var(--text-2xl);
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.page-about__tagline {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--ink-light);
+  margin: 0;
+}
+
+/* 页面正文：行距略宽于正文段落，宜于长文自述 */
+.page-content {
+  line-height: 1.85;
+}
+
+/* =========================================================
+   7. 404 页（一纸空笺）
    ========================================================= */
 .empty-paper {
   text-align: center;
   padding: var(--space-16) 0;
   max-width: 480px;
   margin: 0 auto;
+}
+
+.empty-paper__seal {
+  margin-bottom: var(--space-6);
 }
 
 .empty-paper__title {
@@ -709,7 +776,7 @@
 }
 
 /* =========================================================
-   7. 响应式适配
+   8. 响应式适配
    ========================================================= */
 @media (max-width: 640px) {
   .site-header__inner {

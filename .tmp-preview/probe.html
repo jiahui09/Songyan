@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<iframe id="f" src="../prototype/post-ci.html" style="width:1440px;height:800px"></iframe>
+<div id="out"></div>
+<script>
+window.addEventListener('load', () => {
+  const d = document.getElementById('f').contentDocument;
+  const sel = ['.site-main','.post-ci','.post-ci__header','.post-ci__cipai-badge','.post-title','.post-signature'];
+  const out = sel.map(s => {
+    const el = d.querySelector(s);
+    if (!el) return s + ' => MISSING ELEMENT';
+    const c = el.contentDocument ? null : getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return `${s} => align:${c.textAlign} w:${Math.round(r.width)} x:${Math.round(r.x)} display:${c.display} maxW:${c.maxWidth}`;
+  });
+  document.title = 'DONE';
+  document.getElementById('out').textContent = out.join(' ||| ');
+});
+</script>
+</body></html>

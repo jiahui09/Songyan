@@ -1,0 +1,26 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<iframe id="f" src="../prototype/archive.html" style="width:1440px;height:2400px"></iframe>
+<pre id="out"></pre>
+<script>
+window.addEventListener('load', () => {
+  const d = document.getElementById('f').contentDocument;
+  const w = d.defaultView;
+  const lines = [];
+  const sels = ['main','main .archive-head','.chrono','.chrono__rail','.chrono__track','.chrono__progress','.chrono__axis','.site-footer','body > *:last-child'];
+  for (const s of sels) {
+    const el = d.querySelector(s);
+    if (!el) { lines.push(s + ' MISSING'); continue; }
+    const r = el.getBoundingClientRect();
+    const c = w.getComputedStyle(el);
+    lines.push(`${s}: y=${Math.round(r.y)}..${Math.round(r.bottom)} h=${Math.round(r.height)} display=${c.display} flex=${c.flex} minH=${c.minHeight} h_css=${c.height} pos=${c.position}`);
+  }
+  // track bottom-most descendant
+  const track = d.querySelector('.chrono__track');
+  let maxb = 0, who='';
+  track.querySelectorAll('*').forEach(e=>{const b=e.getBoundingClientRect().bottom; if(b>maxb){maxb=b;who=e.className||e.tagName;}});
+  lines.push('track deepest bottom='+Math.round(maxb)+' by '+who);
+  lines.push('docScrollH='+d.documentElement.scrollHeight+' innerH='+w.innerHeight);
+  document.getElementById('out').textContent = lines.join('\n');
+});
+</script>
+</body></html>

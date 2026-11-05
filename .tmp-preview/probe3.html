@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<iframe id="f" src="../prototype/post-ci.html" style="width:1440px;height:800px"></iframe>
+<pre id="out"></pre>
+<script>
+window.addEventListener('load', () => {
+  const d = document.getElementById('f').contentDocument;
+  const lines = [];
+  for (const ss of d.styleSheets) {
+    let rules; try { rules = ss.cssRules; } catch(e) { lines.push('BLOCKED ' + ss.href); continue; }
+    if (!rules) { lines.push('NULLRULES ' + ss.href + ' disabled=' + ss.disabled + ' media=' + ss.media.mediaText); continue; }
+    lines.push('FILE ' + ss.href.split('/').pop() + ' rules=' + rules.length);
+    for (let i=0;i<rules.length;i++) {
+      const r = rules[i];
+      if (!r) { lines.push('  NULLRULE idx='+i); continue; }
+      if (r.selectorText && r.selectorText.includes('post-ci__header'))
+        lines.push('  MATCH ' + r.selectorText + ' {' + (r.style?r.style.cssText:'?') + '}');
+      if (r.type === 4) {
+        lines.push('  MEDIA ' + r.conditionText + ' inner=' + (r.cssRules ? r.cssRules.length : 'undef'));
+        const inner = r.cssRules || [];
+        for (let j=0;j<inner.length;j++) {
+          const ir = inner[j];
+          if (ir && ir.selectorText && ir.selectorText.includes('post-ci__header'))
+            lines.push('    MATCH-IN-MEDIA ' + ir.selectorText + ' {' + (ir.style?ir.style.cssText:'?') + '}');
+        }
+      }
+    }
+  }
+  document.getElementById('out').textContent = lines.join('\n');
+});
+</script>
+</body></html>

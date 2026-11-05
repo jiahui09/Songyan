@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<iframe id="f" src="about:blank" style="width:900px;height:300px"></iframe>
+<pre id="out">pending</pre>
+</head><body>
+<script>
+window.addEventListener('load', () => {
+  const idoc = document.getElementById('f').contentDocument;
+  idoc.open();
+  idoc.write(
+    '<!DOCTYPE html><html><head>' +
+    '<link rel="stylesheet" href="../prototype/css/tokens.css">' +
+    '<link rel="stylesheet" href="../prototype/css/base.css">' +
+    '<link rel="stylesheet" href="../prototype/css/components.css">' +
+    '<link rel="stylesheet" href="../prototype/css/layouts.css">' +
+    '</head><body></body></html>'
+  );
+  idoc.close();
+  setTimeout(() => {
+    const counts = [];
+    let all = [];
+    for (let i = 0; i < idoc.styleSheets.length; i++) {
+      const sheet = idoc.styleSheets[i];
+      const selectors = [];
+      const walk = (rules) => {
+        for (const r of rules) {
+          if (r.selectorText) selectors.push(r.selectorText);
+          if (r.media) counts.push('media:' + r.conditionText + ' rules=' + r.cssRules.length);
+          if (r.cssRules && !r.media) walk(r.cssRules);
+        }
+      };
+      try { walk(sheet.cssRules); } catch (e) { selectors.push('ERROR:' + e.message); }
+      counts.push('sheet' + i + ': ' + selectors.length + ' selector-rules');
+      all = all.concat(selectors);
+    }
+    const need = ['.site-main', '.site-main--narrow', '.post-ci__header', '.post-ci__cipai-badge', '.home-epigraph', '.chrono__progress', '.empty-paper', '.archive-head'];
+    const check = need.map(s => s + ' => ' + all.some(x => x.indexOf(s) === 0 || x.split(',').some(p => p.trim() === s)));
+    document.getElementById('out').textContent = counts.concat(check).join('\n');
+  }, 800);
+});
+</script>
+</body></html>

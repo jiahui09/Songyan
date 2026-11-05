@@ -1,0 +1,10 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="松烟 favicon 春">
+  <!-- 朱砂底色，圆角 2px，单线方框，专为 16px/32px 图标优化 -->
+  <rect x="1" y="1" width="30" height="30" rx="2" fill="#B03A2E" stroke="#8E2B21" stroke-width="0.75" />
+  <!-- 单字「春」，宣纸米白，居中清晰 -->
+  <text x="16" y="21"
+        font-family="'FZShuTi', 'LXGW WenKai', 'STKaiti', 'KaiTi', serif"
+        font-size="20" font-weight="bold"
+        fill="#F7F2E7"
+        text-anchor="middle">春</text>
+</svg>

@@ -124,11 +124,26 @@
   height: 36px;
 }
 
+/* 空笺残印：极淡印泥，仅作纸面痕迹 */
+.seal--faint {
+  width: 64px;
+  height: 64px;
+  opacity: 0.35;
+}
+
 .seal--watermark {
   width: 80px;
   height: 80px;
   opacity: 0.18;
   pointer-events: none;
+}
+
+.watermark-wrap figcaption {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--ink-faint);
+  text-align: center;
 }
 
 /* 水印容器 */
@@ -248,6 +263,13 @@
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+  line-height: var(--leading-xs);
+}
+
+/* 词页题头：元信息居中于标题之下 */
+.post-card__meta--center {
+  justify-content: center;
+  margin-top: var(--space-2);
 }
 
 .post-card__excerpt {
@@ -255,27 +277,6 @@
   color: var(--ink-light);
   line-height: 1.7;
   margin-bottom: var(--space-3);
-}
-
-/* 朱笔点题：分类作淡红上标前缀（去竖线、去方括号，微小精致），非链接非按钮 */
-.post-category-tag {
-  color: var(--cinnabar-light);
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: var(--text-tag);
-  letter-spacing: var(--tracking-tag);
-  vertical-align: super;
-  line-height: 0;
-  margin-right: var(--space-1);
-}
-
-/* 文章页题头：分类上标居中于标题之上 */
-.post-ci__header .post-category-tag,
-.essay-header .post-category-tag {
-  display: block;
-  text-align: center;
-  margin: 0 0 var(--space-2);
-  vertical-align: baseline;
 }
 
 /* =========================================================
@@ -477,6 +478,7 @@
   margin-top: var(--space-2);
   font-family: var(--font-title);
   font-size: var(--text-xs);
+  line-height: var(--leading-xs);
   letter-spacing: 0.18em;
   color: var(--ink-annotation);
   cursor: pointer;
@@ -724,6 +726,7 @@ body.poem-slip-open {
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-title);
   font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
   background: var(--paper-card);
@@ -778,6 +781,13 @@ body.poem-slip-open {
   gap: var(--space-2);
 }
 
+.site-footer__author {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--ink);
+}
+
 .site-footer__links {
   display: flex;
   gap: var(--space-4);
@@ -796,5 +806,10 @@ body.poem-slip-open {
 
 .site-footer__copy {
   color: var(--ink-faint);
-  line-height: 1.6;
+  line-height: var(--leading-xs);
+}
+
+/* 页脚版权偶作多段，段落跟随同一行盒 */
+.site-footer__copy p {
+  line-height: inherit;
 }

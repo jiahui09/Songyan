@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<iframe id="f" src="../prototype/post-ci.html" style="width:1440px;height:800px"></iframe>
+<pre id="out"></pre>
+<script>
+window.addEventListener('load', () => {
+  const d = document.getElementById('f').contentDocument;
+  const ss = [...d.styleSheets].find(s => s.href && s.href.endsWith('layouts.css'));
+  const sels = [];
+  for (const r of ss.cssRules) { if (r.selectorText) sels.push(r.selectorText.split(',')[0]); else sels.push('AT-RULE:' + (r.conditionText||r.name||r.type)); }
+  document.getElementById('out').textContent = sels.join('\n');
+});
+</script>
+</body></html>

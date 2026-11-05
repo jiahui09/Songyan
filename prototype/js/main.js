@@ -145,12 +145,15 @@ function initChronoRail() {
     return readTokenPx('--chrono-sag', DOT_R * 4);
   }
 
-  // 按实际像素宽重建弧路径；两端内缩一个朱点半径，圆点停在端点时圆缘恰与视口边界相切
+  // 按实际像素宽重建弧路径；两端内缩一个朱点半径，圆点停在端点时圆缘恰与视口边界相切。
+  // 朱线与赭线同在 .chrono__axis 覆盖层的一个 SVG 坐标系：端点 y = --chrono-top + --chrono-bottom，
+  // 中点下沉一个 sag——与赭线弧（端点 --chrono-top、中点拱起同 sag）关于内容区中线精确镜像
   function buildCurve() {
     const width = curveLine.ownerSVGElement.getBoundingClientRect().width;
     if (!width) return;
     const pad = DOT_R;
-    const y0 = DOT_R + 2; // 顶缘余量：半径 + 线宽
+    const y0 =
+      readTokenPx('--chrono-top', 200) + readTokenPx('--chrono-bottom', 512);
     const sag = readSagPx();
     curveLine.setAttribute(
       'd',
@@ -159,7 +162,7 @@ function initChronoRail() {
     pathLen = curveLine.getTotalLength();
   }
 
-  // 拱弧轴线：端点对齐 --chrono-top，中点拱起一个 sag，与朱线弧（下坠）上下镜像
+  // 拱弧轴线：端点对齐 --chrono-top，中点拱起一个 sag（同坐标系，见 buildCurve）
   function buildAxis() {
     if (!axisLine) return;
     const width = axisLine.ownerSVGElement.getBoundingClientRect().width;
