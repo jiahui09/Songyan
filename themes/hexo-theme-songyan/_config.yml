@@ -9,10 +9,6 @@ theme_name: "松烟"
 # 作者信息（印文/尺寸/刻法统一走下方 seal 块）
 author:
   name: "春唇语冬"
-  homepage: "https://example.com"
-
-# 色彩模式（硬性锁定：宣纸暖调浅色主题，不做暗色模式）
-color_scheme: "light"
 
 # =========================================================
 # 纯矢量金石印章生成器 (Crisp Vector Seal Generator)
@@ -32,31 +28,11 @@ seal:
   order: "zhi"               # 四字章序：zhi（直读：右上→右下→左上→左下）| hui（回文：右上→左上→左下→右下）
   ink: "cinnabar"            # 印泥色阶：cinnabar（鲜朱，默认）| zhubiao（朱磦）| shenha（深赭）
 
-  # 位置控制（未移植版式留待各自模板接入）
+  # 位置控制
   locations:
     navbar: true             # 导航栏站名处落印
-    post_header: false       # 文章题头是否落分类名印
     post_footer: true        # 文章文末落款处加盖作者印章
-    sidebar: false           # 侧边栏/名片区（暂无该版式）
 
-
-# 设计令牌与色彩系统映射（镜像 source/css/tokens.css，唯一实现以 tokens.css 为准）
-style:
-  paper_bg:      "#F7F2E7"  # 主宣纸底色
-  paper_subtle:  "#EFEAE0"  # 浅灰茶色（代码块/暗调引用块）
-  ink_primary:   "#2B2B2B"  # 浓松烟墨，主正文（对比度 ≥ 7:1）
-  ink_secondary: "#666055"  # 淡松烟墨，元数据与说明文字
-  cinnabar_red:  "#A8332A"  # 朱砂，分类题头与章印（对比度 ≥ 4.5:1）
-  bamboo_border: "#E2D9C8"  # 淡竹纸缝线/界线
-  bamboo:        "#6B7F5E"  # 竹青标签、维护中状态
-  ochre:         "#B08D57"  # 赭石细线、归档节点
-
-# 字体策略（系统字体优先，首版严禁 @import 外部 WebFont）
-font:
-  use_cdn: false
-  title_font: "LXGW WenKai"
-  body_font:  "Noto Serif SC"
-  code_font:  "Fira Code"
 
 # 文章类型路径映射规则（由 scripts/type-mapping.js 处理；两轨制 ci / post）
 type_mapping:
@@ -66,24 +42,12 @@ type_mapping:
 ci:
   vertical_desktop: true   # 桌面端 (≥1024px 且支持 hover) 启用竖排，移动触控设备自动降级横排
   show_annotation: true    # 启用难词笺注悬停 1.5s 淡入联动
-  show_rhyme: false        # 正文不添加韵脚圆点
   share: true
 
 # 卷首首页配置
 home:
-  stream_limit: 9          # 首页归流单列文章流展示条数（诗文双轨）
-  featured: false          # 精选置顶推荐（规划于 v0.2 启用）
   hero_verse: "一研松烟分细墨 · 四卷清赏寄余年"   # 卷首词句
-  hero_tagline: "外古内今 · 分卷而治"             # 卷首副题
   hero_source: 春唇语冬 · 卷首自题
-  sections:                                 # 词卷栏目头（文章页统一走 labels.post 回退）
-    ci:
-      menu: 词卷        # 首页元信息分类名回退文案
-      index: 一         # 入口序号（四卷四色）
-      desc: 旧调新填，韵脚笺注
-      tag: 最新词选
-      more: 查看全卷 →
-      limit: 3
 
 # 卡片元数据标签（禁止在模板中硬编码文本）
 labels:
@@ -109,10 +73,8 @@ labels:
   empty: 此卷暂无篇什
   previous: 上一页
   next: 下一页
-  cipai: 词牌
   post: 文稿            # 无分类文章的元信息/题头回退文案
   location: 驻足        # 详情页元信息「驻足」槽位前缀（front-matter location 缺省即隐藏）
-  detail: 详情 →
   back_to_home: 返回卷首
 
 # 页脚

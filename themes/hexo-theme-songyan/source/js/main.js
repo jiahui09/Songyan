@@ -7,7 +7,6 @@
  * 4. 首页唯一印章盖下动效：400ms，仅一次
  * 5. 交互反馈：160ms
  * 6. 归档横轴（岁时笺纸）：滚轮仅在轴区内横移轴体，区域外交还页面滚动
- * 7. 长代码块默认折叠「展卷」：折角纸笺 + 题头「［附录：代码手稿 / 点击展卷］」
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,57 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. 归档页「岁时笺纸」横轴：滚轮横移（仅轴区内）+ 指针拖曳 + 进度朱点
   initChronoRail();
-
-  // 4. 长代码块默认折叠「展卷」（超过 --code-fold-max 高度的代码纸笺）
-  initCodeFold();
 });
-
-/**
- * 初始化长代码块折叠「展卷」
- * 阈值取自 tokens.css 的 --code-fold-max（300px），避免 JS 与 CSS 魔数分叉
- * 折叠态：折角纸笺 + 题头「［附录：代码手稿 / 点击展卷］」；点击后展卷并可再次收卷
- */
-function initCodeFold() {
-  const codeBlocks = document.querySelectorAll('.code-block');
-  if (!codeBlocks.length) return;
-
-  const foldHeight = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--code-fold-max')
-  ) || 300;
-
-  codeBlocks.forEach((block) => {
-    const pre = block.querySelector('.code-block__pre');
-    if (!pre) return;
-
-    if (pre.scrollHeight <= foldHeight) return;
-
-    block.classList.add('is-code-folded');
-
-    const bar = document.createElement('button');
-    bar.type = 'button';
-    bar.className = 'code-fold__bar';
-    bar.textContent = '［附录：代码手稿 / 点击展卷］';
-    bar.setAttribute('aria-expanded', 'false');
-
-    bar.addEventListener('click', () => {
-      const folded = block.classList.toggle('is-code-folded');
-      // aria-expanded 反映展卷后的可见态：收卷(false) → 展卷(true)
-      bar.setAttribute('aria-expanded', String(!folded));
-      bar.textContent = folded
-        ? '［附录：代码手稿 / 点击展卷］'
-        : '［附录：代码手稿 / 点击收卷］';
-    });
-
-    block.insertBefore(bar, block.firstChild);
-  });
-}
 
 /**
  * 初始化「落墨」动效（IntersectionObserver 视口触发展开）
  */
 function initLuoMoAnimation() {
   const elementsToAnimate = document.querySelectorAll(
-    '.post-item, .post-card, .post-title, .archive-item'
+    '.post-item, .post-title, .archive-item'
   );
 
   if (!elementsToAnimate.length) return;

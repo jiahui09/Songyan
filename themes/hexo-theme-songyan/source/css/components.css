@@ -109,7 +109,6 @@
   display: block;
 }
 
-/* 保留现有构建期印章的尺寸与局部色阶。 */
 .seal-gen { display: inline-flex; align-items: center; justify-content: center; }
 .seal-gen svg { width: auto; height: auto; }
 .seal-ink-zhubiao { --seal-color: var(--seal-color-zhubiao); }
@@ -137,43 +136,6 @@
   opacity: 0.35;
 }
 
-.seal--watermark {
-  width: 80px;
-  height: 80px;
-  opacity: 0.18;
-  pointer-events: none;
-}
-
-.watermark-wrap figcaption {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-xs);
-  line-height: var(--leading-xs);
-  color: var(--ink-faint);
-  text-align: center;
-}
-
-/* 水印容器 */
-.watermark-wrap {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  margin: var(--space-4) 0;
-  border: 1px solid var(--line);
-  background: var(--paper-deep);
-}
-
-.watermark-wrap > img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-.watermark-wrap .seal--watermark {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-}
-
 /* 落款区：与正文之间只留素白，不设分隔线 */
 .post-signature {
   margin-top: var(--space-12);
@@ -198,70 +160,9 @@
   color: var(--ink);
 }
 
-/* 词页落款：题跋文字在上，朱印错开钤于年号左下（不用同排强制对齐） */
-.post-signature--ci {
-  flex-direction: column;
-}
-
-.post-signature--ci .seal--signature {
-  margin-right: var(--space-6);
-}
-
 /* =========================================================
    3. 通用卡片系统（供归档页复用；首页已改走 .post-item 流式书目）
    ========================================================= */
-/* 去硬框基础卡片：不设方框、不设底色，仅以水墨微晕细线分层（计白当黑） */
-.post-card {
-  padding: var(--space-5) 0;
-  position: relative;
-}
-
-/* 古籍刊本式行气留白：两端透明淡出、中央微显淡墨，严禁灰色实线 */
-.post-card::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--line) 18%,
-    var(--line-wash) 50%,
-    var(--line) 82%,
-    transparent
-  );
-}
-
-.post-card:last-child::after {
-  display: none;
-}
-
-/* 悬浮克制：仅浓墨转微朱的字色过渡，禁弹跳、禁阴影浮起、不改线色 */
-.post-card__title a {
-  transition: color var(--dur-feedback) var(--ease-ink);
-}
-
-.post-card__header {
-  margin-bottom: var(--space-3);
-}
-
-.post-card__title {
-  font-family: var(--font-title);
-  font-size: var(--text-xl);
-  color: var(--ink);
-  margin-bottom: var(--space-2);
-}
-
-.post-card__title a {
-  color: var(--ink);
-}
-
-.post-card__title a:hover {
-  color: var(--cinnabar);
-}
-
 .post-card__meta {
   font-size: var(--text-xs);
   color: var(--ink-faint);
@@ -276,200 +177,6 @@
 .post-card__meta--center {
   justify-content: center;
   margin-top: var(--space-2);
-}
-
-.post-card__excerpt {
-  font-size: var(--text-sm);
-  color: var(--ink-light);
-  line-height: 1.7;
-  margin-bottom: var(--space-3);
-}
-
-/* =========================================================
-   4. 代码块组件 (Code Blocks) —— 文人化：宣纸浅调纸笺，摒弃深黑 IDE 风
-   ========================================================= */
-.code-block {
-  position: relative;
-  margin: var(--space-6) 0;
-  background: var(--code-bg);
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-  border: 1px solid var(--code-border);
-  transition: max-height var(--dur-unfold) var(--ease-ink);
-}
-
-.code-block__header {
-  background: var(--code-bg-alt);
-  padding: var(--space-2) var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--code-border);
-}
-
-.code-block__lang {
-  font-family: var(--font-code);
-  font-size: var(--text-xs);
-  color: var(--ink-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.copy-btn {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--ink-light);
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  padding: 2px 8px;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: background-color var(--dur-feedback) var(--ease-ink), color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
-}
-
-.copy-btn:hover {
-  background: var(--line);
-  color: var(--ink);
-  border-color: var(--bamboo);
-}
-
-.copy-btn--copied {
-  background: var(--bamboo);
-  border-color: var(--bamboo);
-  color: var(--paper-card);
-}
-
-.code-block__pre {
-  margin: 0;
-  padding: var(--space-4);
-  overflow-x: auto;
-  font-family: var(--font-code);
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--code-text);
-}
-
-.code-block__pre code {
-  font-family: inherit;
-  background: transparent;
-  padding: 0;
-}
-
-.code-block ::selection {
-  background: var(--code-selection);
-}
-
-/* 高亮降维：单色/三色阶素雅配色（浓墨 · 朱砂 · 竹青），禁高饱和霓虹 */
-.code-block .comment,
-.code-block .quote,
-.code-block .formula {
-  color: var(--code-comment);
-  font-style: normal;
-}
-
-.code-block .keyword,
-.code-block .selector-tag,
-.code-block .literal,
-.code-block .type,
-.code-block .built_in,
-.code-block .doctag,
-.code-block .meta,
-.code-block .symbol {
-  color: var(--code-keyword);
-}
-
-.code-block .string,
-.code-block .regexp,
-.code-block .attr,
-.code-block .attribute,
-.code-block .number,
-.code-block .bullet,
-.code-block .link,
-.code-block .variable {
-  color: var(--code-string);
-}
-
-.code-block .title,
-.code-block .name,
-.code-block .section,
-.code-block .params,
-.code-block .property {
-  color: var(--code-func);
-  font-weight: 600;
-}
-
-/* ---- 长代码块默认折叠：折角纸笺展卷 ---- */
-.code-block.is-code-folded {
-  max-height: var(--code-fold-max);
-  overflow: hidden;
-  /* 右上角切角，与折角纸笺同语言 */
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-}
-
-/* 右上角折角三角（CSS border 纯色实现，不引入图片） */
-.code-block.is-code-folded::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 1;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 14px 14px 0;
-  border-color: transparent transparent var(--ochre) transparent;
-}
-
-.code-fold__bar {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-4);
-  background: var(--code-bg-alt);
-  border: 0;
-  border-bottom: 1px solid var(--line-light);
-  color: var(--ink-light);
-  font-family: var(--font-serif);
-  font-size: var(--text-xs);
-  letter-spacing: 0.05em;
-  text-align: left;
-  cursor: pointer;
-  transition: color var(--dur-feedback) var(--ease-ink);
-}
-
-.code-fold__bar:hover {
-  color: var(--cinnabar);
-}
-
-/* 打印时强制展卷：纸面不折叠，全文呈现 */
-@media print {
-  .code-block.is-code-folded {
-    max-height: none;
-    overflow: visible;
-    clip-path: none;
-  }
-}
-
-
-/* =========================================================
-   5. 词卷特色：韵脚朱砂点
-   ========================================================= */
-/* 韵脚朱砂小圆点 */
-.rhyme-dot {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-}
-
-.rhyme-dot::after {
-  content: "";
-  position: absolute;
-  right: -5px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background-color: var(--cinnabar);
 }
 
 /* =========================================================
@@ -499,10 +206,6 @@
 .share-trigger:focus-visible {
   outline: 1px solid var(--ink-faint);
   outline-offset: 2px;
-}
-
-.share-trigger .feather-icon {
-  flex: none;
 }
 
 /* 浮层：深墨实底 + 轻微虚化，底层正文与页脚绝不透光 */
@@ -749,13 +452,13 @@ body.poem-slip-open {
 .btn--primary {
   border-color: var(--cinnabar);
   background: var(--cinnabar);
-  color: #FFFFFF;
+  color: var(--print-paper);
 }
 
 .btn--primary:hover {
   background: var(--cinnabar-hover);
   border-color: var(--cinnabar-hover);
-  color: #FFFFFF;
+  color: var(--print-paper);
 }
 
 /* =========================================================

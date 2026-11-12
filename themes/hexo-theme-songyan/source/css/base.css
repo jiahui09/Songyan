@@ -143,48 +143,42 @@ img {
   animation: luo-mo var(--dur-enter) var(--ease-ink) both;
 }
 
-/* 首页唯一印章盖下动效（400ms，仅一次） */
-/* 尊重减弱动效偏好 */
+/* 尊重减弱动效偏好：动效时长全部经 tokens 归零，入场直接落定 */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  :root {
+    --dur-enter: 0.01ms;
+    --dur-feedback: 0.01ms;
+    --dur-unfold: 0.01ms;
+  }
+  html {
+    scroll-behavior: auto;
   }
   .enter {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    filter: none !important;
+    animation: none;
   }
 }
 
-/* 打印样式：词卷强制横排、去除侧栏与噪点 */
+/* 打印样式：素白纸面、去除页头页脚与纸纹 */
 @media print {
+  html,
   body {
-    background: #ffffff !important;
-    background-image: none !important;
-    color: #000000 !important;
+    background: var(--print-paper);
+    color: var(--print-ink);
   }
 
   .site-header,
-  .site-footer,
-  .code-block__header,
-  .copy-btn,
-  .watermark-wrap .seal--watermark {
-    display: none !important;
+  .site-footer {
+    display: none;
   }
 
-  .post-card,
-  article {
-    border: none !important;
-    box-shadow: none !important;
-    max-width: 100% !important;
+  .site-main,
+  .reading-page .site-main {
+    max-width: none;
   }
 
-  a {
-    color: #000000 !important;
-    text-decoration: underline !important;
+  a,
+  .reading-body a {
+    color: var(--print-ink);
+    text-decoration: underline;
   }
 }
