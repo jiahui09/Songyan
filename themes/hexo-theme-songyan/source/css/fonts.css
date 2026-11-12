@@ -2,6 +2,16 @@
  * 霞鹜文楷 Lite（LXGW WenKai Lite v1.250，SIL OFL 1.1，见 ../fonts/lxgw-wenkai-lite/OFL.txt）
  * 按 unicode-range 分片自托管：浏览器只下载页面实际用到的字形分片
  */
+
+/* 题字中的西文：文楷西文偏圆，改由系统衬线承担，仅匹配基本拉丁区，不下载任何文件 */
+@font-face {
+  font-family: 'Songyan Latin';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Georgia'), local('Times New Roman'), local('TimesNewRomanPSMT'), local('Noto Serif'), local('NotoSerif-Regular'), local('DejaVu Serif');
+  unicode-range: U+0041-005A, U+0061-007A;
+}
+
 @font-face {
   font-family: 'LXGW WenKai Lite';
   font-style: normal;

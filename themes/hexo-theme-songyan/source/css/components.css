@@ -12,7 +12,7 @@
 }
 
 .site-header__inner {
-  max-width: var(--container-max);
+  max-width: var(--stream-max);
   margin: 0 auto;
   padding: var(--space-8) var(--space-6) var(--space-4);
   display: flex;

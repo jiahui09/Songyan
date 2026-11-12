@@ -64,7 +64,7 @@
   --code-fold-max:         300px;               /* 超过此高度的代码块默认折叠展卷 */
 
   /* 字体族定义：题字用自托管霞鹜文楷 Lite（fonts.css 分片按需加载），正文系统宋体 */
-  --font-title: "LXGW WenKai Lite", "LXGW WenKai", "霞鹜文楷", "Kaiti SC", "STKaiti", "KaiTi", "楷体", "AR PL UKai CN", serif;
+  --font-title: "Songyan Latin", "LXGW WenKai Lite", "LXGW WenKai", "霞鹜文楷", "Kaiti SC", "STKaiti", "KaiTi", "楷体", "AR PL UKai CN", serif;
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Noto Serif CJK SC", "思源宋体", "Songti SC", "STSong", "SimSun", "宋体", "FangSong", serif;
   --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-code:  "JetBrains Mono", "Fira Code", Monaco, Consolas, "Courier New", monospace;
