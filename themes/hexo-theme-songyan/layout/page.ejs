@@ -1,7 +1,13 @@
-<!--
-  Hexo Layout 占位骨架：page.ejs
-  由本地 Agent 依据 prototype/page-about.html 机械转译实现
--->
-<div class="songyan-page-placeholder">
-  <!-- 待本地 Agent 机械转译 -->
-</div>
+<main class="site-main site-main--narrow" id="reading-main">
+  <article class="page-about">
+    <header class="page-about__header">
+      <div class="page-about__brand">
+        <% if (theme.seal && theme.seal.enable) { %><%- render_seal(undefined, undefined, 48, 'seal--brand') %><% } %>
+        <h1 class="page-about__name"><%= page.title || config.title %></h1>
+      </div>
+      <% if (page.subtitle) { %><p class="page-about__tagline"><%= page.subtitle %></p><% } %>
+    </header>
+    <div class="page-content reading-body"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+    <%- partial('_partial/signature') %>
+  </article>
+</main>

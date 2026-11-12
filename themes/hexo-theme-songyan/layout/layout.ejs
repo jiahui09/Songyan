@@ -12,8 +12,11 @@
   <link rel="stylesheet" href="<%= url_for('/css/base.css') %>">
   <link rel="stylesheet" href="<%= url_for('/css/components.css') %>">
   <link rel="stylesheet" href="<%= url_for('/css/layouts.css') %>">
+  <link rel="stylesheet" href="<%= url_for('/css/reading.css') %>">
 </head>
-<body>
+<% var readingPage = page.layout === 'post' || page.layout === 'page' || page.layout === 'about'; %>
+<body<% if (readingPage) { %> class="reading-page"<% } %>>
+  <% if (readingPage) { %><a href="#reading-main" class="reading-skip"><%= theme.labels.skip_content %></a><% } %>
   <%- partial('_partial/header') %>
 
   <%- body %>
@@ -22,5 +25,12 @@
 
   <script src="<%= url_for('/js/main.js') %>"></script>
   <script src="<%= url_for('/js/seal.js') %>"></script>
+  <% if (readingPage) { %>
+  <%- partial('_partial/reading-tools') %>
+  <script src="<%= url_for('/js/reading.js') %>"></script>
+  <% } %>
+  <% if (page.layout === 'post' && page.type === 'ci') { %>
+  <script src="<%= url_for('/js/poem-slip.js') %>"></script>
+  <% } %>
 </body>
 </html>

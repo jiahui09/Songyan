@@ -530,7 +530,7 @@
 @keyframes chrono-curve {
   0% {
     opacity: 0.4;
-    transform: perspective(620px) translateZ(-130px) rotateY(-44deg);
+    transform: perspective(620px) translateZ(-130px) rotateY(44deg);
   }
 
   35% {
@@ -545,7 +545,7 @@
 
   100% {
     opacity: 0.4;
-    transform: perspective(620px) translateZ(-130px) rotateY(44deg);
+    transform: perspective(620px) translateZ(-130px) rotateY(-44deg);
   }
 }
 

@@ -16,8 +16,10 @@
   <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
   <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
   <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+  <link rel="stylesheet" href="./css/reading.css">
 </head>
-<body>
+<body class="reading-page">
+  <a href="#reading-main" class="reading-skip">跳至正文</a>
 
   <!-- 页头 Header -->
   <header class="site-header">
@@ -100,7 +102,7 @@
     </div>
   </header>
 
-  <main class="site-main">
+  <main class="site-main" id="reading-main">
     <article class="essay-article">
 
       <header class="essay-header">
@@ -149,7 +151,7 @@
 
       <!-- 随笔正文 -->
       <!-- @hexo: page.content -->
-      <div class="essay-body">
+      <div class="essay-body reading-body reading-body--literary">
         <p>
           八月十八，钱塘秋汛。晨起微凉，携一壶清茶独登六和塔。远眺江面，波澜未惊，水汽苍茫，数叶扁舟宛如落叶浮沉于沧溟之间。
         </p>
@@ -242,7 +244,7 @@
       <div class="post-signature">
         <div class="post-signature__meta">
           <p class="post-signature__author">春唇语冬 记于钱塘客馆</p>
-          <time datetime="2026-10-10">岁次丙午 深秋客次</time>
+          <time datetime="2026-10-10">二〇二六年十月十日</time>
         </div>
         <div class="seal seal--signature" aria-label="春唇语冬钤印">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
@@ -319,6 +321,59 @@
         </div>
       </div>
 
+      <details class="reading-specimen" id="reading-specimen" open>
+        <summary>纸上排版 · Markdown 与图片样张</summary>
+        <div class="reading-body">
+          <p class="reading-notice">以下为静态渲染验收样张，不属于上文随笔。正文、技术笔记与项目介绍共用这套阅读规则；实际 Markdown 解析留到 Hexo 迁移阶段验证。</p>
+          <h2>一、段落与文字层次</h2>
+          <p>阅读先于装饰。<strong>重点文字</strong>、<em>语气强调</em>、<del>修订文字</del>与 <code>inlineCode()</code> 应当自然地嵌入叙述。<a href="./post-ci.html">诗词正文</a>保留自己的节奏，但不另换一套纸色与字体。<sup><a id="reading-note-ref" href="#reading-note">[1]</a></sup></p>
+          <p>中英文混排与长路径：<code>source/notes/typography/a-very-long-unbroken-filename-for-mobile-reading.md</code>。内容可以换行，但不应撑破整个页面。</p>
+          <h3>标题与正文有别</h3><p>用字阶、留白和字重建立层次，不在每段外面套上装饰性卡片。</p>
+          <h4>四级标题</h4><p>较深层次适度收敛，仍能清楚识别。</p>
+          <h5>五级标题</h5><p>承接长文中的细分主题。</p>
+          <h6>六级标题</h6><p>保留完整的 Markdown 标题层级。</p>
+          <blockquote><p>文字自有声息，纸面只需为它留出余地。</p><p>引用中的第二段不应继承文学正文的首行缩进。</p><ul><li>引用也可以包含列表。</li><li>层级清楚，比边框复杂更重要。</li></ul></blockquote>
+          <h2>二、列表、任务与表格</h2>
+          <ol><li>先整理内容。<p>列表中的补充段落保持与条目对齐。</p><ul><li>再确认嵌套关系。</li><li>标记不能被裁在版心之外。</li></ul></li><li>再检查手机与桌面阅读。</li></ol>
+          <ul class="reading-tasks"><li><label><input type="checkbox" checked disabled> 已覆盖段落、引用与嵌套列表</label></li><li><label><input type="checkbox" disabled> 正式迁移时验证实际 Markdown 输出</label></li></ul>
+          <table><caption>正文元素的阅读约定（窄屏可横向滚动）</caption><thead><tr><th scope="col">元素</th><th scope="col">呈现原则</th><th scope="col">窄屏行为</th></tr></thead><tbody><tr><th scope="row">正文</th><td>保留语义和适度留白</td><td>自然换行</td></tr><tr><th scope="row">代码与表格</th><td>内容完整，不强行压缩字号</td><td>局部横向滚动</td></tr><tr><th scope="row">图片</th><td>保持比例，图注与正文有别</td><td>不超出版心</td></tr></tbody></table>
+          <hr>
+          <h2>三、代码仍在同一张纸上</h2>
+          <pre><code class="language-css">.reading-body {
+  color: var(--ink);
+  line-height: var(--reading-leading);
+}</code></pre>
+          <pre data-line-numbers><code class="language-javascript">// 阅读样张：复制不带行号，长代码可展开与收起。
+const reading = {
+  layout: 'single-column',
+  content: ['诗词', '随笔', '技术', '项目'],
+  image: {
+    preserveRatio: true,
+    upscale: false,
+    watermark: 'opt-in'
+  },
+  typography: {
+    paper: 'shared',
+    prose: 'readable',
+    poetry: 'stanza-aware'
+  }
+};
+
+function describeReading(value) {
+  return value.content.join(' · ');
+}
+
+const path = 'source/notes/typography/a-long-code-line-that-stays-in-its-own-scroll-container/example.md';
+console.log(describeReading(reading), path);</code></pre>
+          <h2>四、图片与图注</h2>
+          <p>上文的印章是作者主动选择的示例。普通 Markdown 图片不自动加水印，不为了铺满版心而放大小图，也不裁掉截图里的信息。</p>
+          <figure><img src="./assets/reading-portrait.svg" width="240" height="400" loading="lazy" decoding="async" alt="竖幅比例样图：层叠山形与圆日"><figcaption>竖图按原比例居中，保留天地，不强行铺满。</figcaption></figure>
+          <p><img src="./assets/paper-texture.png" width="64" height="64" loading="lazy" decoding="async" alt="小尺寸宣纸纹理，普通 Markdown 图片段落样例"></p>
+          <figure class="reading-image-surface"><img src="./assets/reading-diagram.svg" width="640" height="160" loading="lazy" decoding="async" alt="透明底图表：内容、结构、阅读三个环节"><figcaption>透明图表可选择纸面底衬，不叠加遮挡细节的印章。</figcaption></figure>
+          <details data-image-error-sample><summary>查看图片加载失败的降级示例</summary><p><img src="data:image/png;base64,invalid" alt="图片暂未载入，保留替代说明文字"></p></details>
+          <aside class="reading-footnotes" role="doc-endnotes" aria-label="注释"><ol><li id="reading-note">这是脚注样例。<a href="#reading-note-ref" role="doc-backlink">返回引用处 ↩</a></li></ol></aside>
+        </div>
+      </details>
     </article>
   </main>
 
@@ -380,6 +435,8 @@
     </div>
   </footer>
 
+  <template id="reading-code-template"><div class="reading-code__tools"><span class="reading-code__language" data-reading-language></span><button type="button" data-reading-copy data-done="已复制" data-failed="请选中代码复制" aria-live="polite">复制代码</button><button type="button" data-reading-toggle data-expand="展开代码" data-collapse="收起代码" aria-expanded="false">展开代码</button></div></template>
+  <script src="./js/reading.js"></script>
   <script src="./js/main.js"></script>
   <script src="./js/seal.js"></script>
 </body>

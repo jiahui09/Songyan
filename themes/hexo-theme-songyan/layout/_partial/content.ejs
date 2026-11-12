@@ -1,0 +1,9 @@
+<%
+  // Markdown 内部根路径与模板链接使用同一 url_for，兼容子目录部署。
+  var html = typeof content === 'string' ? content : '';
+  var rootPath = url_for('/');
+  html = html.replace(/\b(href|src|poster)=(['"])(\/(?!\/)[^'"<>]*)\2/gi, function (match, attribute, quote, path) {
+    if (rootPath !== '/' && path.indexOf(rootPath) === 0) return match;
+    return attribute + '=' + quote + url_for(path) + quote;
+  });
+%><%- html %>

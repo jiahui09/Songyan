@@ -16,8 +16,10 @@
   <link rel="stylesheet" href="./css/base.css"> <!-- 待转 url_for('/css/base.css') -->
   <link rel="stylesheet" href="./css/components.css"> <!-- 待转 url_for('/css/components.css') -->
   <link rel="stylesheet" href="./css/layouts.css"> <!-- 待转 url_for('/css/layouts.css') -->
+  <link rel="stylesheet" href="./css/reading.css">
 </head>
-<body>
+<body class="reading-page">
+  <a href="#reading-main" class="reading-skip">跳至正文</a>
 
   <!-- 页头 Header -->
   <header class="site-header">
@@ -100,7 +102,7 @@
     </div>
   </header>
 
-  <main class="site-main site-main--narrow">
+  <main class="site-main site-main--narrow" id="reading-main">
     <article class="page-about">
 
       <header class="page-about__header">
@@ -167,7 +169,7 @@
               </g>
             </svg>
           </span>
-          <span class="page-about__name">春唇语冬</span>
+          <h1 class="page-about__name">春唇语冬</h1>
         </div>
         <p class="page-about__tagline">
           居松下斋 · 守一砚松烟 · 分四卷余墨
@@ -175,7 +177,7 @@
       </header>
 
       <!-- @hexo: page.content -->
-      <div class="page-content">
+      <div class="page-content reading-body">
         <h2>自述</h2>
         <p>
           生于江左，居无常地。平生喜古调之铿锵，爱编程之精密；闲时研墨试纸，抚琴听雨，忙时折冲代码，构筑系统。此博客名曰「春唇语冬」，取四季流转、言语有声之意。
@@ -203,7 +205,7 @@
       <div class="post-signature">
         <div class="post-signature__meta">
           <p class="post-signature__author">春唇语冬 谨白</p>
-          <time datetime="2026-10-10">岁次丙午 霜月写于松下斋</time>
+          <time datetime="2026-10-10">二〇二六年十月十日</time>
         </div>
         <div class="seal seal--signature" aria-label="春唇语冬钤印">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="春唇语冬印" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">

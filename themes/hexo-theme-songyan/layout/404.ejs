@@ -1,7 +1,8 @@
-<!--
-  Hexo Layout 占位骨架：404.ejs
-  由本地 Agent 依据 prototype/404.html 机械转译实现
--->
-<div class="songyan-404-placeholder">
-  <!-- 待本地 Agent 机械转译 -->
-</div>
+<main class="site-main">
+  <section class="empty-paper" aria-label="<%= theme.not_found.title %>">
+    <div class="empty-paper__seal"><% if (theme.seal && theme.seal.enable) { %><%- render_seal(undefined, undefined, 64, 'seal--faint') %><% } %></div>
+    <h1 class="empty-paper__title"><%= theme.not_found.title %></h1>
+    <p class="empty-paper__verse"><% theme.not_found.lines.forEach(function (line, index) { %><%= line %><% if (index < theme.not_found.lines.length - 1) { %><br><% } %><% }); %></p>
+    <div class="empty-paper__actions"><a href="<%= url_for('/') %>" class="btn btn--primary"><%= theme.not_found.home %></a><a href="<%= url_for('/archives/') %>" class="btn"><%= theme.not_found.archive %></a></div>
+  </section>
+</main>

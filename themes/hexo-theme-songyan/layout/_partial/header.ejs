@@ -16,7 +16,8 @@
       <nav aria-label="全局导航">
         <ul class="site-header__nav">
           <% Object.keys(theme.menu).forEach(function (label) { %>
-          <li><a href="<%= url_for(theme.menu[label]) %>" class="site-header__nav-link"><%= label %></a></li>
+          <% var active = url_for(theme.menu[label]) === url_for(page.path || '') || (theme.menu[label] === '/archives/' && is_archive()); %>
+          <li><a href="<%= url_for(theme.menu[label]) %>" class="site-header__nav-link<%= active ? ' site-header__nav-link--active' : '' %>"<% if (active) { %> aria-current="page"<% } %>><%= label %></a></li>
           <% }); %>
         </ul>
       </nav>

@@ -3,6 +3,10 @@ title: 秋夜怀远
 date: 2026-10-12 21:30:00
 type: ci
 cipai: 水调歌头
+stanza_break: 4
+annotations:
+  - word: 素娥
+    meaning: 月中嫦娥，也用以借指明月。
 tags:
   - 秋思
   - 月

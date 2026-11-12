@@ -35,3 +35,17 @@ hexo.extend.filter.register('before_post_render', function (data) {
 
   return data;
 });
+
+// 诗词段落只添加语义标记；分阕由作者显式给出，不猜测字数或格律。
+hexo.extend.filter.register('after_post_render', function (data) {
+  if (data.type !== 'ci' || typeof data.content !== 'string') return data;
+  const split = Number(data.stanza_break);
+  let paragraph = 0;
+  data.content = data.content.replace(/<p(?:\s[^>]*)?>/g, function (opening) {
+    const starts = Number.isInteger(split) && split > 0 && paragraph === split;
+    paragraph++;
+    return starts ? opening.replace(/>$/, ' data-stanza-start="true">') : opening;
+  });
+  data.content = data.content.replace(/<span\b([^>]*\bclass=["'][^"']*\brhyme-dot\b[^"']*["'][^>]*)>([\s\S]*?)<\/span>/gi, '$2');
+  return data;
+});

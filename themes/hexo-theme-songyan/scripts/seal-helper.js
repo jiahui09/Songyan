@@ -585,7 +585,8 @@ function renderSealSvg(options, themeConfig) {
   const activeSeed = options.seed !== undefined
     ? options.seed
     : (hashString(`${text}_${style}_${shapeName}`) + (cfg.seed || 42));
-  const maskId = 'seal_mk_' + Math.abs(hashString(`${text}_${style}_${shapeName}_${activeSeed}`)).toString(36);
+  // 同页导航、落款和页脚的细节密度不同，不能共用一个蒙版 id。
+  const maskId = 'seal_mk_' + Math.abs(hashString(`${text}_${style}_${shapeName}_${activeSeed}_${size}_${className || ''}`)).toString(36);
 
   // 界格与落位（先于颗粒：字格供聚笔加权）；白文/朱白相间均界格，纯朱文不界
   const slots = shape.slots(chars.length, chars, order);

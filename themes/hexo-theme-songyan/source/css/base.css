@@ -15,8 +15,8 @@
 html {
   font-size: 16px;
   line-height: 1.75;
-  background-color: var(--paper-bg);
-  color: var(--ink-primary);
+  background-color: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -27,10 +27,10 @@ html {
 body {
   min-height: 100vh;
   font-family: var(--font-serif);
-  background-color: var(--paper-bg);
+  background-color: var(--paper);
   background-image: url("../images/paper-texture.png");
   background-repeat: repeat;
-  color: var(--ink-primary);
+  color: var(--ink);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -38,24 +38,26 @@ body {
 
 /* 链接规范（朱砂点染） */
 a {
-  color: var(--cinnabar-red);
+  color: var(--cinnabar);
   text-decoration: none;
   transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
 }
 
 a:hover, a:focus-visible {
-  color: var(--cinnabar-red-hover);
+  color: var(--cinnabar-hover);
 }
 
 a:focus-visible {
-  outline: 2px solid var(--ochre);
+  /* 焦点环须满足 WCAG 2.2 SC 1.4.11 非文本对比 ≥ 3:1：
+     --ochre 2.77:1 不达标，改用朱砂悬停色 7.47:1，与站点色系同源 */
+  outline: 2px solid var(--cinnabar-hover);
   outline-offset: 2px;
 }
 
 /* 标题规范（默认选用文楷/宋体） */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
-  color: var(--ink-primary);
+  color: var(--ink);
   line-height: 1.35;
   font-weight: 600;
   text-wrap: balance;
@@ -74,21 +76,21 @@ p {
 /* 强调与引用 */
 em, i {
   font-style: normal;
-  color: var(--ink-secondary);
+  color: var(--ink-light);
 }
 
 strong, b {
   font-weight: 700;
-  color: var(--ink-primary);
+  color: var(--ink);
 }
 
 blockquote {
   margin: var(--space-6) 0;
   padding: var(--space-4) var(--space-6);
-  background: var(--paper-subtle);
-  border: 1px solid var(--bamboo-border);
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
   border-radius: var(--radius-xs);
-  color: var(--ink-secondary);
+  color: var(--ink-light);
   font-family: var(--font-serif);
   font-style: normal;
 }
@@ -100,9 +102,9 @@ hr {
   background: linear-gradient(
     to right,
     transparent,
-    var(--bamboo-border) 18%,
-    var(--ink-wash-mid) 50%,
-    var(--bamboo-border) 82%,
+    var(--line) 18%,
+    var(--line-wash) 50%,
+    var(--line) 82%,
     transparent
   );
   margin: var(--space-8) 0;
@@ -142,21 +144,6 @@ img {
 }
 
 /* 首页唯一印章盖下动效（400ms，仅一次） */
-@keyframes seal-stamp {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.seal-stamp-once {
-  animation: seal-stamp var(--dur-seal) var(--ease-ink) both;
-}
-
 /* 尊重减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -165,7 +152,7 @@ img {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .enter, .seal-stamp-once {
+  .enter {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -184,15 +171,9 @@ img {
   .site-header,
   .site-footer,
   .code-block__header,
-  .code-fold__bar,
   .copy-btn,
   .watermark-wrap .seal--watermark {
     display: none !important;
-  }
-
-  .post-ci__vertical-wrap {
-    writing-mode: horizontal-tb !important;
-    overflow: visible !important;
   }
 
   .post-card,

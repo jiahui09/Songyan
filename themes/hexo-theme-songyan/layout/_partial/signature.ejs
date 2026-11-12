@@ -1,0 +1,21 @@
+<%
+  var sealCfg = theme.seal || {};
+  var override = page.seal;
+  var text = typeof override === 'string' ? override : override && override.text;
+  var style = override && typeof override === 'object' ? override.style : undefined;
+  var showSeal = override !== false && sealCfg.enable && sealCfg.locations && sealCfg.locations.post_footer;
+  var written = page.date || page.updated;
+  var digits = '〇一二三四五六七八九';
+  function hanNumber(value) {
+    var n = Number(value);
+    return n < 10 ? digits[n] : (n < 20 ? '十' + (n % 10 ? digits[n % 10] : '') : digits[Math.floor(n / 10)] + '十' + (n % 10 ? digits[n % 10] : ''));
+  }
+  var signatureDate = written ? date(written, 'YYYY').split('').map(function (n) { return digits[Number(n)]; }).join('') + theme.labels.year + hanNumber(date(written, 'MM')) + theme.labels.month + hanNumber(date(written, 'DD')) + theme.labels.day : '';
+%>
+<div class="post-signature">
+  <div class="post-signature__meta">
+    <p class="post-signature__author"><%= page.signature || (theme.author && theme.author.name) || config.author %></p>
+    <% if (written) { %><time datetime="<%= date(written, 'YYYY-MM-DD') %>"><%= signatureDate %></time><% } %>
+  </div>
+  <% if (showSeal) { %><%- render_seal(text, style, 110, 'seal--signature') %><% } %>
+</div>

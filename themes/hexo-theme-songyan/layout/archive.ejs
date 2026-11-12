@@ -1,7 +1,51 @@
-<!--
-  Hexo Layout 占位骨架：archive.ejs
-  由本地 Agent 依据 prototype/archive.html 机械转译实现
--->
-<div class="songyan-archive-placeholder">
-  <!-- 待本地 Agent 机械转译 -->
-</div>
+<%
+  var cfg = theme.archive;
+  var collection = (page.category || page.tag || page.year) && page.posts ? page.posts : site.posts;
+  var ordered = collection.sort('-date').toArray();
+  var groups = {};
+  ordered.forEach(function (post) {
+    var year = date(post.date, 'YYYY');
+    (groups[year] || (groups[year] = [])).push(post);
+  });
+  function sectionOf(post) {
+    if (post.type === 'ci') return 'ci';
+    var names = post.categories ? post.categories.toArray().map(function (cat) { return cat.name; }) : [];
+    return Object.keys(cfg.category_names).find(function (key) { return cfg.category_names[key].some(function (name) { return names.includes(name); }); }) || 'essay';
+  }
+  var digits = '〇一二三四五六七八九';
+  var stems = '甲乙丙丁戊己庚辛壬癸';
+  var branches = '子丑寅卯辰巳午未申酉戌亥';
+%>
+<main class="site-main">
+  <header class="archive-head">
+    <h1 class="archive-head__title enter"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
+    <p class="archive-head__count"><%= cfg.count_prefix %>：<%= ordered.length %> <%= cfg.count_suffix %></p>
+    <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">
+      <% Object.keys(cfg.categories).forEach(function (key) { %><button type="button" class="archive-legend__item" data-cat-filter="<%= key %>" aria-pressed="false"><span class="archive-legend__dot archive-legend__dot--<%= key %>"></span><%= cfg.categories[key] %></button><% }); %>
+    </nav>
+  </header>
+  <% if (ordered.length) { %>
+  <div class="chrono">
+    <div class="chrono__rail" data-chrono-rail tabindex="0" role="region" aria-label="<%= cfg.title %>">
+      <div class="chrono__track">
+        <% Object.keys(groups).sort().reverse().forEach(function (year) { var n = Number(year) - 4; %>
+        <section class="chrono__year">
+          <h2 class="chrono__year-mark"><span class="chrono__year-greg"><%= year.split('').map(function (digit) { return digits[Number(digit)]; }).join('') %></span><span class="chrono__year-gz"><%= stems[(n % 10 + 10) % 10] + branches[(n % 12 + 12) % 12] + theme.labels.year %></span></h2>
+          <ul class="chrono__items">
+            <% groups[year].forEach(function (post) { var key = sectionOf(post); %>
+            <li class="archive-item chrono__item" data-cat="<%= key %>">
+              <span class="chrono__dot chrono__dot--<%= key %>" title="<%= cfg.categories[key] %>"></span>
+              <div class="chrono__head"><time class="chrono__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><span class="chrono__mo"><%= date(post.date, 'MM') %></span><span class="chrono__slash">/</span><span class="chrono__day"><%= date(post.date, 'DD') %></span></time></div>
+              <a href="<%= url_for(post.path) %>" class="chrono__entry"><span class="chrono__rubric"><%= cfg.categories[key] %></span><span class="chrono__sep">·</span><%= post.title || config.title %></a>
+            </li>
+            <% }); %>
+          </ul>
+        </section>
+        <% }); %>
+      </div>
+    </div>
+    <div class="chrono__axis" aria-hidden="true"><svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg"><path class="chrono__axis-line"/><path class="chrono__curve-line"/><circle class="chrono__curve-dot"/></svg></div>
+  </div>
+  <% } else { %><p class="archive-empty"><%= theme.labels.empty %></p><% } %>
+  <%- partial('_partial/pagination') %>
+</main>

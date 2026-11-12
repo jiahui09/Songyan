@@ -30,23 +30,44 @@ function initPoemSlip() {
   const saveBtn = overlay.querySelector('[data-poem-slip-save]');
   const closeBtn = overlay.querySelector('[data-poem-slip-close]');
   let lastFocused = null;
+  const background = document.querySelectorAll('body > header, body > main, body > footer, body > .reading-skip');
+  const originalInert = new Map();
+
+  function checkPreviewFit() {
+    const overflow = cols.scrollWidth > cols.clientWidth + 1 || cols.scrollHeight > cols.clientHeight + 1;
+    cols.dataset.overflow = String(overflow);
+    if (overflow) status.textContent = overlay.dataset.overflowNotice;
+  }
 
   function open() {
     lastFocused = document.activeElement;
     renderPoemSlip(cols);
     status.textContent = '';
     overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('poem-slip-open');
-    requestAnimationFrame(() => closeBtn.focus());
+    background.forEach(element => {
+      originalInert.set(element, element.inert);
+      element.inert = true;
+    });
+    closeBtn.focus();
+    requestAnimationFrame(checkPreviewFit);
+    document.fonts.ready.then(() => {
+      if (overlay.classList.contains('is-open')) checkPreviewFit();
+    });
   }
 
   function close() {
     overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('poem-slip-open');
+    background.forEach(element => { element.inert = originalInert.get(element) || false; });
+    originalInert.clear();
     if (lastFocused && lastFocused.focus) lastFocused.focus();
   }
 
   Array.prototype.forEach.call(openers, (opener) => {
+    opener.hidden = false;
     opener.addEventListener('click', open);
     opener.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
@@ -62,10 +83,33 @@ function initPoemSlip() {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && overlay.classList.contains('is-open')) close();
+    if (!overlay.classList.contains('is-open')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+    } else if (event.key === 'Tab') {
+      const buttons = Array.from(overlay.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]'));
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !overlay.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
   });
 
-  saveBtn.addEventListener('click', () => exportPoemSlip(status));
+  window.addEventListener('resize', () => {
+    if (overlay.classList.contains('is-open')) checkPreviewFit();
+  });
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    await exportPoemSlip(status);
+    saveBtn.disabled = false;
+  });
 }
 
 /**
@@ -80,6 +124,7 @@ function collectPoemSlipData() {
 
   const titleText = title ? title.textContent.trim() : '';
   const sepIndex = titleText.indexOf('·');
+  const cipaiText = badge ? badge.textContent.replace(/^词牌\s*·\s*/, '').trim() : '';
 
   // 上阕 / 下阕之界：沿用词页已标注的 --lower-stanza 起句
   let lowerIndex = -1;
@@ -88,8 +133,8 @@ function collectPoemSlipData() {
   });
 
   return {
-    cipai: badge ? badge.textContent.replace(/^词牌\s*·\s*/, '').trim() : '',
-    tizhu: sepIndex > -1 ? titleText.slice(sepIndex + 1).trim() : '',
+    cipai: cipaiText,
+    tizhu: sepIndex > -1 ? titleText.slice(sepIndex + 1).trim() : (titleText !== cipaiText ? titleText : ''),
     lines: Array.prototype.map.call(lineEls, (el) => cleanCiLine(el)),
     lowerIndex: lowerIndex,
     watermark: watermark ? watermark.textContent.trim() : ''
@@ -100,7 +145,9 @@ function collectPoemSlipData() {
  * 词句清洗：只取汉字文本，现代标点化为分句边界，返回词句数组（如「露下碧梧冷」「风引画檐铃」）
  */
 function cleanCiLine(lineEl) {
-  const text = lineEl.textContent.replace(/\s+/g, '');
+  const copy = lineEl.cloneNode(true);
+  copy.querySelectorAll('rt, rp').forEach(node => node.remove());
+  const text = copy.textContent.replace(/\s+/g, '');
   return text.split(/[，。、；：？！,.;:?!]+/).filter(Boolean);
 }
 
@@ -213,31 +260,33 @@ function loadSlipSealImage() {
  */
 async function exportPoemSlip(status) {
   try {
+    await document.fonts.ready;
     const data = collectPoemSlipData();
     const canvas = await drawPoemSlip(data);
 
     if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable');
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        status.textContent = '此笺未能落盘，可长按或右键诗笺留存';
-        return;
-      }
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) {
+      status.textContent = '此笺未能落盘，可长按或右键诗笺留存';
+      return;
+    }
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = (data.cipai || '松烟') + '-诗笺.png';
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = (data.cipai || '松烟') + '-诗笺.png';
 
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
 
-      status.textContent = '诗笺已落 · ' + link.download;
-    }, 'image/png');
+    status.textContent = '诗笺已落 · ' + link.download;
   } catch (err) {
-    status.textContent = '此笺未能落盘，可长按或右键诗笺留存';
+    status.textContent = err instanceof RangeError
+      ? document.querySelector('[data-poem-slip]').dataset.overflowNotice
+      : '此笺未能落盘，可长按或右键诗笺留存';
   }
 }
 
@@ -286,6 +335,7 @@ async function drawPoemSlip(data) {
   const ruleXs = [];
 
   const placeBox = (width, top, draw) => {
+    if (cursor - width < inset - 1) throw new RangeError('poem slip columns exceed paper width');
     const half = width / 2;
     cursor -= half;
     const cx = cursor;
@@ -297,6 +347,7 @@ async function drawPoemSlip(data) {
 
   // 竖排文字列：列宽 = 字号×行距；align 'center' 时于列区居中（天头地脚均分）
   const place = (clauses, m) => {
+    if (ciTextHeight(clauses, m) > areaH) throw new RangeError('poem slip text exceeds paper height');
     const top = inset + (m.top || 0) * W +
       (m.align === 'center' ? (areaH - ciTextHeight(clauses, m)) / 2 : 0);
     return placeBox(m.size * m.lh, top, (cx, y) => drawVerticalClauses(ctx, clauses, cx, y, m));
@@ -363,7 +414,7 @@ function ciTextHeight(clauses, metric) {
   const advance = metric.size * (1 + metric.ls);
   let height = 0;
   Array.prototype.forEach.call(clauses, (clause, ci) => {
-    height += clause.length * advance;
+    height += Array.from(clause).length * advance;
     if (ci < clauses.length - 1) height += metric.size * 0.35;
   });
   return height;
