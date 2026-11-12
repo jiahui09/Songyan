@@ -47,5 +47,19 @@ hexo.extend.filter.register('after_post_render', function (data) {
     return starts ? opening.replace(/>$/, ' data-stanza-start="true">') : opening;
   });
   data.content = data.content.replace(/<span\b([^>]*\bclass=["'][^"']*\brhyme-dot\b[^"']*["'][^>]*)>([\s\S]*?)<\/span>/gi, '$2');
+  // 笺注：难词首次出现处落着重点并链至文末注条（只改文本节点，不触标签）
+  const ciConfig = (hexo.theme && hexo.theme.config && hexo.theme.config.ci) || {};
+  if (ciConfig.show_annotation && Array.isArray(data.annotations)) {
+    data.annotations.forEach(function (note, index) {
+      const word = note && note.word ? String(note.word) : '';
+      if (!word) return;
+      let done = false;
+      data.content = data.content.replace(/>([^<]+)</g, function (match, text) {
+        if (done || text.indexOf(word) < 0) return match;
+        done = true;
+        return '>' + text.replace(word, '<a class="poem-gloss" href="#poem-note-' + (index + 1) + '">' + word + '</a>') + '<';
+      });
+    });
+  }
   return data;
 });

@@ -36,22 +36,27 @@ body {
   flex-direction: column;
 }
 
-/* 链接规范（朱砂点染） */
+/* 链接规范：烟青墨色，悬停转浓；朱砂留给每屏唯一的一点 */
 a {
-  color: var(--cinnabar);
+  color: var(--celadon-deep);
   text-decoration: none;
-  transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
+  transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink), background-size var(--dur-feedback) var(--ease-ink);
 }
 
 a:hover, a:focus-visible {
-  color: var(--cinnabar-hover);
+  color: var(--ink);
 }
 
 a:focus-visible {
   /* 焦点环须满足 WCAG 2.2 SC 1.4.11 非文本对比 ≥ 3:1：
      --ochre 2.77:1 不达标，改用朱砂悬停色 7.47:1，与站点色系同源 */
-  outline: 2px solid var(--cinnabar-hover);
+  outline: 2px solid var(--celadon-deep);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--line);
+  color: var(--ink);
 }
 
 /* 标题规范（默认选用文楷/宋体） */
@@ -59,7 +64,8 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
   color: var(--ink);
   line-height: 1.35;
-  font-weight: 600;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   text-wrap: balance;
 }
 
@@ -85,13 +91,12 @@ strong, b {
 }
 
 blockquote {
-  margin: var(--space-6) 0;
-  padding: var(--space-4) var(--space-6);
-  background: var(--paper-deep);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
+  margin: var(--space-8) 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-6);
+  border-left: 1px solid transparent;
+  border-image: var(--rain-thread-v) 1;
   color: var(--ink-light);
-  font-family: var(--font-serif);
+  font-family: var(--font-title);
   font-style: normal;
 }
 
@@ -99,15 +104,9 @@ hr {
   border: none;
   height: 1px;
   /* 古籍刊本式行气留白：两端透明淡出、中央微显淡墨，严禁灰色实线 */
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--line) 18%,
-    var(--line-wash) 50%,
-    var(--line) 82%,
-    transparent
-  );
-  margin: var(--space-8) 0;
+  background: var(--rain-thread);
+  margin: var(--space-12) auto;
+  max-width: 50%;
 }
 
 ul, ol {
@@ -143,17 +142,39 @@ img {
   animation: luo-mo var(--dur-enter) var(--ease-ink) both;
 }
 
+/* 首页唯一印章盖下：自上轻落、微放即收（400ms，仅一次） */
+@keyframes gai-yin {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.seal--stamp {
+  animation: gai-yin var(--dur-stamp) var(--ease-ink) 120ms both;
+}
+
 /* 尊重减弱动效偏好：动效时长全部经 tokens 归零，入场直接落定 */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-enter: 0.01ms;
     --dur-feedback: 0.01ms;
     --dur-unfold: 0.01ms;
+    --dur-stamp: 0.01ms;
   }
   html {
     scroll-behavior: auto;
   }
-  .enter {
+  .enter,
+  .seal--stamp {
     animation: none;
   }
 }

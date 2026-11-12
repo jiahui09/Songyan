@@ -1,8 +1,8 @@
 <main class="site-main">
   <section class="empty-paper" aria-label="<%= theme.not_found.title %>">
-    <div class="empty-paper__seal"><% if (theme.seal && theme.seal.enable) { %><%- render_seal(undefined, undefined, 64, 'seal--faint') %><% } %></div>
+    <div class="empty-paper__seal"><% if (theme.seal && theme.seal.enable) { %><%- render_seal(undefined, undefined, 56, 'seal--faint') %><% } %></div>
     <h1 class="empty-paper__title"><%= theme.not_found.title %></h1>
     <p class="empty-paper__verse"><% theme.not_found.lines.forEach(function (line, index) { %><%= line %><% if (index < theme.not_found.lines.length - 1) { %><br><% } %><% }); %></p>
-    <div class="empty-paper__actions"><a href="<%= url_for('/') %>" class="btn btn--primary"><%= theme.not_found.home %></a><a href="<%= url_for('/archives/') %>" class="btn"><%= theme.not_found.archive %></a></div>
+    <div class="empty-paper__actions"><a href="<%= url_for('/') %>" class="empty-paper__link"><%= theme.not_found.home %></a><a href="<%= url_for('/archives/') %>" class="empty-paper__link"><%= theme.not_found.archive %></a></div>
   </section>
 </main>

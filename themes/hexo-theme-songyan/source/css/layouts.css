@@ -19,13 +19,12 @@
 }
 
 /* =========================================================
-   2. 首页 (《词韵》宋本流式目录) 版式
-   规范：768px 居中版心 · 卷首题词定锚 · 诗词与文章同一垂直骨骼
-   严禁：卡片容器、投影、诗词整段折行散排
+   2. 首页版式
+   规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
+   严禁：卡片容器、投影、条目分割线
    ========================================================= */
 .home-epigraph,
 .home-stream {
-  /* 版心收拢（max-w-3xl ≈ 768px）：杜绝无边界散漫感 */
   max-width: var(--stream-max);
   margin-left: auto;
   margin-right: auto;
@@ -33,172 +32,165 @@
   padding-right: var(--space-6);
 }
 
-/* ---- 卷首题词（Epigraph）：全站视觉定海神针 ---- */
+/* ---- 卷首题词：全站唯一主角，两句分行，四周大面积留白 ---- */
 .home-epigraph {
-  padding-top: var(--space-10);
-  padding-bottom: var(--space-8);
+  padding-top: var(--space-20);
+  padding-bottom: var(--space-16);
   margin-bottom: var(--space-12);
   text-align: center;
-  border-bottom: 1px solid var(--line-light);
 }
 
 .home-epigraph__text {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-family: var(--font-title);
+  font-size: var(--text-3xl);
   color: var(--ink);
-  letter-spacing: 0.2em;
-  line-height: 1.8;
+  letter-spacing: 0.32em;
+  line-height: 1.5;
   margin: 0;
-  text-indent: 0.2em; /* 抵消末字字距，保证视觉居中 */
+  text-indent: 0.32em; /* 抵消末字字距，保证视觉居中 */
+}
+
+/* 第二句略向右错落，如题壁行书 */
+.home-epigraph__line + .home-epigraph__line {
+  padding-left: 2em;
 }
 
 .home-epigraph__source {
+  font-family: var(--font-title);
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
   color: var(--ink-faint);
-  letter-spacing: 0.18em;
-  margin: var(--space-3) 0 0;
-  text-indent: 0.18em;
+  letter-spacing: 0.3em;
+  margin: var(--space-8) 0 0;
+  text-indent: 0.3em;
 }
 
 /* ============================================================
-   归流（统一流式骨架）：题名 → 元信息 → 摘句 → 阅读本文
-   诗词与文章 DOM 骨骼完全一致，行气整齐如宋刻书目
+   归流：诗文两轨——词作出词牌与起首两句，文章出题目与一行摘要；
+   条目间只以留白相隔，整条可点，悬停时左侧浮现一道天青雨丝
    ============================================================ */
 .home-stream {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
   margin-bottom: var(--space-16);
 }
 
-/* ---- 单条目：纯垂直流，靠留白与极细淡墨线分层 ---- */
 .post-item {
-  padding: var(--space-6) 0;
-  border-bottom: 1px solid var(--line-light);
+  position: relative;
+  padding: var(--space-6) 0 var(--space-6) var(--space-6);
 }
 
-.post-item:last-child {
-  border-bottom: none;
+.post-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 1px;
+  background: var(--rain-thread-v);
+  opacity: 0;
+  transition: opacity var(--dur-feedback) var(--ease-ink);
 }
 
-/* 朱红题头 Eyebrow：每条必有、固定高度，词牌/主分类压阵题名之上 */
+.post-item:hover::before,
+.post-item:focus-within::before {
+  opacity: 1;
+}
+
+/* 词牌题头：只给词作，一点朱 */
 .post-item__eyebrow {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-title);
   font-size: var(--text-tag);
-  font-weight: 500;
   color: var(--cinnabar-eyebrow);
   letter-spacing: var(--tracking-tag);
-  text-indent: var(--tracking-tag);
   margin-bottom: var(--space-2);
   line-height: var(--leading-xs);
-  height: var(--leading-xs); /* 固定高度：无题头文案时占位齐整 */
 }
 
-/* 题名：宋体中字，悬浮仅浓墨转微朱（禁阴影禁浮起） */
 .post-item .post-title {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg);
-  font-weight: 500;
+  font-family: var(--font-title);
+  font-size: var(--text-xl);
   color: var(--ink);
   line-height: 1.6;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   margin: 0;
 }
 
+/* 整条可点：题目链接铺满条目 */
 .post-item .post-title a {
   color: inherit;
   text-decoration: none;
   transition: color var(--dur-feedback) var(--ease-ink);
 }
 
-.post-item .post-title a:hover,
-.post-item .post-title a:focus-visible {
-  color: var(--cinnabar);
+.post-item .post-title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
-/* 元信息：公历 · 干支节气 · 分类 · #标签，细中圆点连缀，零胶囊 */
+.post-item:hover .post-title a,
+.post-item .post-title a:focus-visible {
+  color: var(--celadon-deep);
+}
+
+/* 词作起首两句：保留断句，一句一行 */
+.post-item__verse {
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 2;
+  letter-spacing: var(--tracking-verse);
+  color: var(--ink-light);
+}
+
+/* 元信息：汉字日期淡墨一行 */
 .post-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2);
+  font-family: var(--font-date);
   font-size: var(--text-xs);
-  color: var(--ink-secondary);
-  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
   line-height: var(--leading-xs);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .post-meta .sep {
-  color: var(--ink-faint);
+  color: var(--line-wash);
   user-select: none;
 }
 
-/* 公历数字：衬线西文优化（Georgia / Times 族） */
-.post-meta__date-gregorian {
-  font-family: var(--font-date);
-  letter-spacing: 0.02em;
-}
-
-/* 标签墨痕：纯文本细点缀，无药丸无边框 */
-.post-meta__tag-item {
-  margin-right: var(--space-1);
-  color: var(--ink-secondary);
-  opacity: 0.85;
-}
-
-/* 摘句/摘要：统一 2~3 行内，两端对齐；诗词合为单段，严禁折行散排 */
+/* 文章摘要：一行半为度，不抢题目 */
 .post-excerpt {
   font-family: var(--font-serif);
   font-size: var(--text-sm);
-  color: var(--ink-light);
+  color: var(--ink-secondary);
   line-height: 1.9;
   letter-spacing: 0.02em;
-  text-align: justify;
-  margin: var(--space-3) 0 0;
+  margin: var(--space-2) 0 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* 阅读本文：纯文字入口，无边框无底色无内边距，hover 仅转朱，禁投影禁浮起 */
-.read-more-wrapper {
-  margin-top: var(--space-4);
-}
-
-.read-more-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  line-height: var(--leading-xs);
-  letter-spacing: 0.1em;
-  color: var(--ink-light);
-  text-decoration: none;
-  transition: color var(--dur-feedback) var(--ease-ink);
-}
-
-.read-more-btn:hover,
-.read-more-btn:focus-visible {
-  color: var(--cinnabar);
-}
-
-.read-more-btn .arrow {
-  font-size: var(--text-xs);
-  line-height: 1;
 }
 
 /* =========================================================
    3. 词页 (type: ci) 版式
    ========================================================= */
-/* 横排版式（v0.1 基准） */
+/* 题头：词牌一点朱，题目淡墨大字，此外别无他物 */
 .post-ci__header {
   text-align: center;
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-16);
 }
 
 .post-ci__cipai-badge {
@@ -207,8 +199,29 @@
   color: var(--cinnabar);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-2);
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  margin-bottom: var(--space-3);
+}
+
+.post-ci__header .post-title {
+  font-size: var(--text-3xl);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+.post-ci__rhyme {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+.post-ci__stage {
+  display: flex;
+  justify-content: center;
 }
 
 .post-ci__body-horizontal {
@@ -218,18 +231,89 @@
   font-family: var(--font-serif);
   font-size: var(--text-lg);
   line-height: 1.7778; /* 18px × 1.7778 = 32px，落在 4px 网格 */
+  color: var(--ink);
 }
 
-.post-ci__line {
-  /* 全局 p 规则会重置行高，词句行显式跟随容器 */
-  line-height: inherit;
-  margin-bottom: var(--space-3);
-  letter-spacing: 0.06em;
+/* 桌面竖排：右起成列，一句一列，过片空出一段留白；窄屏仍为横排 */
+@media (min-width: 1024px) {
+  .post-ci__body--vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: var(--ci-column-height);
+    max-width: none;
+    margin: 0;
+    text-align: start;
+    line-height: 2.25;
+    letter-spacing: var(--tracking-verse);
+  }
 }
 
-/* 下阕起句：过片只以留白承接，不设任何标记 */
-.post-ci__line--lower-stanza {
-  margin-top: var(--ci-stanza-gap);
+/* 落花：全篇只此一瓣淡胭脂，静置于词尾之后 */
+.post-ci__petal {
+  display: block;
+  width: 7px;
+  height: 9px;
+  margin: var(--space-12) auto 0;
+  background: var(--rouge);
+  border-radius: 70% 0 70% 0;
+  transform: rotate(-24deg);
+  opacity: 0.85;
+}
+
+/* 文末笺注：小字两栏，不用展开框 */
+.poem-annotations {
+  max-width: 28rem;
+  margin: var(--space-12) auto 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--ink-secondary);
+}
+
+.poem-annotations__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xs);
+  letter-spacing: 0.4em;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.poem-annotations dl {
+  margin: 0;
+}
+
+.poem-annotations__item {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-1) 0;
+  scroll-margin-block-start: var(--space-16);
+}
+
+.poem-annotations__item:target {
+  color: var(--ink);
+}
+
+.poem-annotations dt {
+  flex: none;
+  font-family: var(--font-title);
+  color: var(--ink);
+}
+
+.poem-annotations dd {
+  margin: 0;
+}
+
+/* 难词：字旁一点淡胭脂着重号，点按跳至注条 */
+.poem-gloss {
+  color: inherit;
+  text-emphasis: dot var(--rouge);
+  -webkit-text-emphasis: dot var(--rouge);
+  text-emphasis-position: under right;
+  -webkit-text-emphasis-position: under right;
+}
+
+.poem-gloss:hover,
+.poem-gloss:focus-visible {
+  color: var(--celadon-deep);
 }
 
 /* =========================================================
@@ -240,50 +324,72 @@
   margin: 0 auto;
 }
 
+/* 文章题头：居左，题目为主，汉字日期淡墨一行；无分割线，以留白分层 */
 .essay-header {
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--line);
-  text-align: center;
+  margin-bottom: var(--space-12);
+  text-align: left;
 }
 
-/* 文章题头：front-matter header 字段，与词牌同定位（标题上方一行朱砂小字），缺省静默隐藏 */
 .essay-header .post-detail__eyebrow {
   display: block;
   font-family: var(--font-title);
-  color: var(--cinnabar);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-2);
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.3em;
+  margin-bottom: var(--space-3);
+}
+
+.essay-header .post-title {
+  font-size: var(--text-3xl);
+  letter-spacing: 0.06em;
 }
 
 .essay-meta-strip {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-2);
+  font-family: var(--font-title);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
-  color: var(--ink-light);
-  margin-top: var(--space-3);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-top: var(--space-4);
   flex-wrap: wrap;
 }
 
 .essay-meta-item {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
 }
 
-.essay-meta-strip time {
-  font-family: var(--font-code);
-  color: var(--ink);
-}
-
-/* 元信息前缀（驻足 / 天候 / 心境）：淡墨小字 */
+/* 元信息前缀（驻足 / 天候 / 心境）：更淡一层 */
 .essay-meta-label {
   color: var(--ink-faint);
+  opacity: 0.8;
+}
+
+/* 文末题签：标签以汉字「题」引出，烟青小字 */
+.post-tags {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-10) 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.post-tags__label {
+  margin-right: var(--space-2);
+}
+
+.post-ci .post-tags {
+  justify-content: center;
 }
 
 .essay-body {
@@ -404,7 +510,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background-color: var(--ochre);
+  background-color: var(--celadon);
   border: 2px solid var(--paper);
 }
 
@@ -467,30 +573,14 @@
   padding-bottom: var(--space-2);
 }
 
-/* 月日「10/10」：整组斜置（−30°），介于竖直与水平之间的非常规排布；
-   墨分浓淡：月浓、隔笔次之、日淡 */
+/* 月日：汉字竖写贴轴，淡墨小字 */
 .chrono__date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  writing-mode: vertical-rl;
   font-family: var(--font-title);
-  font-size: var(--text-base);
-  line-height: 1.1;
-  color: var(--ink);
-  transform: rotate(-30deg);
-}
-
-.chrono__mo {
-  color: var(--ink);
-}
-
-.chrono__slash {
-  font-size: 0.85em;
-  color: var(--ink-light);
-}
-
-.chrono__day {
-  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: var(--ink-secondary);
 }
 
 /* 轴下区：题头·题目，墨点相隔，一列直下（nowrap，不折列）；整列即文章链接 */
@@ -498,6 +588,7 @@
   height: var(--chrono-bottom);
   padding-top: var(--space-3);
   writing-mode: vertical-rl;
+  text-orientation: upright; /* 西文随竖排直立，不横倒 */
   white-space: nowrap;
   font-family: var(--font-title);
   font-size: var(--text-lg);
@@ -506,11 +597,11 @@
 }
 
 .chrono__entry:hover {
-  color: var(--cinnabar);
+  color: var(--celadon-deep);
 }
 
 .chrono__rubric {
-  color: var(--cinnabar);
+  color: var(--ink-faint);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   letter-spacing: 0.1em;
@@ -586,27 +677,27 @@
 
 .chrono__curve-line {
   fill: none;
-  stroke: var(--cinnabar);
+  stroke: var(--celadon);
   stroke-width: 1;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 /* 拱弧轴线：赭石 1px 实线（与原直轴同色同宽），仅描边不填充 */
 .chrono__axis-line {
   fill: none;
-  stroke: var(--ochre);
+  stroke: var(--line-wash);
   stroke-width: 1;
 }
 
 .chrono__curve-dot {
   r: 3.5px;
-  fill: var(--cinnabar);
+  fill: var(--celadon-deep);
 }
 
 /* 页头 */
 .archive-head {
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin: var(--space-8) 0 var(--space-12);
 }
 
 /* 分卷图例：默认灰墨点（grayscale），悬停/选中还原彩墨；点按筛选轴体篇目 */
@@ -641,14 +732,12 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  filter: grayscale(1);
-  opacity: 0.6;
-  transition: filter var(--dur-feedback) ease, opacity var(--dur-feedback) ease;
+  opacity: 0.45;
+  transition: opacity var(--dur-feedback) ease;
 }
 
 .archive-legend__item:hover .archive-legend__dot,
 .archive-legend__item[aria-pressed="true"] .archive-legend__dot {
-  filter: none;
   opacity: 1;
 }
 
@@ -676,15 +765,19 @@
 
 .archive-head__title {
   font-family: var(--font-title);
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
   color: var(--ink);
 }
 
 .archive-head__count {
-  margin-top: var(--space-2);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  color: var(--ink-light);
+  margin-top: var(--space-3);
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
 }
 
 /* 窄屏：仅收字号与列距，滚动与手势不变 */
@@ -703,27 +796,22 @@
 }
 
 /* =========================================================
-   6. 独立页面（关于 / about）版式
+   6. 独立页面（关于 / about）版式：小印一方、名字一行、自述数语
    ========================================================= */
 .page-about__header {
   text-align: center;
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-12);
 }
 
 .page-about__brand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
   margin-bottom: var(--space-3);
 }
 
 .page-about__name {
   font-family: var(--font-title);
   font-size: var(--text-2xl);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
   color: var(--ink);
 }
 
@@ -731,7 +819,8 @@
   font-family: var(--font-title);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
-  color: var(--ink-light);
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
   margin: 0;
 }
 
@@ -741,38 +830,55 @@
 }
 
 /* =========================================================
-   7. 404 页（一纸空笺）
+   7. 404 页（一纸空笺）：淡印一方、两行小字、两处雨丝链接
    ========================================================= */
 .empty-paper {
   text-align: center;
-  padding: var(--space-16) 0;
+  padding: var(--space-24) 0 var(--space-16);
   max-width: 480px;
   margin: 0 auto;
 }
 
 .empty-paper__seal {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 .empty-paper__title {
   font-family: var(--font-title);
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
   color: var(--ink);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .empty-paper__verse {
   font-family: var(--font-title);
-  font-size: var(--text-lg);
-  color: var(--ink-light);
-  line-height: 1.8;
-  margin-bottom: var(--space-8);
+  font-size: var(--text-base);
+  letter-spacing: 0.12em;
+  color: var(--ink-secondary);
+  line-height: 2;
+  margin-bottom: var(--space-12);
 }
 
 .empty-paper__actions {
   display: flex;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-10);
+}
+
+.empty-paper__link {
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  letter-spacing: 0.24em;
+  color: var(--ink-light);
+  padding-bottom: var(--space-1);
+  background: var(--rain-thread-h-celadon) no-repeat 0 100% / 100% 1px;
+}
+
+.empty-paper__link:hover,
+.empty-paper__link:focus-visible {
+  color: var(--ink);
 }
 
 /* =========================================================
@@ -796,16 +902,16 @@
     padding-right: 0;
   }
   .home-epigraph {
-    padding-top: var(--space-6);
-    padding-bottom: var(--space-6);
-    margin-bottom: var(--space-8);
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-10);
+    margin-bottom: var(--space-6);
   }
   .home-epigraph__text {
-    font-size: var(--text-base);
-    letter-spacing: 0.12em;
-    text-indent: 0.12em;
+    font-size: var(--text-xl);
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
   }
   .post-item {
-    padding: var(--space-5) 0;
+    padding: var(--space-5) 0 var(--space-5) var(--space-4);
   }
 }

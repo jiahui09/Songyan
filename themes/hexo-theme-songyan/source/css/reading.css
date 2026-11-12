@@ -9,7 +9,7 @@
 .reading-body { min-width: 0; }
 .reading-page .site-main { max-width: var(--prose-max); }
 .reading-page :is(button, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--cinnabar-hover);
+  outline: 2px solid var(--celadon-deep);
   outline-offset: var(--space-1);
 }
 .reading-skip {
@@ -41,17 +41,17 @@
 .reading-body h3 { font-size: var(--text-xl); }
 .reading-body :is(h4,h5,h6) { font-size: var(--text-lg); }
 .reading-body > :first-child { margin-block-start: 0; }
-.reading-body a { text-decoration: underline; text-underline-offset: .22em; }
+.reading-body a { text-decoration: underline; text-decoration-color: var(--celadon); text-decoration-thickness: 1px; text-underline-offset: .28em; }
+.reading-body a:hover { text-decoration-color: currentColor; }
 .reading-body :is(ul,ol) { margin-block: var(--space-4) var(--space-6); padding-inline-start: 1.6em; }
 .reading-body li :is(p,ul,ol) { margin-block: var(--space-2); }
 .reading-body li { padding-inline-start: var(--space-1); }
 .reading-body .reading-tasks { list-style: none; padding-inline-start: 0; }
-.reading-tasks input { accent-color: var(--cinnabar); margin-inline-end: var(--space-2); }
+.reading-tasks input { accent-color: var(--celadon-deep); margin-inline-end: var(--space-2); }
 .reading-body blockquote {
-  border: 0;
-  border-inline-start: 2px solid var(--ochre);
-  margin: var(--space-8) 0;
-  padding: var(--space-4) var(--space-6);
+  margin: var(--space-10) 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-6);
+  color: var(--ink-light);
 }
 .reading-body blockquote > :last-child { margin-bottom: 0; }
 .reading-body em { font-style: italic; color: inherit; }
@@ -97,7 +97,7 @@
 .reading-code__language { margin-inline-end: auto; font-family: var(--font-code); }
 .reading-code__tools button {
   font: inherit;
-  color: var(--cinnabar);
+  color: var(--celadon-deep);
   background: transparent;
   border: 1px solid var(--code-border);
   padding: var(--space-1) var(--space-2);
@@ -135,32 +135,29 @@
 .reading-page .post-ci__body-horizontal ruby { ruby-position: over; }
 .reading-page .post-ci__body-horizontal rt { font-size: .55em; letter-spacing: normal; }
 .reading-page .poem-clause { display: inline-block; max-width: 100%; vertical-align: baseline; }
-.reading-page .poem-annotations { margin-top: var(--space-8); padding-top: var(--space-4); border-top: 1px solid var(--line-light); text-align: start; font-size: var(--text-sm); color: var(--ink-light); }
-.poem-annotations summary { cursor: pointer; color: var(--cinnabar); }
-.poem-annotations p { margin-top: var(--space-3); line-height: 1.9; }
-.reading-page .post-card__meta--center { color: var(--ink-secondary); }
-.reading-page .post-card__meta--center,
-.reading-page .essay-meta-strip { font-size: var(--text-sm); line-height: var(--leading-sm); }
-.reading-page .post-card__meta time,
-.reading-page .essay-meta-strip time { font-family: var(--font-date); color: var(--ink-secondary); }
+.reading-page .essay-meta-strip time { font-family: var(--font-date); }
 .reading-page .post-signature {
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   justify-content: flex-end;
   gap: var(--space-4);
-  margin-top: var(--space-12);
-  padding-top: var(--space-6);
+  margin-top: var(--space-16);
+  padding-top: 0;
 }
 .reading-page .post-signature__meta { min-width: 0; text-align: right; font-size: var(--text-sm); line-height: var(--leading-sm); }
-.reading-page .post-signature__author { margin: 0 0 var(--space-2); font-family: var(--font-title); font-size: var(--text-base); line-height: var(--leading-sm); }
-.reading-page .post-signature__meta time { display: block; font-family: var(--font-serif); font-size: var(--text-sm); line-height: var(--leading-sm); }
-.reading-page .post-signature .seal--signature { flex: 0 0 auto; margin: 0; }
+.reading-page .post-signature__author { margin: 0 0 var(--space-1); font-family: var(--font-title); font-size: var(--text-base); line-height: var(--leading-sm); }
+.reading-page .post-signature__meta time { display: block; font-family: var(--font-title); font-size: var(--text-xs); line-height: var(--leading-xs); letter-spacing: .1em; }
+.reading-page .post-signature .seal--signature { flex: 0 0 auto; margin: 0; transform: translateY(var(--space-2)); }
 .post-signature-actions { display: flex; justify-content: flex-end; margin-top: var(--space-3); }
 .post-signature-actions .share-trigger { margin: 0; }
 .post-signature-actions button.share-trigger { border: 0; background: none; padding: 0; }
-.reading-page .post-ci__body-horizontal > p { margin-bottom: var(--space-3); letter-spacing: .06em; }
+.reading-page .post-ci__body-horizontal > p { margin-bottom: var(--space-3); letter-spacing: var(--tracking-verse); }
 .reading-page .post-ci__body-horizontal > p[data-stanza-start] { margin-top: var(--ci-stanza-gap); }
+@media (min-width: 1024px) {
+  .reading-page .post-ci__body--vertical > p { margin: 0 0 0 var(--space-4); }
+  .reading-page .post-ci__body--vertical > p[data-stanza-start] { margin-top: 0; margin-right: var(--ci-stanza-gap); }
+}
 .reading-page .poem-slip-overlay { overflow-y: auto; }
 .reading-page .poem-slip__actions { flex-wrap: wrap; justify-content: center; }
 .reading-page .poem-slip__cols[data-overflow="true"] { overflow: auto; }
@@ -171,7 +168,7 @@
   .reading-page .site-main { padding-inline: var(--space-5); }
   .reading-page .post-title { font-size: var(--text-2xl); }
   .reading-page .post-ci__body-horizontal { font-size: var(--text-base); }
-  .reading-page .post-ci__line { letter-spacing: .03em; }
+  .reading-page .post-ci__body-horizontal > p { letter-spacing: .04em; text-wrap: balance; }
   .reading-page .essay-meta-strip { gap: var(--space-1) var(--space-2); }
   .reading-body blockquote { padding-inline: var(--space-4); }
 }

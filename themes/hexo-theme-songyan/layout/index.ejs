@@ -1,28 +1,32 @@
 <%
   var cfg = theme.home || {};
   var posts = page.posts || site.posts.sort('-date');
+  var verses = cfg.hero_verse ? String(cfg.hero_verse).split(/\s*·\s*/) : [];
+  function plain(html) {
+    return strip_html(String(html || '').replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '').replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '')).trim();
+  }
 %>
 <main class="site-main">
   <section class="home-epigraph" aria-label="<%= theme.theme_name %>">
-    <% if (cfg.hero_verse) { %><p class="home-epigraph__text"><%= cfg.hero_verse %></p><% } %>
+    <% if (verses.length) { %><p class="home-epigraph__text"><% verses.forEach(function (verse) { %><span class="home-epigraph__line"><%= verse %></span><% }); %></p><% } %>
     <% if (cfg.hero_source) { %><p class="home-epigraph__source"><%= cfg.hero_source %></p><% } %>
   </section>
   <section class="home-stream" aria-label="<%= theme.labels.post %>">
     <% posts.forEach(function (post) {
+      var isCi = post.type === 'ci';
       var category = post.categories && post.categories.length ? post.categories.toArray()[0].name : '';
-      var eyebrow = post.cipai || category || (post.type === 'ci' ? theme.archive.categories.ci : theme.labels.post);
-      var text = strip_html((post.excerpt || post.content || '').replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '').replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, ''));
+      var lines = isCi ? (String(post.content || '').match(/<p\b[^>]*>[\s\S]*?<\/p>/gi) || []).slice(0, 2).map(plain).filter(Boolean) : [];
+      var text = isCi ? '' : plain(post.excerpt || post.content);
     %>
-    <article class="post-item enter">
-      <span class="post-item__eyebrow"><%= eyebrow %></span>
+    <article class="post-item enter" data-track="<%= isCi ? 'ci' : 'post' %>">
+      <% if (isCi) { %><span class="post-item__eyebrow"><%= post.cipai || theme.archive.categories.ci %></span><% } %>
       <h2 class="post-title"><a href="<%= url_for(post.path) %>"><%= post.title || config.title %></a></h2>
+      <% if (lines.length) { %><p class="post-item__verse"><% lines.forEach(function (line) { %><span><%= line %></span><% }); %></p><% } %>
+      <% if (text) { %><p class="post-excerpt"><%= truncate(text, {length: 80, separator: ''}) %></p><% } %>
       <div class="post-meta">
-        <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><span class="post-meta__date-gregorian"><%= date(post.date, 'YYYY.MM.DD') %></span></time>
-        <% if (category || post.type === 'ci') { %><span class="sep" aria-hidden="true">·</span><span><%= post.type === 'ci' ? theme.archive.categories.ci : category %></span><% } %>
-        <% if (post.tags && post.tags.length) { %><span class="sep" aria-hidden="true">·</span><span class="post-meta__tags"><% post.tags.forEach(function (tag) { %><span class="post-meta__tag-item">#<%= tag.name %></span><% }); %></span><% } %>
+        <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date}) %></time>
+        <% if (!isCi && category) { %><span class="sep" aria-hidden="true">·</span><span><%= category %></span><% } %>
       </div>
-      <% if (text) { %><p class="post-excerpt"><%= truncate(text, {length: 120, separator: ''}) %></p><% } %>
-      <div class="read-more-wrapper"><a href="<%= url_for(post.path) %>" class="read-more-btn"><span><%= theme.labels.read_more %></span><span class="arrow" aria-hidden="true">→</span></a></div>
     </article>
     <% }); %>
     <% if (!posts.length) { %><p><%= theme.labels.empty %></p><% } %>

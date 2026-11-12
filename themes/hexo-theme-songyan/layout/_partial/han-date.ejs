@@ -1,0 +1,9 @@
+<%
+  // 汉字纪日：二〇二六年十月十二日；withYear === false 时只写月日
+  var hanDigits = '〇一二三四五六七八九';
+  function hanNumber(n) {
+    return n < 10 ? hanDigits[n] : (n < 20 ? '十' : hanDigits[Math.floor(n / 10)] + '十') + (n % 10 ? hanDigits[n % 10] : '');
+  }
+  var hanYear = date(value, 'YYYY').split('').map(function (n) { return hanDigits[Number(n)]; }).join('') + theme.labels.year;
+  var hanDay = hanNumber(Number(date(value, 'M'))) + theme.labels.month + hanNumber(Number(date(value, 'D'))) + theme.labels.day;
+%><%= (typeof withYear !== 'undefined' && withYear === false ? '' : hanYear) + hanDay %>

@@ -4,12 +4,9 @@
       <a href="<%= url_for('/') %>" class="site-header__brand" title="<%= theme.labels.back_to_home %>">
         <% if (theme.seal && theme.seal.enable && theme.seal.locations && theme.seal.locations.navbar) { %>
         <!-- 金石印章：构建期由 render_seal 生成纯矢量 SVG（崩刃/飞白/砂眼走蒙版剪切） -->
-        <%- render_seal(theme.seal.text, theme.seal.style, theme.seal.size, 'site-header__seal-gen') %>
+        <%- render_seal(theme.seal.text, theme.seal.style, theme.seal.size, is_home() && !(page.current > 1) ? 'site-header__seal-gen seal--stamp' : 'site-header__seal-gen') %>
         <% } %>
-        <div class="site-header__title-wrap">
-          <span class="site-header__title"><%= config.title %></span>
-          <span class="site-header__title-line"></span>
-        </div>
+        <span class="site-header__title"><%= config.title %></span>
       </a>
 
       <!-- 导航 Links -->

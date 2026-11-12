@@ -2,7 +2,6 @@
   <article class="page-about">
     <header class="page-about__header">
       <div class="page-about__brand">
-        <% if (theme.seal && theme.seal.enable) { %><%- render_seal(undefined, undefined, 48, 'seal--brand') %><% } %>
         <h1 class="page-about__name"><%= page.title || config.title %></h1>
       </div>
       <% if (page.subtitle) { %><p class="page-about__tagline"><%= page.subtitle %></p><% } %>

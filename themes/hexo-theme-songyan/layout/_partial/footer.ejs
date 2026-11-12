@@ -1,19 +1,12 @@
-  <!-- 页脚 Footer（含 mini 印章 + 版权） -->
+  <!-- 页脚 Footer：一道雨丝、一行淡墨，不落印 -->
   <footer class="site-footer">
     <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <!-- 页脚小印：render_seal 构建期生成（36px） -->
-        <%- render_seal(theme.seal.text, theme.seal.style, 36, 'seal--mini') %>
-        <span class="site-footer__author"><%= theme.author.name || config.author %></span>
-      </div>
-
       <ul class="site-footer__links">
         <% var footerLinks = theme.footer && theme.footer.links ? theme.footer.links : {}; %>
         <% Object.keys(footerLinks).forEach(function (label) { %>
         <li><a href="<%= url_for(footerLinks[label]) %>"><%= label %></a></li>
         <% }); %>
       </ul>
-
       <div class="site-footer__copy">
         <% if (theme.footer && theme.footer.copyright) { %>
         <p><%= theme.footer.copyright %></p>

@@ -18,7 +18,7 @@ seal:
   enable: true               # 是否开启印章模块
   text: "春唇语冬"           # 默认印章文字（2~4 字；4 字按古法直读：右上→右下→左上→左下）
   style: "yang"              # 默认刻法：yang（朱文/阳刻，细线红字）| yin（白文/阴刻，红底白字）| mixed（朱白相间，逐格相间）
-  size: 34                   # 默认尺寸 (px)
+  size: 26                   # 默认尺寸 (px)：页头小印，点到为止
   rotate: -1.2               # 微倾斜角度 (deg)，模拟手盖印泥的自然微偏
   density: 1.0               # 刀痕崩刃、金石飞白与砂眼颗粒密度 (0.5 ~ 1.5)
   seed: 42                   # 随机种子（固定种子确保重建时刀痕完全一致）
@@ -40,8 +40,8 @@ type_mapping:
 
 # 词卷配置 (type: ci)
 ci:
-  vertical_desktop: true   # 桌面端 (≥1024px 且支持 hover) 启用竖排，移动触控设备自动降级横排
-  show_annotation: true    # 启用难词笺注悬停 1.5s 淡入联动
+  vertical_desktop: true   # 桌面端 (≥1024px) 词作右起竖排，窄屏自动降级横排
+  show_annotation: true    # 难词旁落淡胭脂着重点，点按跳至文末笺注
   share: true
 
 # 卷首首页配置
@@ -49,7 +49,7 @@ home:
   hero_verse: "一研松烟分细墨 · 四卷清赏寄余年"   # 卷首词句
   hero_source: 春唇语冬 · 卷首自题
 
-# 卡片元数据标签（禁止在模板中硬编码文本）
+# 界面文案（禁止在模板中硬编码文本）
 labels:
   skip_content: 跳至正文
   year: 年
@@ -67,9 +67,9 @@ labels:
   poem_close: 阖卷
   poem_overflow: 此词超出单张诗笺容量，请在预览中滚动阅读；为避免截字，暂不导出。
   annotations: 笺注
+  tags: 系
   weather: 天候
   mood: 心境
-  read_more: 阅读本文
   empty: 此卷暂无篇什
   previous: 上一页
   next: 下一页
@@ -80,11 +80,10 @@ labels:
 # 页脚
 footer:
   links:
-    归档时间线: /archives/
-    关于斋主: /about/
-    空笺样例: /404.html
-  copyright: "© 2026 春唇语冬 · 纯粹原笔 · 守此一砚松烟"
-  note: "基于 Hexo 主题「松烟」构建 · 宣纸暖色 · 系统字体"
+    归档: /archives/
+    关于: /about/
+  copyright: "© 二〇二六 春唇语冬"
+  note: "落花人独立，微雨燕双飞 · Hexo 主题「松烟」"
 
 # 导航菜单
 menu:

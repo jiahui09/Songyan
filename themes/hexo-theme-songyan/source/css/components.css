@@ -7,8 +7,6 @@
    1. 页头导航与 Brand Logo（印前名后）
    ========================================================= */
 .site-header {
-  border-bottom: 1px solid var(--line);
-  background-color: var(--paper);
   position: relative;
   z-index: 100;
 }
@@ -16,7 +14,7 @@
 .site-header__inner {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-8) var(--space-6) var(--space-4);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -31,67 +29,44 @@
   flex-shrink: 0;
 }
 
-.site-header__seal {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: inline-block;
-}
-
-.site-header__title-wrap {
-  display: inline-flex;
-  flex-direction: column;
-}
-
 .site-header__title {
   font-family: var(--font-title);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--text-lg);
+  letter-spacing: 0.3em;
   color: var(--ink);
   line-height: 1.2;
-}
-
-.site-header__title-line {
-  display: block;
-  width: 100%;
-  height: 1px;
-  background-color: var(--ochre);
-  margin-top: 3px;
 }
 
 .site-header__nav {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-8);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+.site-header__nav li {
+  margin: 0;
+}
+
+/* 导航：淡墨小字，悬停/当前页以一道天青雨丝线托底 */
 .site-header__nav-link {
   font-family: var(--font-title);
-  font-size: var(--text-base);
-  color: var(--ink-light);
+  font-size: var(--text-sm);
+  letter-spacing: 0.2em;
+  color: var(--ink-secondary);
   white-space: nowrap;
-  position: relative;
-  padding-bottom: 2px;
-  transition: color var(--dur-feedback) var(--ease-ink);
+  padding-bottom: var(--space-1);
+  background: var(--rain-thread-h-celadon) no-repeat 0 100% / 0 1px;
+  transition: color var(--dur-feedback) var(--ease-ink), background-size var(--dur-feedback) var(--ease-ink);
 }
 
 .site-header__nav-link:hover,
+.site-header__nav-link:focus-visible,
 .site-header__nav-link--active {
-  color: var(--cinnabar);
-}
-
-.site-header__nav-link--active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1.5px;
-  background-color: var(--cinnabar);
+  color: var(--ink);
+  background-size: 100% 1px;
 }
 
 /* =========================================================
@@ -114,26 +89,17 @@
 .seal-ink-zhubiao { --seal-color: var(--seal-color-zhubiao); }
 .seal-ink-shenha { --seal-color: var(--seal-color-shenha); }
 
-.seal--brand {
-  width: 48px;
-  height: 48px;
-}
-
+/* 落款印：小而沉，压在署名左下，略错开如手钤 */
 .seal--signature {
-  width: 110px;
-  height: 110px;
-}
-
-.seal--mini {
-  width: 36px;
-  height: 36px;
+  width: 60px;
+  height: 60px;
 }
 
 /* 空笺残印：极淡印泥，仅作纸面痕迹 */
 .seal--faint {
-  width: 64px;
-  height: 64px;
-  opacity: 0.35;
+  width: 56px;
+  height: 56px;
+  opacity: 0.3;
 }
 
 /* 落款区：与正文之间只留素白，不设分隔线 */
@@ -149,34 +115,15 @@
 .post-signature__meta {
   text-align: right;
   font-family: var(--font-title);
-  color: var(--ink-light);
+  color: var(--ink-faint);
   font-size: var(--text-sm);
   line-height: 1.6;
 }
 
 .post-signature__author {
   font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--ink);
-}
-
-/* =========================================================
-   3. 通用卡片系统（供归档页复用；首页已改走 .post-item 流式书目）
-   ========================================================= */
-.post-card__meta {
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  line-height: var(--leading-xs);
-}
-
-/* 词页题头：元信息居中于标题之下 */
-.post-card__meta--center {
-  justify-content: center;
-  margin-top: var(--space-2);
+  letter-spacing: 0.2em;
+  color: var(--ink-light);
 }
 
 /* =========================================================
@@ -423,42 +370,8 @@ body.poem-slip-open {
 }
 
 .meta-separator {
-  color: var(--line);
-  padding: 0 4px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: var(--paper-card);
-  color: var(--ink);
-  cursor: pointer;
-  transition: border-color var(--dur-feedback) var(--ease-ink), color var(--dur-feedback) var(--ease-ink), background-color var(--dur-feedback) var(--ease-ink);
-}
-
-.btn:hover {
-  border-color: var(--ochre);
-  color: var(--cinnabar);
-}
-
-.btn--primary {
-  border-color: var(--cinnabar);
-  background: var(--cinnabar);
-  color: var(--print-paper);
-}
-
-.btn--primary:hover {
-  background: var(--cinnabar-hover);
-  border-color: var(--cinnabar-hover);
-  color: var(--print-paper);
+  color: var(--line-wash);
+  padding: 0 var(--space-1);
 }
 
 /* =========================================================
@@ -466,59 +379,53 @@ body.poem-slip-open {
    ========================================================= */
 .site-footer {
   margin-top: auto;
-  border-top: 1px solid var(--line);
-  background: var(--paper-deep);
-  padding: var(--space-8) var(--space-6);
-  font-family: var(--font-serif);
+  padding: var(--space-16) var(--space-6) var(--space-12);
+  font-family: var(--font-title);
   font-size: var(--text-xs);
-  color: var(--ink-light);
+  color: var(--ink-faint);
 }
 
+/* 一道雨丝：两端淡出，替代整块深色页脚 */
 .site-footer__inner {
-  max-width: var(--container-max);
+  max-width: var(--stream-max);
   margin: 0 auto;
+  padding-top: var(--space-8);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--space-4);
-}
-
-.site-footer__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.site-footer__author {
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  color: var(--ink);
+  gap: var(--space-3);
+  background: var(--rain-thread) no-repeat 50% 0 / 40% 1px;
 }
 
 .site-footer__links {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-6);
   list-style: none;
   padding: 0;
+  margin: 0;
+  letter-spacing: 0.2em;
+}
+
+.site-footer__links li {
   margin: 0;
 }
 
 .site-footer__links a {
-  color: var(--ink-light);
+  color: var(--ink-secondary);
 }
 
 .site-footer__links a:hover {
-  color: var(--cinnabar);
+  color: var(--ink);
 }
 
 .site-footer__copy {
-  color: var(--ink-faint);
+  letter-spacing: 0.12em;
   line-height: var(--leading-xs);
 }
 
 /* 页脚版权偶作多段，段落跟随同一行盒 */
 .site-footer__copy p {
   line-height: inherit;
+  margin: 0;
 }
