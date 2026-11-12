@@ -124,16 +124,14 @@ img {
   display: block;
 }
 
-/* 全站唯一入场动效：「落墨」 */
+/* 全站唯一入场动效：「落墨」——只动透明度与位移，交由合成层完成 */
 @keyframes luo-mo {
   from {
     opacity: 0;
-    filter: blur(2px);
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    filter: blur(0);
     transform: translateY(0);
   }
 }

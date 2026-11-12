@@ -14,8 +14,8 @@
   --ink:                   #22282B;  /* 松烟墨正文：偏青的浓墨（对比度 ≥ 12:1） */
   --ink-light:             #3E4B50;  /* 黛青，次要文字 */
   --ink-secondary:         #586266;  /* 雨灰，元数据与说明（对比度 ≥ 5.5:1） */
-  --ink-faint:             #6B7477;  /* 淡墨，时间与小注（对比度 ≥ 4.5:1） */
-  --ink-annotation:        #6F7679;  /* 烟灰，题笺入口小字 */
+  --ink-faint:             #5F686B;  /* 淡墨，时间与小注（对比度 5.06:1，WCAG AA） */
+  --ink-annotation:        #646D70;  /* 烟灰，题笺入口小字（对比度 4.69:1） */
   --cinnabar:              #A8392E;  /* 朱砂：每屏至多一点 */
   --cinnabar-hover:        #842A21;  /* 朱砂深色悬停态 */
   --cinnabar-eyebrow:      var(--cinnabar);  /* 词牌题头（仅词作条目） */
@@ -77,7 +77,8 @@
   --text-xl:    1.25rem;    /* 20px */
   --text-2xl:   1.5rem;     /* 24px */
   --text-3xl:   1.875rem;   /* 30px */
-  --text-4xl:   2.25rem;    /* 36px：卷首题句 */
+  --text-4xl:   2.25rem;    /* 36px */
+  --text-epigraph: clamp(var(--text-xl), 1rem + 2.5vw, var(--text-4xl)); /* 卷首题句：随视口流动，20→36px */
 
   /* 小字行盒（4px 网格：12px 字 → 20px，14px 字 → 24px） */
   --leading-xs: 20px;
@@ -120,6 +121,7 @@
   --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
   --dur-unfold:    200ms;  /* 折角纸笺展开 */
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
+  --stagger:       60ms;   /* 归流条目依次落墨的间隔 */
 
   /* 岁时笺纸（归档横轴）专用 — 上下区高度、列距、朱线曲度 */
   --chrono-top:    12.5rem; /* 轴上区：竖排年份与月日 */
