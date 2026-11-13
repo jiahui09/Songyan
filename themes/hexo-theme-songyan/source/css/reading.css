@@ -173,7 +173,7 @@
   .reading-page .poem-slip-overlay * { transition-property: none; }
 }
 @media print {
-  .skip-link, .reading-code__tools, .reading-page .poem-slip-overlay, .reading-page .share-trigger { display: none; }
+  .reading-code__tools, .reading-page .poem-slip-overlay, .reading-page .share-trigger { display: none; }
   .reading-code.is-collapsed pre { max-height: none; }
   .reading-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .reading-body pre code { white-space: pre-wrap; }

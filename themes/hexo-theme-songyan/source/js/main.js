@@ -10,7 +10,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. 落墨动效：作用于首页归流条目、文章正文一级标题、归档时间轴节点
+  // 1. 落墨动效：首页归流只整体入场，不再单独触发条目与条目标题
   initLuoMoAnimation();
 
   // 2. 归档页「岁时笺纸」横轴：滚轮横移（仅轴区内）+ 指针拖曳 + 进度朱点
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initLuoMoAnimation() {
   const elementsToAnimate = document.querySelectorAll(
-    '.post-item, .post-title, .archive-item'
+    '.home-stream, .reading-page .post-title, .archive-item'
   );
 
   if (!elementsToAnimate.length) return;
@@ -45,7 +45,7 @@ function initLuoMoAnimation() {
         });
       },
       {
-        threshold: 0.1,
+        threshold: 0,
         rootMargin: '0px 0px -20px 0px'
       }
     );

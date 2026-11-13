@@ -23,21 +23,60 @@
    规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
    严禁：卡片容器、投影、条目分割线
    ========================================================= */
-.home-epigraph,
-.home-stream {
-  max-width: var(--stream-max);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--space-6);
-  padding-right: var(--space-6);
+/* ---- 留白封面 · 层叠揭示：封面钉在视口，正文以整片纸面自下而上盖住它 ---- */
+.site-main--home {
+  max-width: none;
+  padding: 0;
+}
+
+/* sticky 参照容器：自身不得裁切，否则钉住失效 */
+.home-reveal {
+  position: relative;
+  timeline-scope: --reveal;
+}
+
+.home-cover {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  min-height: var(--cover-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+  background-color: var(--paper);
+  background-image: var(--paper-texture);
+  background-repeat: repeat;
+  text-align: center;
+}
+
+/* 正文纸面：不透明并沿用同一纸纹，盖住封面时不留缝 */
+.home-sheet {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-16) var(--space-6) var(--space-24);
+  background-color: var(--paper);
+  background-image: var(--paper-texture);
+  background-repeat: repeat;
+  view-timeline: --reveal block;
+}
+
+.home-cover + .home-sheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(var(--stream-max), 100%);
+  height: 1px;
+  transform: translateX(-50%);
+  background: var(--rain-thread);
 }
 
 /* ---- 卷首题词：全站唯一主角，两句分行，四周大面积留白 ---- */
 .home-epigraph {
-  padding-top: var(--space-20);
-  padding-bottom: var(--space-16);
-  margin-bottom: var(--space-12);
-  text-align: center;
+  max-width: var(--stream-max);
+  margin: 0;
 }
 
 .home-epigraph__text {
@@ -68,6 +107,72 @@
   text-indent: 0.3em;
 }
 
+/* 「入卷」：封面唯一的动作，是真实锚点而非脚本 */
+.home-cover__enter {
+  margin-top: var(--space-16);
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--ink-faint);
+  padding-bottom: var(--space-1);
+  background: var(--rain-thread-h-celadon) no-repeat 50% 100% / 100% 1px;
+  transition: color var(--dur-feedback) var(--ease-ink);
+}
+
+.home-cover__enter:hover,
+.home-cover__enter:focus-visible {
+  color: var(--celadon-deep);
+}
+
+/* 微缩退场：由正文入场的视图时间轴驱动，滚动位置即动画进度 */
+@keyframes cover-pass {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.55;
+    transform: scale(var(--cover-scale-end));
+  }
+}
+
+/* 窄屏不做层叠揭示：封面回归普通流，短封面让正文尽早出现 */
+@media (max-width: 899px) {
+  .home-cover {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  @supports (animation-timeline: view()) and (timeline-scope: --reveal) {
+    .home-cover {
+      animation: cover-pass linear both;
+      animation-timeline: --reveal;
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+
+/* 打印回到普通文流，不钉住、不微缩，也不留整屏封面的空白。 */
+@media print {
+  .home-cover {
+    position: static;
+    min-height: 0;
+    animation: none;
+    padding-block: var(--space-8);
+    background: var(--print-paper);
+  }
+  .home-cover__enter {
+    display: none;
+  }
+  .home-sheet {
+    padding-block: var(--space-8);
+    background: var(--print-paper);
+  }
+}
+
 /* ============================================================
    归流：诗文两轨——词作出词牌与起首两句，文章出题目与一行摘要；
    条目间只以留白相隔，整条可点，悬停时左侧浮现一道天青雨丝
@@ -76,19 +181,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  margin-bottom: var(--space-16);
+  max-width: var(--stream-max);
+  margin: 0 auto;
 }
 
 .post-item {
   position: relative;
   padding: var(--space-6) 0 var(--space-6) var(--space-6);
 }
-
-/* 条目依次落墨，如雨点先后着纸 */
-.home-stream > .post-item:nth-child(2) { animation-delay: var(--stagger); }
-.home-stream > .post-item:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
-.home-stream > .post-item:nth-child(4) { animation-delay: calc(var(--stagger) * 3); }
-.home-stream > .post-item:nth-child(n + 5) { animation-delay: calc(var(--stagger) * 4); }
 
 .post-item::before {
   content: "";
@@ -892,15 +992,14 @@
   }
   /* 卷首题词与归流：窄屏收紧留白，题词缩字号保版心；
      横向缩进已由 .site-main 版心供距，此处归零防双重缩进 */
-  .home-epigraph,
-  .home-stream {
-    padding-left: 0;
-    padding-right: 0;
+  .home-cover {
+    padding: var(--space-12) var(--space-5);
   }
-  .home-epigraph {
-    padding-top: var(--space-12);
-    padding-bottom: var(--space-10);
-    margin-bottom: var(--space-6);
+  .home-cover__enter {
+    margin-top: var(--space-10);
+  }
+  .home-sheet {
+    padding: var(--space-12) var(--space-5) var(--space-16);
   }
   .home-epigraph__text {
     letter-spacing: 0.2em;

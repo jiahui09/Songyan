@@ -56,6 +56,10 @@ const pages = [
           assert.equal(await page.locator('.post-signature').evaluate(el => getComputedStyle(el).flexDirection), 'row');
         }
         if (['archive', 'category', 'tag'].includes(name)) assert.ok(await page.locator('.chrono__entry').count() > 0);
+        if (name === 'index' && width < 900) {
+          assert.equal(await page.locator('.home-cover').evaluate(el => getComputedStyle(el).position), 'static', 'narrow screens drop the pin');
+          assert.ok(await page.locator('.home-cover').evaluate(el => el.getBoundingClientRect().height < innerHeight * 0.75), 'short cover leaves room for reading');
+        }
         const urls = await page.locator('a[href], link[rel="stylesheet"], script[src], img[src]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href') || node.getAttribute('src')).filter(value => value && !/^(https?:|data:|mailto:|#)/.test(value)));
         for (const url of urls) assert.equal((await page.request.get(new URL(url, page.url()).href)).status(), 200, `${name}: broken local URL ${url}`);
         if (width === 390 || width === 1280) {
@@ -140,6 +144,91 @@ const pages = [
     await context.close();
     const desktopContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const desktopPage = await desktopContext.newPage();
+    await desktopPage.goto(origin + prefix + '/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const coverProbe = await desktopPage.evaluate(() => {
+      const cover = document.querySelector('.home-cover');
+      const sheet = document.querySelector('.home-sheet');
+      const skip = document.querySelector('.skip-link');
+      return {
+        coverPosition: getComputedStyle(cover).position,
+        coverHeight: cover.getBoundingClientRect().height,
+        sheetZ: Number(getComputedStyle(sheet).zIndex),
+        coverZ: Number(getComputedStyle(cover).zIndex),
+        sheetBackground: getComputedStyle(sheet).backgroundColor,
+        skipHref: skip && skip.getAttribute('href'),
+        enterHref: document.querySelector('.home-cover__enter').getAttribute('href'),
+        targetExists: Boolean(document.querySelector('#' + sheet.id)),
+        scrollSnap: getComputedStyle(document.documentElement).scrollSnapType,
+        sameTexture: getComputedStyle(cover).backgroundImage === getComputedStyle(sheet).backgroundImage
+      };
+    });
+    assert.equal(coverProbe.coverPosition, 'sticky');
+    assert.ok(coverProbe.coverHeight >= 880, `cover fills the viewport: ${coverProbe.coverHeight}`);
+    assert.ok(coverProbe.sheetZ > coverProbe.coverZ, 'content sheet stacks above the pinned cover');
+    assert.equal(coverProbe.sheetBackground, 'rgb(243, 241, 236)', 'sheet is opaque so the cover cannot show through');
+    assert.equal(coverProbe.skipHref, '#home-stream');
+    assert.equal(coverProbe.enterHref, '#home-stream');
+    assert.ok(coverProbe.targetExists);
+    assert.equal(coverProbe.scrollSnap, 'none');
+    assert.ok(coverProbe.sameTexture, 'the two paper layers use the same texture');
+    await desktopPage.evaluate(async () => {
+      const sheet = document.querySelector('.home-sheet');
+      scrollTo({ top: sheet.getBoundingClientRect().top + scrollY - innerHeight / 2 + 40, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const covered = await desktopPage.evaluate(() => {
+      const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      return Boolean(hit && hit.closest('.home-stream, .home-sheet'));
+    });
+    assert.ok(covered, 'the content sheet covers the pinned cover');
+    console.log('PASS home cover: pinned hero, opaque overlay, anchor targets and 62svh narrow fallback'); checks++;
+    await desktopPage.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+
+    await desktopPage.emulateMedia({ reducedMotion: 'no-preference' });
+    const coverMotion = await desktopPage.evaluate(async () => {
+      const cover = document.querySelector('.home-cover');
+      const sheet = document.querySelector('.home-sheet');
+      scrollTo({ top: 0, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const sample = () => {
+        const anim = document.getAnimations().find(a => a.animationName === 'cover-pass');
+        return {
+          timeline: anim && anim.timeline.constructor.name,
+          progress: anim && anim.effect.getComputedTiming().progress,
+          opacity: Number(getComputedStyle(cover).opacity),
+          scale: new DOMMatrix(getComputedStyle(cover).transform).a
+        };
+      };
+      const start = sample();
+      scrollTo({ top: sheet.getBoundingClientRect().top + scrollY, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return { start, end: sample() };
+    });
+    assert.equal(coverMotion.start.timeline, 'ViewTimeline');
+    assert.ok(coverMotion.start.progress < 0.02, JSON.stringify(coverMotion));
+    assert.ok(Math.abs(coverMotion.start.scale - 1) < 0.001, 'cover starts at its natural size');
+    assert.ok(coverMotion.end.progress > 0.95, 'the reveal timeline reaches its end when the sheet covers the fold');
+    assert.ok(coverMotion.end.opacity < coverMotion.start.opacity, 'the cover dims as it is covered');
+    assert.ok(Math.abs(coverMotion.end.scale - 0.98) < 0.001, 'cover gently shrinks to 98%, not an exaggerated zoom');
+    assert.equal(await desktopPage.locator('.home-stream .enter').count(), 0, 'post items and titles do not animate separately');
+    await desktopPage.emulateMedia({ reducedMotion: 'reduce' });
+    assert.equal(await desktopPage.locator('.home-cover').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion keeps the cover static');
+    console.log('PASS home cover motion: scroll-driven view timeline, gentle shrink, reduced-motion opt-out'); checks++;
+
+    await desktopPage.goto(origin + prefix + '/');
+    await desktopPage.keyboard.press('Tab');
+    assert.ok(await desktopPage.locator('.skip-link').evaluate(el => el === document.activeElement));
+    await desktopPage.keyboard.press('Enter');
+    await desktopPage.waitForFunction(() => document.activeElement?.id === 'home-stream');
+    assert.equal(await desktopPage.locator('#home-stream').count(), 1);
+    assert.ok(await desktopPage.locator('#home-stream').evaluate(el => Math.abs(el.getBoundingClientRect().top) <= 2));
+    await desktopPage.emulateMedia({ media: 'print' });
+    assert.equal(await desktopPage.locator('.home-cover').evaluate(el => getComputedStyle(el).position), 'static');
+    assert.equal(await desktopPage.locator('.home-cover').evaluate(el => getComputedStyle(el).minHeight), '0px');
+    await desktopPage.emulateMedia({ media: 'screen' });
+    console.log('PASS home cover keyboard skip link transfers focus; printing removes the full-screen cover height'); checks++;
+
     await desktopPage.goto(origin + prefix + '/2026/10/12/qiushi-huaiyuan/');
     await desktopPage.evaluate(() => document.fonts.ready);
     const poemOverflow = await desktopPage.locator('.post-ci__body-horizontal').evaluate(body => {
@@ -166,6 +255,12 @@ const pages = [
       await staticPage.goto(origin + prefix + route);
       assert.ok(await staticPage.locator('main').isVisible());
       assert.ok(await staticPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name}: no-JS layout`);
+      if (name === 'index') {
+        assert.equal(await staticPage.locator('.post-item').count(), 4, 'all content is in the initial HTML');
+        assert.equal(await staticPage.locator('.home-stream').evaluate(el => getComputedStyle(el).opacity), '1');
+        await staticPage.locator('.home-cover__enter').click();
+        assert.ok(await staticPage.locator('#home-stream').evaluate(el => Math.abs(el.getBoundingClientRect().top) <= 2), 'no-JS entry anchor reaches the content');
+      }
     }
     await staticContext.close();
     console.log('PASS no-JavaScript fallback on all generated page types'); checks++;

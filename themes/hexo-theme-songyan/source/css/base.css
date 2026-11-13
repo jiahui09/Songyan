@@ -20,7 +20,6 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  scroll-behavior: smooth;
   color-scheme: light;
 }
 
@@ -28,7 +27,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-serif);
   background-color: var(--paper);
-  background-image: url("../images/paper-texture.png");
+  background-image: var(--paper-texture);
   background-repeat: repeat;
   color: var(--ink);
   position: relative;
@@ -130,7 +129,7 @@ img {
   inset-block-start: var(--space-2);
   inset-inline-start: var(--space-4);
   transform: translateY(-200%);
-  z-index: 20;
+  z-index: 101;
   padding: var(--space-2) var(--space-4);
   background: var(--paper);
 }
@@ -201,7 +200,8 @@ img {
   }
 
   .site-header,
-  .site-footer {
+  .site-footer,
+  .skip-link {
     display: none;
   }
 

@@ -41,8 +41,10 @@ async function build(name, overrides, source) {
   const paginated = await build('paginated', { index_generator: { path: '', per_page: 3, order_by: '-date' }, per_page: 3 }, fixture);
   const index = await fs.readFile(path.join(paginated, 'index.html'), 'utf8');
   const page2 = await fs.readFile(path.join(paginated, 'page/2/index.html'), 'utf8');
-  assert.equal((index.match(/class="post-item enter"/g) || []).length, 3);
-  assert.equal((page2.match(/class="post-item enter"/g) || []).length, 3);
+  assert.equal((index.match(/class="post-item"/g) || []).length, 3);
+  assert.equal((page2.match(/class="post-item"/g) || []).length, 3);
+  assert.ok(index.includes('class="home-cover"'), 'first page has its cover');
+  assert.ok(!page2.includes('class="home-cover"'), 'pagination never repeats the cover');
   assert.ok(index.includes('class="pagination"') && index.includes('/page/2/'));
   const archive = await fs.readFile(path.join(paginated, 'archives/index.html'), 'utf8');
   assert.equal((archive.match(/class="archive-item chrono__item"/g) || []).length, 13, 'full archive includes every published post even when generator pagination is enabled');
@@ -62,5 +64,10 @@ async function build(name, overrides, source) {
   const emptyFiles = await fs.readdir(empty);
   assert.ok(emptyFiles.includes('css') && emptyFiles.includes('index.html') === false, 'empty source generates assets without inventing a post index');
   console.log('PASS isolated empty site: successful generation without fabricated content');
-  console.log(`RESULT: 3 isolated build variants passed. Subpath output: ${subpath}`);
+  const coverOff = await build('cover-off', { theme_config: { home: { cover: false } } });
+  const directIndex = await fs.readFile(path.join(coverOff, 'index.html'), 'utf8');
+  assert.ok(!directIndex.includes('class="home-cover"'), 'home.cover:false disables the cover');
+  assert.ok(directIndex.includes('id="home-stream"') && directIndex.includes('class="post-item"'), 'content remains present with the cover disabled');
+  console.log('PASS isolated home.cover:false: direct reading without a cover or broken content target');
+  console.log(`RESULT: 4 isolated build variants passed. Subpath output: ${subpath}`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
