@@ -130,22 +130,26 @@
 .reading-page .post-ending .post-tags { margin: 0 0 var(--space-6); justify-content: flex-start; }
 .reading-page .post-ending .post-signature { margin-top: 0; }
 .reading-page .post-ci .post-ending .post-signature { margin-bottom: 0; }
-/* 题笺在落款下方，与落花并排；字号不大于落款日期（text-xs） */
-.reading-page .post-ci__colophon {
+/* 题笺竖排紧挨作者名下，中间落花隔开；字号不大于落款日期 */
+.reading-page .post-signature__slip {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+.reading-page .post-signature__slip .post-signature-actions {
+  margin-top: 0;
   justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
 }
-.reading-page .post-ci__colophon .post-signature-actions {
+.reading-page .post-signature__slip .share-trigger {
   margin-top: 0;
-}
-.reading-page .post-ci__colophon .share-trigger {
-  margin-top: 0;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
 }
 .reading-page .post-ci__body-horizontal { overflow-wrap: anywhere; }
 .reading-page .post-ci__body-horizontal p { line-height: inherit; }
@@ -208,6 +212,17 @@
     margin: 0;
     transform: none;
     transform-origin: center center;
+  }
+  /* vertical-rl 下落款列内：姓名 → 落花 → 竖排题笺 → 日期 */
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__slip {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-2) 0;
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__slip .share-trigger {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
   }
 }
 .reading-page .poem-slip-overlay { overflow-y: auto; }

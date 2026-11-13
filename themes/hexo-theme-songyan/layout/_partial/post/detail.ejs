@@ -33,7 +33,7 @@
     <div class="reading-body-anchor" id="reading-body" tabindex="-1">
       <% if (isCi) { %>
       <div class="post-ci__stage<%= verticalCi ? ' post-ci__stage--columns' : '' %>"<%= verticalCi ? ' data-ci-columns' : '' %>>
-        <div class="post-ci__body-horizontal<%= verticalCi ? ' post-ci__body--vertical' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %><% if (verticalCi) { %><%- partial('_partial/signature', {variant: 'vertical'}) %><% } %></div>
+        <div class="post-ci__body-horizontal<%= verticalCi ? ' post-ci__body--vertical' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %><% if (verticalCi) { %><%- partial('_partial/signature', {variant: 'vertical', slip: !!ciCfg.share}) %><% } %></div>
       </div>
       <% if (notes.length) { %>
       <aside class="poem-annotations" aria-label="<%= labels.annotations %>">
@@ -49,13 +49,7 @@
     <% if (!isCi && tags.length) { %>
     <p class="post-tags"><span class="post-tags__label"><%= labels.tags %></span><% tags.forEach(function (tag, index) { %><% if (index) { %><span class="meta-separator" aria-hidden="true">·</span><% } %><a href="<%= url_for(tag.path) %>"><%= tag.name %></a><% }); %></p>
     <% } %>
-    <% if (!(verticalCi)) { %><%- partial('_partial/signature') %><% } %>
-    <% if (isCi) { %>
-    <div class="post-ci__colophon">
-      <span class="post-ci__petal" aria-hidden="true"></span>
-      <% if (ciCfg.share) { %><%- partial('_partial/poem-slip') %><% } %>
-    </div>
-    <% } %>
+    <% if (!(verticalCi)) { %><%- partial('_partial/signature', {slip: isCi && !!ciCfg.share}) %><% } %>
     </footer>
     <%- partial('_partial/comments') %>
   </article>
