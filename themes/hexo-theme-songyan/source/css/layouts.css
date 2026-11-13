@@ -23,22 +23,21 @@
    规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
    严禁：卡片容器、投影、条目分割线
    ========================================================= */
-/* ---- 留白封面 · 层叠揭示：封面钉在视口，正文以整片纸面自下而上盖住它 ---- */
+/* ---- 卷首题签停靠：同一标题由卷首缩小、上移为栏头，不被正文遮盖 ---- */
 .site-main--home {
   max-width: none;
   padding: 0;
 }
 
-/* sticky 参照容器：自身不得裁切，否则钉住失效 */
+/* sticky 参照容器：覆盖整个阅读区，题签可一直停留到正文末尾。 */
 .home-reveal {
   position: relative;
-  timeline-scope: --reveal;
 }
 
 .home-cover {
-  position: sticky;
+  position: static;
   top: 0;
-  z-index: 0;
+  z-index: 2;
   min-height: var(--cover-height);
   display: flex;
   flex-direction: column;
@@ -51,7 +50,17 @@
   text-align: center;
 }
 
-/* 正文纸面：不透明并沿用同一纸纹，盖住封面时不留缝 */
+.home-cover__details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home-cover-space {
+  display: none;
+}
+
+/* 正文从栏头下方自然展开，始终位于标题层之下。 */
 .home-sheet {
   position: relative;
   z-index: 1;
@@ -59,10 +68,9 @@
   background-color: var(--paper);
   background-image: var(--paper-texture);
   background-repeat: repeat;
-  view-timeline: --reveal block;
 }
 
-.home-cover + .home-sheet::before {
+.home-cover-space + .home-sheet::before {
   content: "";
   position: absolute;
   top: 0;
@@ -126,31 +134,71 @@
   color: var(--celadon-deep);
 }
 
-/* 微缩退场：由正文入场的视图时间轴驱动，滚动位置即动画进度 */
-@keyframes cover-pass {
+/* 只变换同一个标题：透明度始终为 1，位移与缩放由滚动进度控制。 */
+@keyframes title-dock {
   from {
-    opacity: 1;
-    transform: scale(1);
+    transform: translateY(calc(var(--cover-travel) / 2 - var(--cover-title-lift))) scale(1);
   }
   to {
-    opacity: 0.55;
-    transform: scale(var(--cover-scale-end));
+    transform: translateY(0) scale(var(--cover-title-scale));
   }
 }
 
-/* 窄屏不做层叠揭示：封面回归普通流，短封面让正文尽早出现 */
-@media (max-width: 899px) {
-  .home-cover {
-    position: static;
+/* 出处与入卷入口不是栏头的一部分，随卷首收起；不改变标题本身。 */
+@keyframes cover-details-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
-  @supports (animation-timeline: view()) and (timeline-scope: --reveal) {
+  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
     .home-cover {
-      animation: cover-pass linear both;
-      animation-timeline: --reveal;
-      animation-range: entry 0% entry 100%;
+      position: sticky;
+      min-height: 0;
+      height: var(--cover-dock-height);
+      padding: 0;
+    }
+
+    .home-cover .home-epigraph {
+      flex-shrink: 0;
+    }
+
+    .home-cover .home-epigraph__text {
+      animation: title-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--cover-travel);
+    }
+
+    .home-cover__details {
+      position: absolute;
+      top: calc(var(--cover-height) / 2 - var(--cover-title-lift) + var(--space-24));
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      padding-inline: var(--space-6);
+      animation: cover-details-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--cover-travel) / 2);
+    }
+
+    .home-cover__details .home-epigraph__source {
+      margin-top: 0;
+    }
+
+    .home-cover-space {
+      display: block;
+      height: var(--cover-travel);
+    }
+
+    .home-cover-space + .home-sheet {
+      scroll-margin-top: var(--cover-dock-height);
+      min-height: var(--cover-travel); /* 只有一篇短文时，也保留足够的停靠行程。 */
     }
   }
 }
@@ -160,9 +208,22 @@
   .home-cover {
     position: static;
     min-height: 0;
+    height: auto;
     animation: none;
     padding-block: var(--space-8);
     background: var(--print-paper);
+  }
+  .home-cover .home-epigraph__text {
+    animation: none;
+    transform: none;
+  }
+  .home-cover__details {
+    position: static;
+    transform: none;
+    animation: none;
+  }
+  .home-cover-space {
+    display: none;
   }
   .home-cover__enter {
     display: none;
@@ -170,6 +231,10 @@
   .home-sheet {
     padding-block: var(--space-8);
     background: var(--print-paper);
+  }
+  .home-cover-space + .home-sheet {
+    min-height: 0;
+    scroll-margin-top: 0;
   }
 }
 

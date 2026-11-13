@@ -124,9 +124,12 @@
   --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
   --dur-unfold:    200ms;  /* 折角纸笺展开 */
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
-  /* 留白封面 · 层叠揭示：窄屏短封面，宽屏一屏素笺 */
+  /* 卷首题签停靠：占位保持稳定，同一个标题随原生滚动变形。 */
   --cover-height: 62svh;
-  --cover-scale-end: 0.98;   /* 被正文盖住时的微缩终点 */
+  --cover-dock-height: var(--space-24);
+  --cover-title-scale: 0.5;
+  --cover-title-lift: var(--space-20);
+  --cover-travel: calc(var(--cover-height) - var(--cover-dock-height));
 
   /* 岁时笺纸：字形不作透视缩放，长题可折列；两弧与月日共用轴位。 */
   --chrono-top:    8rem;   /* 轴上区：竖排年份与月日 */

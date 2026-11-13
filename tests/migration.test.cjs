@@ -146,16 +146,21 @@ const pages = [
     const desktopPage = await desktopContext.newPage();
     await desktopPage.goto(origin + prefix + '/');
     await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const titleHandle = await desktopPage.locator('.home-epigraph__text').elementHandle();
     const coverProbe = await desktopPage.evaluate(() => {
       const cover = document.querySelector('.home-cover');
       const sheet = document.querySelector('.home-sheet');
       const skip = document.querySelector('.skip-link');
+      const title = document.querySelector('.home-epigraph__text');
+      const rect = title.getBoundingClientRect();
       return {
         coverPosition: getComputedStyle(cover).position,
-        coverHeight: cover.getBoundingClientRect().height,
+        coverHeight: cover.getBoundingClientRect().height + document.querySelector('.home-cover-space').getBoundingClientRect().height,
         sheetZ: Number(getComputedStyle(sheet).zIndex),
         coverZ: Number(getComputedStyle(cover).zIndex),
-        sheetBackground: getComputedStyle(sheet).backgroundColor,
+        titleOpacity: getComputedStyle(title).opacity,
+        titleCenter: (rect.top + rect.bottom) / 2,
         skipHref: skip && skip.getAttribute('href'),
         enterHref: document.querySelector('.home-cover__enter').getAttribute('href'),
         targetExists: Boolean(document.querySelector('#' + sheet.id)),
@@ -165,8 +170,9 @@ const pages = [
     });
     assert.equal(coverProbe.coverPosition, 'sticky');
     assert.ok(coverProbe.coverHeight >= 880, `cover fills the viewport: ${coverProbe.coverHeight}`);
-    assert.ok(coverProbe.sheetZ > coverProbe.coverZ, 'content sheet stacks above the pinned cover');
-    assert.equal(coverProbe.sheetBackground, 'rgb(243, 241, 236)', 'sheet is opaque so the cover cannot show through');
+    assert.ok(coverProbe.sheetZ < coverProbe.coverZ, 'the title remains above the content, never covered by it');
+    assert.equal(coverProbe.titleOpacity, '1');
+    assert.ok(coverProbe.titleCenter > 270 && coverProbe.titleCenter < 630, 'initial title sits near the viewport center');
     assert.equal(coverProbe.skipHref, '#home-stream');
     assert.equal(coverProbe.enterHref, '#home-stream');
     assert.ok(coverProbe.targetExists);
@@ -174,47 +180,81 @@ const pages = [
     assert.ok(coverProbe.sameTexture, 'the two paper layers use the same texture');
     await desktopPage.evaluate(async () => {
       const sheet = document.querySelector('.home-sheet');
-      scrollTo({ top: sheet.getBoundingClientRect().top + scrollY - innerHeight / 2 + 40, behavior: 'instant' });
+      const dock = document.querySelector('.home-cover');
+      scrollTo({ top: sheet.getBoundingClientRect().top + scrollY - dock.getBoundingClientRect().height, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     });
-    const covered = await desktopPage.evaluate(() => {
-      const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
-      return Boolean(hit && hit.closest('.home-stream, .home-sheet'));
+    const docked = await desktopPage.evaluate(() => {
+      const title = document.querySelector('.home-epigraph__text');
+      const rect = title.getBoundingClientRect();
+      const dockHeight = document.querySelector('.home-cover').getBoundingClientRect().height;
+      const titleHit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+      return {
+        top: rect.top, bottom: rect.bottom, dockHeight,
+        titleVisible: Boolean(titleHit && title.contains(titleHit)),
+        contentBelow: document.querySelector('.home-sheet').getBoundingClientRect().top >= dockHeight - 1
+      };
     });
-    assert.ok(covered, 'the content sheet covers the pinned cover');
-    console.log('PASS home cover: pinned hero, opaque overlay, anchor targets and 62svh narrow fallback'); checks++;
+    assert.ok(docked.top >= 0 && docked.bottom <= docked.dockHeight, JSON.stringify(docked));
+    assert.ok(docked.titleVisible && docked.contentBelow, 'title docks above the naturally flowing content');
+    assert.ok(await titleHandle.evaluate(el => el === document.querySelector('.home-epigraph__text')), 'the title is the same DOM element, not a copy');
+    assert.equal(await desktopPage.locator('.home-cover h1').count(), 1);
+    console.log('PASS home title: same element docks above content; initial full cover and narrow short-cover fallback'); checks++;
     await desktopPage.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
 
     await desktopPage.emulateMedia({ reducedMotion: 'no-preference' });
     const coverMotion = await desktopPage.evaluate(async () => {
-      const cover = document.querySelector('.home-cover');
+      const title = document.querySelector('.home-epigraph__text');
       const sheet = document.querySelector('.home-sheet');
       scrollTo({ top: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const sample = () => {
-        const anim = document.getAnimations().find(a => a.animationName === 'cover-pass');
+        const anim = document.getAnimations().find(a => a.animationName === 'title-dock');
+        const transform = new DOMMatrix(getComputedStyle(title).transform);
         return {
           timeline: anim && anim.timeline.constructor.name,
           progress: anim && anim.effect.getComputedTiming().progress,
-          opacity: Number(getComputedStyle(cover).opacity),
-          scale: new DOMMatrix(getComputedStyle(cover).transform).a
+          opacity: Number(getComputedStyle(title).opacity),
+          scale: transform.a, translateY: transform.f
         };
       };
       const start = sample();
+      scrollTo({ top: document.querySelector('.home-cover-space').getBoundingClientRect().height / 2, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const middle = sample();
       scrollTo({ top: sheet.getBoundingClientRect().top + scrollY, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      return { start, end: sample() };
+      const end = sample();
+      scrollTo({ top: 0, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return { start, middle, end, restored: sample() };
     });
-    assert.equal(coverMotion.start.timeline, 'ViewTimeline');
+    assert.equal(coverMotion.start.timeline, 'ScrollTimeline');
     assert.ok(coverMotion.start.progress < 0.02, JSON.stringify(coverMotion));
     assert.ok(Math.abs(coverMotion.start.scale - 1) < 0.001, 'cover starts at its natural size');
-    assert.ok(coverMotion.end.progress > 0.95, 'the reveal timeline reaches its end when the sheet covers the fold');
-    assert.ok(coverMotion.end.opacity < coverMotion.start.opacity, 'the cover dims as it is covered');
-    assert.ok(Math.abs(coverMotion.end.scale - 0.98) < 0.001, 'cover gently shrinks to 98%, not an exaggerated zoom');
+    assert.ok(coverMotion.end.progress > 0.95, 'title reaches its final size before the content reaches the dock');
+    assert.equal(coverMotion.start.opacity, 1);
+    assert.equal(coverMotion.middle.opacity, 1, 'title stays visible during the transition, not just at its endpoints');
+    assert.equal(coverMotion.end.opacity, 1, 'title never fades or retires');
+    assert.ok(coverMotion.start.scale > coverMotion.middle.scale && coverMotion.middle.scale > coverMotion.end.scale, 'title continuously shrinks instead of switching states');
+    assert.ok(coverMotion.start.translateY > coverMotion.end.translateY, 'title moves upward');
+    assert.ok(Math.abs(coverMotion.end.scale - 0.5) < 0.001, 'title becomes a half-sized masthead');
+    assert.ok(Math.abs(coverMotion.restored.scale - 1) < 0.001, 'scrolling back restores the same title');
     assert.equal(await desktopPage.locator('.home-stream .enter').count(), 0, 'post items and titles do not animate separately');
+    const shortPageDock = await desktopPage.evaluate(async () => {
+      document.querySelectorAll('.post-item').forEach((item, i) => { if (i) item.remove(); });
+      const dock = document.querySelector('.home-cover');
+      const sheet = document.querySelector('.home-sheet');
+      scrollTo({ top: sheet.getBoundingClientRect().top + scrollY - dock.getBoundingClientRect().height, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rect = document.querySelector('.home-epigraph__text').getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= dock.getBoundingClientRect().height;
+    });
+    assert.ok(shortPageDock, 'a single short post still provides sufficient title-docking travel');
     await desktopPage.emulateMedia({ reducedMotion: 'reduce' });
-    assert.equal(await desktopPage.locator('.home-cover').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion keeps the cover static');
-    console.log('PASS home cover motion: scroll-driven view timeline, gentle shrink, reduced-motion opt-out'); checks++;
+    assert.equal(await desktopPage.locator('.home-epigraph__text').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion keeps the title static');
+    assert.equal(await desktopPage.locator('.home-cover').evaluate(el => getComputedStyle(el).position), 'static');
+    console.log('PASS home title motion: native scroll timeline, scale/translation without fade, reduced-motion fallback'); checks++;
 
     await desktopPage.goto(origin + prefix + '/');
     await desktopPage.keyboard.press('Tab');
@@ -262,6 +302,21 @@ const pages = [
         assert.ok(await staticPage.locator('#home-stream').evaluate(el => Math.abs(el.getBoundingClientRect().top) <= 2), 'no-JS entry anchor reaches the content');
       }
     }
+    await staticPage.setViewportSize({ width: 1280, height: 900 });
+    await staticPage.emulateMedia({ reducedMotion: 'no-preference' });
+    await staticPage.goto(origin + prefix + '/');
+    await staticPage.evaluate(() => document.fonts.ready);
+    const staticTitle = await staticPage.locator('.home-epigraph__text').elementHandle();
+    await staticPage.locator('.home-cover__enter').click();
+    // 禁用页面 JS 时不能等待页面内的 rAF 回调；截图请求由浏览器完成渲染同步。
+    await staticPage.screenshot({ path: path.join(output, 'nojs-title-dock.png') });
+    const noJsDock = await staticPage.locator('.home-epigraph__text').evaluate(title => {
+      const rect = title.getBoundingClientRect();
+      const dock = document.querySelector('.home-cover').getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= dock.height && document.querySelector('#home-stream').getBoundingClientRect().top >= dock.height - 1;
+    });
+    assert.ok(noJsDock, 'native anchor scrolling docks the title without any JavaScript');
+    assert.ok(await staticTitle.evaluate(el => el === document.querySelector('.home-epigraph__text')));
     await staticContext.close();
     console.log('PASS no-JavaScript fallback on all generated page types'); checks++;
     console.log(`RESULT: ${checks} migration check groups passed. Evidence: ${output}`);

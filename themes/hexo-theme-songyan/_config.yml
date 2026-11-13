@@ -46,7 +46,7 @@ ci:
 
 # 卷首首页配置
 home:
-  cover: true                                    # 首页首屏留白封面（层叠揭示）；false 则直接归流
+  cover: true                                    # 首页卷首题句随滚动缩小停靠为栏头；false 则直接归流
   hero_verse: "一研松烟分细墨 · 四卷清赏寄余年"   # 卷首词句
   hero_source: 春唇语冬 · 卷首自题
 
