@@ -209,7 +209,7 @@ const pages = [
     assert.ok(coverProbe.sheetBg.includes('paper-texture'), 'content keeps the shared paper texture');
     assert.equal(coverProbe.coverBg, 'none', 'docked masthead is not a paper overlay covering the page');
     assert.equal(coverProbe.sheetSnap, 'start');
-    assert.equal(coverProbe.sheetSnapStop, 'normal', 'after docking the page can continue to the footer');
+    assert.equal(coverProbe.sheetSnapStop, 'always', 'once docked, light scrolls do not pull the masthead back');
     await desktopPage.evaluate(async () => {
       const space = document.querySelector('.home-cover-space').getBoundingClientRect().height;
       scrollTo({ top: space, behavior: 'instant' });
@@ -422,7 +422,7 @@ const pages = [
     assert.ok(archiveIntro.recentOpacity > 0.8, 'recent posts are visible on the archive intro');
     assert.equal(archiveIntro.dockSnap, 'proximity', JSON.stringify(archiveIntro));
     assert.equal(archiveIntro.legendSnap, 'start');
-    assert.equal(archiveIntro.legendSnapStop, 'normal');
+    assert.equal(archiveIntro.legendSnapStop, 'always');
     assert.deepEqual(archiveIntro.activeNav, ['归档']);
 
     await desktopPage.evaluate(async () => {
@@ -556,7 +556,9 @@ const pages = [
         hasVerticalSignature: Boolean(signature),
         endingSignature: Boolean(endingSignature),
         annotations: Boolean(annotations),
-        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim()
+        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        bodySnap: getComputedStyle(document.querySelector('.reading-body-anchor')).scrollSnapAlign,
+        bodySnapStop: getComputedStyle(document.querySelector('.reading-body-anchor')).scrollSnapStop
       };
     });
     assert.ok(Math.abs(readingCiDocked.mastTop - readingCiDocked.headerBottom) <= 2, 'ci title docks under header');
@@ -569,6 +571,8 @@ const pages = [
     assert.equal(readingCiDocked.endingSignature, false, 'ci does not duplicate horizontal ending signature');
     assert.equal(readingCiDocked.annotations, false, 'ci annotations are off by default');
     assert.equal(readingCiDocked.dockSnap, 'proximity');
+    assert.equal(readingCiDocked.bodySnap, 'start');
+    assert.equal(readingCiDocked.bodySnapStop, 'always', 'reading dock holds at the body start');
 
     // 定点后锁页：滚轮逐列淡入，落款字后再末拍盖章
     const readingCiColumns = await desktopPage.evaluate(async () => {
@@ -685,6 +689,27 @@ const pages = [
     assert.ok(aboutDocked.titleSize < 28, 'about title compactifies');
     assert.ok(aboutDocked.tagOpacity < 0.05, 'about tagline fades when docking');
     assert.ok(aboutDocked.footerBottomVisible, 'about page can reach the footer after docking');
+
+    // 定点后继续下滑应能越过锚点到页脚（always 不永久锁页）
+    await desktopPage.goto(origin + prefix + '/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const homeFooter = await desktopPage.evaluate(async () => {
+      const space = document.querySelector('.home-cover-space').getBoundingClientRect().height;
+      scrollTo({ top: space, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const footer = document.querySelector('.site-footer').getBoundingClientRect();
+      return {
+        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        sheetStop: getComputedStyle(document.querySelector('.home-sheet')).scrollSnapStop,
+        footerBottomVisible: footer.bottom <= innerHeight + 2,
+        scrollY
+      };
+    });
+    assert.equal(homeFooter.dockSnap, 'proximity');
+    assert.equal(homeFooter.sheetStop, 'always');
+    assert.ok(homeFooter.footerBottomVisible, 'home can pass the dock snap and reach the footer');
 
     // 首页诗文简介字号一致且为 text-sm
     await desktopPage.goto(origin + prefix + '/');

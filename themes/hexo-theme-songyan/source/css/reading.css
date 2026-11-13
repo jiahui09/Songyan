@@ -360,8 +360,8 @@
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
     /*
-     * 只在正文定点设 proximity：首屏不 snap，克服阻力后吸住，
-     * 之后可继续滑到页脚，不被卷首锚点拉回。
+     * 只在正文定点设引力锚点：首屏不 snap；
+     * proximity + always = 靠近才吸，吸住后轻滑不半途回弹；再滑可过定点到页脚。
      */
     html:has(body.reading-dock-page) {
       scroll-snap-type: y proximity;
@@ -468,10 +468,11 @@
       position: relative;
       z-index: 0;
       scroll-snap-align: start;
-      scroll-snap-stop: normal;
+      scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
       padding-top: var(--space-12);
-      min-height: calc(var(--reading-travel) * 0.35);
+      /* 加大定点后缓冲，克服阻力后吸住，不半途卡壳 */
+      min-height: calc(var(--reading-travel) * 0.55);
     }
 
     .reading-dock-page .post-ci__header,

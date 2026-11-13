@@ -253,8 +253,9 @@
     }
 
     /*
-     * 只在定点设 proximity 锚点：首屏不 snap，避免来回吸；
-     * 克服阻力后吸住定点，之后可继续滑到页脚。
+     * 只在「停靠完成 / 正文起点」设引力锚点：
+     * 首屏不 snap，避免把已出现的题头再拉回去；
+     * proximity + always = 靠近才吸，吸住后轻滑不半途回弹；再滑可过定点到页脚。
      */
     html:has(body.home-cover-page) {
       scroll-snap-type: y proximity;
@@ -264,8 +265,9 @@
     .home-dock-zone + .home-sheet {
       scroll-margin-top: calc(var(--header-dock-height) + var(--cover-dock-height));
       scroll-snap-align: start;
-      scroll-snap-stop: normal;
+      scroll-snap-stop: always;
       padding-top: var(--space-12);
+      /* 定点后缓冲：克服阻力后吸住，不半途卡壳 */
       min-height: calc(var(--cover-travel) + var(--space-16));
     }
   }
@@ -1230,7 +1232,7 @@
       position: relative;
       z-index: 1;
       scroll-snap-align: start;
-      scroll-snap-stop: normal;
+      scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
       /* 上边距作定点缓冲，不占时间轴一屏高度 */
       margin: var(--space-8) 0 var(--space-3);

@@ -28,8 +28,9 @@
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) {
+    /* 评论区不作第二道 always 锚点，避免挡住滑向页脚 */
     html:has(body.reading-dock-page) .comments {
-      scroll-snap-align: start;
+      scroll-snap-align: none;
       scroll-snap-stop: normal;
     }
   }
