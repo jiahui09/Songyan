@@ -210,7 +210,7 @@
       height: var(--cover-dock-height);
       padding: 0 var(--space-6);
       justify-content: flex-start;
-      overflow: visible;
+      overflow: visible; /* 卷首大字需溢出栏头盒；出处以 visibility 隐去 */
       background-color: transparent;
       background-image: none;
     }
@@ -236,7 +236,8 @@
     .home-cover .home-epigraph__source {
       animation: source-fold linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--cover-travel) * 0.85);
+      /* 在停靠完成前隐去，定点态不再露出出处 */
+      animation-range: 0px calc(var(--cover-travel) * 0.7);
     }
 
     .home-cover__hint {
@@ -250,8 +251,20 @@
       height: var(--cover-travel);
     }
 
+    /*
+     * 引力锚点只设在「停靠完成 / 正文起点」：
+     * 首屏不设 snap，避免把已出现的题头再拉回去；
+     * proximity = 靠近完成点才吸住，要么停在卷首，要么停在定点。
+     */
+    html:has(body.home-cover-page) {
+      scroll-snap-type: y proximity;
+      --dock-snap: proximity;
+    }
+
     .home-dock-zone + .home-sheet {
-      scroll-margin-top: var(--header-dock-height);
+      scroll-margin-top: calc(var(--header-dock-height) + var(--cover-dock-height));
+      scroll-snap-align: start;
+      scroll-snap-stop: always; /* 一旦进入定点，不再被轻滑拽回半途 */
       padding-top: var(--space-8);
       min-height: var(--cover-travel);
     }
@@ -902,7 +915,7 @@
   max-width: none;
 }
 
-.archive-dock-zone {
+.archive-intro {
   position: relative;
 }
 
@@ -913,6 +926,61 @@
 
 .archive-head-space {
   display: none;
+}
+
+/* 首屏近期篇目：进入后可见；下滑随题头行程渐隐，完整时间轴成为焦点。 */
+.archive-recent {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  max-width: var(--stream-max);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.archive-recent__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.archive-recent__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-base);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.archive-recent__link:hover,
+.archive-recent__link:focus-visible {
+  color: var(--celadon-deep);
+}
+
+.archive-recent__rubric,
+.archive-recent__sep {
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+}
+
+.archive-recent__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-recent__date {
+  flex-shrink: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
 }
 
 /* 分卷图例：与时间轴同屏；默认灰墨点，悬停/选中还原彩墨；点按筛选轴体篇目 */
@@ -1016,7 +1084,7 @@
   color: var(--ink-faint);
 }
 
-/* 归档题头停靠：首屏题头居中；下滑后收拢到页眉下，时间轴与分类图例占满画面。 */
+/* 归档题头停靠：首屏题头+近期；下滑后题头常驻页眉下，近期隐去，时间轴一屏完整展示。 */
 @keyframes archive-title-dock {
   from {
     transform: translateY(calc(var(--archive-travel) / 2 - var(--space-8)));
@@ -1045,13 +1113,35 @@
   }
 }
 
+@keyframes archive-recent-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(calc(var(--space-4) * -1));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
-    .archive-dock-zone {
-      height: calc(var(--archive-intro-height) + var(--header-dock-height));
-      margin-top: calc(var(--header-dock-height) * -1);
-      padding-top: var(--header-dock-height);
-      box-sizing: border-box;
+    /*
+     * 引力锚点只设在「图例 + 时间轴」起点：
+     * 首屏不设 snap，避免把已出现的题头再拉回去；
+     * always = 进入定点后不再被轻滑拽回半途。
+     */
+    html:has(body.archive-dock-page) {
+      scroll-snap-type: y proximity;
+      --dock-snap: proximity;
+      /* 定点一屏：压缩轴上下高度，整条时间轴落在页眉+题头下 */
+      --chrono-top: 5.5rem;
+      --chrono-bottom: 18rem;
+      --chrono-gap: 1.35rem;
+      --chrono-sag: 0.625rem;
+      --chrono-breath: clamp(var(--space-10), 8vw, var(--space-16));
     }
 
     .archive-head {
@@ -1065,6 +1155,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      overflow: visible; /* 首屏大题头需溢出栏头盒向下居中 */
       background-color: transparent;
     }
 
@@ -1077,23 +1168,72 @@
     .archive-head__count {
       animation: archive-count-fold linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--archive-travel) * 0.7);
+      animation-range: 0px calc(var(--archive-travel) * 0.55);
+    }
+
+    .archive-intro {
+      /* 盖住视口剩余高度，避免时间轴在首屏探头 */
+      height: var(--archive-travel);
+      margin-top: calc(var(--archive-dock-height) * -1);
+      padding-top: var(--archive-dock-height);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .archive-recent {
+      position: absolute;
+      left: 0;
+      right: 0;
+      /* 落在居中大题头下方，避免与题头/时间轴重叠 */
+      top: calc(50% + var(--space-16));
+      max-width: min(var(--stream-max), 34rem);
+      margin-inline: auto;
+      animation: archive-recent-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--archive-travel) * 0.6);
     }
 
     .archive-head-space {
       display: block;
-      height: var(--archive-travel);
+      height: 100%;
     }
 
-    .archive-legend + .chrono,
-    .archive-legend + .archive-empty {
-      min-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - 4rem);
+    .archive-legend {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
+      margin: 0 0 var(--space-3);
+      min-height: var(--archive-legend-height);
+      align-items: center;
+    }
+
+    .archive-dock-page .chrono {
+      margin-top: 0;
+      /* 再扣一点底边余量，避免竖排尾字贴视口底 */
+      height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
+      max-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
+    }
+
+    .archive-dock-page .chrono__track {
+      padding-bottom: var(--space-4);
+    }
+
+    .archive-dock-page .chrono__entry {
+      font-size: var(--text-base);
+    }
+
+    .archive-dock-page .chrono__year-greg {
+      font-size: var(--text-lg);
+    }
+
+    .archive-dock-page .chrono__year-gz {
+      font-size: var(--text-base);
     }
   }
 }
 
 @media print {
-  .archive-dock-zone {
+  .archive-intro {
     height: auto;
     margin-top: 0;
     padding-top: 0;
@@ -1103,7 +1243,8 @@
     height: auto;
   }
   .archive-head__title,
-  .archive-head__count {
+  .archive-head__count,
+  .archive-recent {
     animation: none;
     transform: none;
   }

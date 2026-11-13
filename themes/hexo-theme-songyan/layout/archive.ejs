@@ -2,6 +2,8 @@
   var cfg = theme.archive;
   var collection = (page.category || page.tag || page.year) && page.posts ? page.posts : site.posts;
   var ordered = collection.sort('-date').toArray();
+  var recentCount = Math.max(0, Number(cfg.recent) || 3);
+  var recent = ordered.slice(0, recentCount);
   var groups = {};
   ordered.forEach(function (post) {
     var year = date(post.date, 'YYYY');
@@ -17,11 +19,27 @@
   var branches = '子丑寅卯辰巳午未申酉戌亥';
 %>
 <main class="site-main site-main--archive">
-  <div class="archive-dock-zone">
-    <header class="archive-head">
-      <h1 class="archive-head__title"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
-      <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
-    </header>
+  <header class="archive-head">
+    <h1 class="archive-head__title"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
+    <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
+  </header>
+  <div class="archive-intro">
+    <% if (recent.length) { %>
+    <ol class="archive-recent" aria-label="<%= cfg.recent_label %>">
+      <% recent.forEach(function (post) {
+        var key = sectionOf(post);
+      %>
+      <li class="archive-recent__item">
+        <a href="<%= url_for(post.path) %>" class="archive-recent__link">
+          <span class="archive-recent__rubric"><%= cfg.categories[key] %></span>
+          <span class="archive-recent__sep" aria-hidden="true">·</span>
+          <span class="archive-recent__title"><%= post.title || config.title %></span>
+        </a>
+        <time class="archive-recent__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date}) %></time>
+      </li>
+      <% }); %>
+    </ol>
+    <% } %>
     <div class="archive-head-space" aria-hidden="true"></div>
   </div>
   <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">

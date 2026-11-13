@@ -168,16 +168,18 @@ const pages = [
         hasHint: Boolean(document.querySelector('.home-cover__hint')),
         headerPos: getComputedStyle(document.querySelector('.site-header')).position,
         targetExists: Boolean(document.querySelector('#' + sheet.id)),
-        scrollSnap: getComputedStyle(document.documentElement).scrollSnapType,
+        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
         coverBg: getComputedStyle(cover).backgroundImage,
-        sheetBg: getComputedStyle(sheet).backgroundImage
+        sheetBg: getComputedStyle(sheet).backgroundImage,
+        sheetSnap: getComputedStyle(sheet).scrollSnapAlign,
+        sheetSnapStop: getComputedStyle(sheet).scrollSnapStop
       };
     });
     assert.equal(coverProbe.coverPosition, 'sticky');
     assert.ok(coverProbe.coverHeight >= 880, `cover fills the viewport under the overlaid header: ${coverProbe.coverHeight}`);
     assert.equal(coverProbe.sheetZ, coverProbe.coverZ, 'title and content share the same stacking layer');
     assert.equal(coverProbe.titleOpacity, '1');
-    assert.equal(coverProbe.sourceOpacity, '1', 'source stays visible');
+    assert.ok(Number(coverProbe.sourceOpacity) > 0.95, 'source stays visible at rest');
     assert.ok(Number(coverProbe.hintOpacity) > 0.2, 'scroll hint is visible at rest');
     assert.equal(coverProbe.hasEnter, false, 'enter button is removed');
     assert.equal(coverProbe.hasHint, true);
@@ -185,9 +187,11 @@ const pages = [
     assert.ok(coverProbe.titleCenter > 270 && coverProbe.titleCenter < 630, 'initial title sits near the viewport center');
     assert.equal(coverProbe.skipHref, '#home-stream');
     assert.ok(coverProbe.targetExists);
-    assert.equal(coverProbe.scrollSnap, 'none');
+    assert.equal(coverProbe.dockSnap, 'proximity', 'dock completion uses a proximity snap anchor');
     assert.ok(coverProbe.sheetBg.includes('paper-texture'), 'content keeps the shared paper texture');
     assert.equal(coverProbe.coverBg, 'none', 'docked masthead is not a paper overlay covering the page');
+    assert.equal(coverProbe.sheetSnap, 'start');
+    assert.equal(coverProbe.sheetSnapStop, 'always', 'once docked, light scrolls do not pull the masthead back');
     await desktopPage.evaluate(async () => {
       const space = document.querySelector('.home-cover-space').getBoundingClientRect().height;
       scrollTo({ top: space, behavior: 'instant' });
@@ -359,28 +363,41 @@ const pages = [
       const head = document.querySelector('.archive-head');
       const title = document.querySelector('.archive-head__title');
       const legend = document.querySelector('.archive-legend');
-      const chrono = document.querySelector('.chrono');
+      const recent = document.querySelector('.archive-recent');
       const header = document.querySelector('.site-header');
       return {
         headPos: getComputedStyle(head).position,
         headerPos: getComputedStyle(header).position,
         titleAnim: getComputedStyle(title).animationName,
-        legendAfterHead: Boolean(legend && legend.compareDocumentPosition(document.querySelector('.archive-dock-zone')) & Node.DOCUMENT_POSITION_PRECEDING),
+        legendAfterIntro: Boolean(legend && legend.compareDocumentPosition(document.querySelector('.archive-intro')) & Node.DOCUMENT_POSITION_PRECEDING),
         titleCenter: (title.getBoundingClientRect().top + title.getBoundingClientRect().bottom) / 2,
         railZ: Number(getComputedStyle(document.querySelector('.chrono__rail')).zIndex),
-        axisZ: Number(getComputedStyle(document.querySelector('.chrono__axis')).zIndex)
+        axisZ: Number(getComputedStyle(document.querySelector('.chrono__axis')).zIndex),
+        recentCount: recent ? recent.querySelectorAll('.archive-recent__item').length : 0,
+        recentOpacity: recent ? Number(getComputedStyle(recent).opacity) : 0,
+        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        legendSnap: getComputedStyle(legend).scrollSnapAlign,
+        legendSnapStop: getComputedStyle(legend).scrollSnapStop
       };
     });
     assert.equal(archiveIntro.headPos, 'sticky');
     assert.equal(archiveIntro.headerPos, 'sticky');
     assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
-    assert.ok(archiveIntro.legendAfterHead, 'category legend sits with the timeline focus area under the title');
+    assert.ok(archiveIntro.legendAfterIntro, 'category legend sits with the timeline focus area under the title');
     assert.ok(archiveIntro.titleCenter > 180 && archiveIntro.titleCenter < 560, JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
+    assert.ok(archiveIntro.recentCount >= 1 && archiveIntro.recentCount <= 3, JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.recentOpacity > 0.8, 'recent posts are visible on the archive intro');
+    assert.equal(archiveIntro.dockSnap, 'proximity', JSON.stringify(archiveIntro));
+    assert.equal(archiveIntro.legendSnap, 'start');
+    assert.equal(archiveIntro.legendSnapStop, 'always');
 
     await desktopPage.evaluate(async () => {
-      const space = document.querySelector('.archive-head-space').getBoundingClientRect().height;
-      scrollTo({ top: space, behavior: 'instant' });
+      const legend = document.querySelector('.archive-legend');
+      const head = document.querySelector('.archive-head');
+      const header = document.querySelector('.site-header');
+      const top = legend.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - head.getBoundingClientRect().height;
+      scrollTo({ top: Math.max(0, top), behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     });
     const archiveDocked = await desktopPage.evaluate(() => {
@@ -390,26 +407,36 @@ const pages = [
       const legend = document.querySelector('.archive-legend').getBoundingClientRect();
       const count = document.querySelector('.archive-head__count');
       const title = document.querySelector('.archive-head__title');
+      const recent = document.querySelector('.archive-recent');
       return {
         headerTop: header.top,
         headerBottom: header.bottom,
         headTop: head.top,
         headBottom: head.bottom,
         chronoTop: chrono.top,
+        chronoBottom: chrono.bottom,
         legendTop: legend.top,
+        legendBottom: legend.bottom,
         countOpacity: Number(getComputedStyle(count).opacity),
         titleSize: parseFloat(getComputedStyle(title).fontSize),
-        focusBottom: Math.max(chrono.bottom, legend.bottom),
-        viewport: innerHeight
+        recentOpacity: recent ? Number(getComputedStyle(recent).opacity) : 0,
+        recentVisibility: recent ? getComputedStyle(recent).visibility : 'hidden',
+        viewport: innerHeight,
+        chronoTopToken: getComputedStyle(document.documentElement).getPropertyValue('--chrono-top').trim(),
+        overlap: legend.bottom > chrono.top + 1
       };
     });
     assert.ok(archiveDocked.headerTop >= -1 && archiveDocked.headerTop <= 1, JSON.stringify(archiveDocked));
     assert.ok(Math.abs(archiveDocked.headTop - archiveDocked.headerBottom) <= 2, 'archive title docks under the pinned header');
     assert.ok(archiveDocked.legendTop >= archiveDocked.headBottom - 2, 'legend sits under the docked title');
-    assert.ok(archiveDocked.chronoTop >= archiveDocked.legendTop - 2, 'timeline follows the legend');
+    assert.ok(archiveDocked.chronoTop >= archiveDocked.legendBottom - 2, 'timeline follows the legend without overlap');
+    assert.equal(archiveDocked.overlap, false, 'legend and timeline do not overlap');
     assert.ok(archiveDocked.countOpacity < 0.05, 'count fades as the title docks');
+    assert.ok(archiveDocked.recentOpacity < 0.05, 'recent posts hide after scrolling into the timeline');
+    assert.equal(archiveDocked.recentVisibility, 'hidden');
     assert.ok(archiveDocked.titleSize < 28, 'archive title compactifies');
-    assert.ok(archiveDocked.focusBottom > archiveDocked.viewport * 0.85, 'timeline and legend fill the remaining viewport');
+    assert.ok(archiveDocked.chronoBottom <= archiveDocked.viewport + 2, 'timeline fits under header+title in one screen');
+    assert.ok(archiveDocked.chronoTopToken.includes('5.5'), 'docked archive uses compact chrono metrics');
 
     const archiveCenterOffset = await desktopPage.locator('.chrono__year').evaluate(year => {
       const group = year.getBoundingClientRect();
@@ -419,7 +446,7 @@ const pages = [
     assert.ok(archiveCenterOffset < 2, 'a short archive is centered in its rail');
     assert.equal(await desktopPage.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).textOrientation), 'mixed');
     assert.equal(await desktopPage.locator('.chrono__item').first().evaluate(el => getComputedStyle(el).animationName.includes('chrono-curve')), false);
-    console.log('PASS archive dock: title compactifies, timeline fills view, ink dots above axis, no 3D distortion'); checks++;
+    console.log('PASS archive dock: recent fades, title compactifies, snap anchor, timeline fills view, ink dots above axis'); checks++;
     await desktopContext.close();
     const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 900 }, reducedMotion: 'reduce' });
     const staticPage = await staticContext.newPage();

@@ -97,6 +97,8 @@ archive:
   count_prefix: 当前篇什
   count_suffix: 篇
   filter_label: 按分卷筛选
+  recent: 3                         # 首屏近期篇目数；下滑后隐去，进入完整时间轴
+  recent_label: 近期篇什
   categories:
     ci: 词卷
     essay: 随笔
