@@ -10,16 +10,18 @@
 <main class="site-main site-main--home">
   <div class="home-reveal">
     <% if (withCover) { %>
-    <section class="home-cover" aria-label="<%= theme.theme_name %>">
-      <div class="home-epigraph">
-        <h1 class="home-epigraph__text"><% if (verses.length) { verses.forEach(function (verse) { %><span class="home-epigraph__line"><%= verse %></span><% }); } else { %><%= config.title %><% } %></h1>
-      </div>
-      <div class="home-cover__details">
-        <% if (cfg.hero_source) { %><p class="home-epigraph__source"><%= cfg.hero_source %></p><% } %>
-        <a class="home-cover__enter" href="#home-stream"><%= theme.labels.cover_enter %></a>
-      </div>
-    </section>
-    <div class="home-cover-space" aria-hidden="true"></div>
+    <div class="home-dock-zone">
+      <section class="home-cover" aria-label="<%= theme.theme_name %>">
+        <div class="home-epigraph">
+          <h1 class="home-epigraph__text"><% if (verses.length) { verses.forEach(function (verse) { %><span class="home-epigraph__line"><%= verse %></span><% }); } else { %><%= config.title %><% } %></h1>
+          <div class="home-cover__details">
+            <% if (cfg.hero_source) { %><p class="home-epigraph__source"><%= cfg.hero_source %></p><% } %>
+            <a class="home-cover__enter" href="#home-stream"><%= theme.labels.cover_enter %></a>
+          </div>
+        </div>
+      </section>
+      <div class="home-cover-space" aria-hidden="true"></div>
+    </div>
     <% } %>
     <section class="home-sheet" id="home-stream" tabindex="-1" aria-label="<%= theme.labels.post %>">
       <div class="home-stream">

@@ -23,21 +23,26 @@
    规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
    严禁：卡片容器、投影、条目分割线
    ========================================================= */
-/* ---- 卷首题签停靠：同一标题由卷首缩小、上移为栏头，不被正文遮盖 ---- */
+/* ---- 卷首题签停靠：同一组题句/出处/入卷上移收拢；停靠后与正文同层离开 ---- */
 .site-main--home {
   max-width: none;
   padding: 0;
 }
 
-/* sticky 参照容器：覆盖整个阅读区，题签可一直停留到正文末尾。 */
 .home-reveal {
   position: relative;
+}
+
+/* 停靠区高度 = 栏头 + 行程：sticky 只在本区内生效，行程结束后随正文一起离开。 */
+.home-dock-zone {
+  position: relative;
+  min-height: var(--cover-height);
 }
 
 .home-cover {
   position: static;
   top: 0;
-  z-index: 2;
+  z-index: 0;
   min-height: var(--cover-height);
   display: flex;
   flex-direction: column;
@@ -60,17 +65,17 @@
   display: none;
 }
 
-/* 正文从栏头下方自然展开，始终位于标题层之下。 */
+/* 正文与栏头同层展开，不压在标题之上，也不被标题罩住。 */
 .home-sheet {
   position: relative;
-  z-index: 1;
+  z-index: 0;
   padding: var(--space-16) var(--space-6) var(--space-24);
   background-color: var(--paper);
   background-image: var(--paper-texture);
   background-repeat: repeat;
 }
 
-.home-cover-space + .home-sheet::before {
+.home-dock-zone + .home-sheet::before {
   content: "";
   position: absolute;
   top: 0;
@@ -85,6 +90,9 @@
 .home-epigraph {
   max-width: var(--stream-max);
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .home-epigraph__text {
@@ -134,61 +142,78 @@
   color: var(--celadon-deep);
 }
 
-/* 只变换同一个标题：透明度始终为 1，位移与缩放由滚动进度控制。 */
-@keyframes title-dock {
+/* 整组题签上移：出处与入卷始终跟在题句下方，不隐藏、不脱节。 */
+@keyframes epigraph-dock {
   from {
-    transform: translateY(calc(var(--cover-travel) / 2 - var(--cover-title-lift))) scale(1);
+    transform: translateY(calc(var(--cover-travel) / 2 - var(--cover-title-lift)));
   }
   to {
-    transform: translateY(0) scale(var(--cover-title-scale));
+    transform: translateY(var(--space-3));
   }
 }
 
-/* 出处与入卷入口不是栏头的一部分，随卷首收起；不改变标题本身。 */
-@keyframes cover-details-fold {
+/* 字号缩小会改变布局盒，详情自然跟在题句下面，不会与 transform:scale 重叠。 */
+@keyframes title-shrink {
   from {
-    opacity: 1;
-    visibility: visible;
+    font-size: var(--text-epigraph);
+    gap: var(--space-4);
+    letter-spacing: 0.32em;
+    text-indent: 0.32em;
   }
   to {
-    opacity: 0;
-    visibility: hidden;
+    font-size: calc(var(--text-epigraph) * var(--cover-title-scale));
+    gap: var(--space-1);
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    .home-dock-zone {
+      height: var(--cover-height);
+      min-height: 0;
+    }
+
     .home-cover {
       position: sticky;
       min-height: 0;
       height: var(--cover-dock-height);
-      padding: 0;
+      padding: 0 var(--space-6);
+      justify-content: flex-start;
+      overflow: visible;
+      background-color: transparent;
+      background-image: none;
     }
 
     .home-cover .home-epigraph {
-      flex-shrink: 0;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      width: min(var(--stream-max), 100%);
+      margin-inline: auto;
+      animation: epigraph-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--cover-travel);
     }
 
     .home-cover .home-epigraph__text {
-      animation: title-dock linear both;
+      animation: title-shrink linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--cover-travel);
     }
 
     .home-cover__details {
-      position: absolute;
-      top: calc(var(--cover-height) / 2 - var(--cover-title-lift) + var(--space-24));
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      padding-inline: var(--space-6);
-      animation: cover-details-fold linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--cover-travel) / 2);
+      gap: var(--space-1);
     }
 
     .home-cover__details .home-epigraph__source {
-      margin-top: 0;
+      margin-top: var(--space-3);
+    }
+
+    .home-cover__enter {
+      margin-top: var(--space-2);
     }
 
     .home-cover-space {
@@ -196,15 +221,21 @@
       height: var(--cover-travel);
     }
 
-    .home-cover-space + .home-sheet {
-      scroll-margin-top: var(--cover-dock-height);
-      min-height: var(--cover-travel); /* 只有一篇短文时，也保留足够的停靠行程。 */
+    .home-dock-zone + .home-sheet {
+      scroll-margin-top: 0;
+      padding-top: var(--space-8);
+      /* 短文也要留出完整停靠行程，否则滚动到底也到不了缩放终点。 */
+      min-height: var(--cover-travel);
     }
   }
 }
 
 /* 打印回到普通文流，不钉住、不微缩，也不留整屏封面的空白。 */
 @media print {
+  .home-dock-zone {
+    min-height: 0;
+    height: auto;
+  }
   .home-cover {
     position: static;
     min-height: 0;
@@ -213,14 +244,16 @@
     padding-block: var(--space-8);
     background: var(--print-paper);
   }
-  .home-cover .home-epigraph__text {
+  .home-cover .home-epigraph {
+    position: static;
     animation: none;
     transform: none;
   }
+  .home-cover .home-epigraph__text {
+    animation: none;
+  }
   .home-cover__details {
     position: static;
-    transform: none;
-    animation: none;
   }
   .home-cover-space {
     display: none;
@@ -231,10 +264,7 @@
   .home-sheet {
     padding-block: var(--space-8);
     background: var(--print-paper);
-  }
-  .home-cover-space + .home-sheet {
     min-height: 0;
-    scroll-margin-top: 0;
   }
 }
 
