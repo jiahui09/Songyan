@@ -130,7 +130,13 @@
 .reading-page .post-ending .post-tags { margin: 0 0 var(--space-6); justify-content: flex-start; }
 .reading-page .post-ending .post-signature { margin-top: 0; }
 .reading-page .post-ci .post-ending .post-signature { margin-bottom: 0; }
-/* 题笺竖排紧挨作者名下，中间落花隔开；字号不大于落款日期 */
+/* 题笺紧挨作者名下，中间落花隔开；字号不大于落款日期 */
+.reading-page .post-signature__meta:has(.post-signature__slip) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
 .reading-page .post-signature__slip {
   display: flex;
   flex-direction: column;
@@ -195,34 +201,28 @@
     max-height: 100%;
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
-    text-align: start;
+    /* 在竖排词列里仍用横向堆叠，保证姓名/落花/题笺同列，不向左开新列 */
+    writing-mode: horizontal-tb;
     font-size: var(--text-sm);
     line-height: 2;
     letter-spacing: var(--tracking-verse);
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__author {
     margin: 0;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
     font-size: var(--text-base);
     letter-spacing: var(--tracking-verse);
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta time {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
     letter-spacing: 0.12em;
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
     margin: 0;
     transform: none;
     transform-origin: center center;
-  }
-  /* vertical-rl 下落款列内：姓名 → 落花 → 竖排题笺 → 日期 */
-  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__slip {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-2);
-    margin: var(--space-2) 0;
-  }
-  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__slip .share-trigger {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
   }
 }
 .reading-page .poem-slip-overlay { overflow-y: auto; }

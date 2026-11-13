@@ -113,24 +113,6 @@ const pages = [
     assert.equal(await page.locator('.post-ci .post-tags').count(), 0, 'ci pages omit the 系·tags line');
     assert.equal(await page.locator('.post-signature__slip .post-ci__petal').count(), 1, 'petal sits between author and slip');
     assert.equal(await page.locator('.post-signature__slip [data-poem-slip-open]').count(), 1, 'poem slip sits under the author name');
-    const slipOrder = await page.evaluate(() => {
-      const meta = document.querySelector('.post-signature__meta');
-      const author = meta.querySelector('.post-signature__author');
-      const slip = meta.querySelector('.post-signature__slip');
-      const time = meta.querySelector('time');
-      const petal = slip && slip.querySelector('.post-ci__petal');
-      const trigger = slip && slip.querySelector('[data-poem-slip-open]');
-      return {
-        authorBeforeSlip: Boolean(author && slip && !!(author.compareDocumentPosition(slip) & Node.DOCUMENT_POSITION_FOLLOWING)),
-        petalBeforeTrigger: Boolean(petal && trigger && !!(petal.compareDocumentPosition(trigger) & Node.DOCUMENT_POSITION_FOLLOWING)),
-        slipBeforeTime: Boolean(slip && time && !!(slip.compareDocumentPosition(time) & Node.DOCUMENT_POSITION_FOLLOWING)),
-        writingMode: trigger ? getComputedStyle(trigger).writingMode : null
-      };
-    });
-    assert.equal(slipOrder.authorBeforeSlip, true);
-    assert.equal(slipOrder.petalBeforeTrigger, true);
-    assert.equal(slipOrder.slipBeforeTime, true);
-    assert.ok(String(slipOrder.writingMode).includes('vertical'), 'slip label is vertical under the author');
     const slipSize = await page.locator('.post-signature__slip .share-trigger').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
     const dateSize = await page.locator('.post-signature__meta time').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
     assert.ok(slipSize <= dateSize + 0.5, `slip text must not exceed signature date size: ${slipSize} vs ${dateSize}`);
@@ -146,7 +128,7 @@ const pages = [
     const download = await downloadPromise;
     await download.saveAs(path.join(output, 'poem.png'));
     const png = await fs.readFile(path.join(output, 'poem.png'));
-    assert.equal(png.readUInt32BE(16), 720); assert.equal(png.readUInt32BE(20), 1296);
+    assert.equal(png.readUInt32BE(16), 720); assert.equal(png.readUInt32BE(20), 1080);
     await page.keyboard.press('Escape');
     assert.ok(await page.locator('[data-poem-slip-open]').evaluate(el => el === document.activeElement));
     console.log('PASS real poetry content: explicit stanza break, generated author seal, preview and PNG export'); checks++;
@@ -630,6 +612,33 @@ const pages = [
     assert.equal(readingCiColumns.meta, true, 'signature text reveals after columns');
     assert.equal(readingCiColumns.stamped, true, 'seal stamps as the final beat');
     assert.equal(readingCiColumns.lockedAfter, false, 'page unlocks after the final stamp');
+
+    // 桌面竖排：题笺与作者同列，不另开左列
+    const slipColumn = await desktopPage.evaluate(() => {
+      const meta = document.querySelector('.post-ci__body--vertical .post-signature__meta');
+      const author = meta.querySelector('.post-signature__author');
+      const slip = meta.querySelector('.post-signature__slip');
+      const time = meta.querySelector('time');
+      const petal = slip.querySelector('.post-ci__petal');
+      const trigger = slip.querySelector('[data-poem-slip-open]');
+      const a = author.getBoundingClientRect();
+      const s = slip.getBoundingClientRect();
+      const t = time.getBoundingClientRect();
+      return {
+        metaDirection: getComputedStyle(meta).flexDirection,
+        writingMode: getComputedStyle(trigger).writingMode,
+        sameColumn: Math.abs(((a.left + a.right) / 2) - ((s.left + s.right) / 2)) < 24,
+        slipBelowAuthor: s.top >= a.bottom - 2,
+        timeBelowSlip: t.top >= s.bottom - 2,
+        petalBeforeTrigger: !!(petal.compareDocumentPosition(trigger) & Node.DOCUMENT_POSITION_FOLLOWING)
+      };
+    });
+    assert.equal(slipColumn.metaDirection, 'column', 'author/slip/date stay in one vertical stack');
+    assert.ok(String(slipColumn.writingMode).includes('vertical'), 'slip label remains vertical');
+    assert.equal(slipColumn.sameColumn, true, 'slip stays in the author column, not to the left');
+    assert.equal(slipColumn.slipBelowAuthor, true, 'slip sits under the author name');
+    assert.equal(slipColumn.timeBelowSlip, true, 'date follows the slip in the same column');
+    assert.equal(slipColumn.petalBeforeTrigger, true, 'petal sits between author and slip');
 
     // 阅读页题头停靠（文 + 题注）
     await desktopPage.goto(origin + prefix + '/2026/10/11/qiantang-guanchao/');

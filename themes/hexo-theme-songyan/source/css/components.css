@@ -274,13 +274,13 @@ body.poem-slip-open {
   overflow: hidden;
 }
 
-/* 素笺：360×648 竖排走势长笺（1:1.8 条幅感），无框，词句竖写、题右款印 */
+/* 素笺：360×540 竖排走势（1:1.5），无框，词句竖写、题右款印 */
 .poem-slip {
-  --slip-w: min(360px, calc(100vw - 3rem), calc((100vh - 11rem) * 0.5556));
-  --slip-w: min(360px, calc(100vw - 3rem), calc((100dvh - 11rem) * 0.5556));
+  --slip-w: min(360px, calc(100vw - 3rem), calc((100vh - 11rem) * 0.6667));
+  --slip-w: min(360px, calc(100vw - 3rem), calc((100dvh - 11rem) * 0.6667));
   position: relative;
   width: var(--slip-w);
-  height: calc(var(--slip-w) * 1.8);
+  height: calc(var(--slip-w) * 1.5);
   background: var(--slip-paper);
   box-shadow: var(--slip-shadow);
   flex: none;
