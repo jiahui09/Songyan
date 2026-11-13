@@ -129,6 +129,24 @@
 .reading-page .post-ci .post-ending { max-width: 28rem; margin-inline: auto; }
 .reading-page .post-ending .post-tags { margin: 0 0 var(--space-6); justify-content: flex-start; }
 .reading-page .post-ending .post-signature { margin-top: 0; }
+.reading-page .post-ci .post-ending .post-signature { margin-bottom: 0; }
+/* 题笺在落款下方，与落花并排；字号不大于落款日期（text-xs） */
+.reading-page .post-ci__colophon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.reading-page .post-ci__colophon .post-signature-actions {
+  margin-top: 0;
+}
+.reading-page .post-ci__colophon .share-trigger {
+  margin-top: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.12em;
+}
 .reading-page .post-ci__body-horizontal { overflow-wrap: anywhere; }
 .reading-page .post-ci__body-horizontal p { line-height: inherit; }
 .reading-page .post-ci__body-horizontal ruby { ruby-position: over; }

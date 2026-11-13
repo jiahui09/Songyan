@@ -494,16 +494,25 @@
   }
 }
 
-/* 落花：全篇只此一瓣淡胭脂，静置于词尾之后 */
+/* 落花：全篇只此一瓣淡胭脂，与题笺同列于落款下方 */
 .post-ci__petal {
   display: block;
+  flex: 0 0 auto;
   width: 7px;
   height: 9px;
-  margin: var(--space-12) auto 0;
+  margin: 0;
   background: var(--rouge);
   border-radius: 70% 0 70% 0;
   transform: rotate(-24deg);
   opacity: 0.85;
+}
+
+.post-ci__colophon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
 }
 
 /* 文末笺注：小字两栏，不用展开框 */

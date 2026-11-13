@@ -110,6 +110,12 @@ const pages = [
     console.log('PASS actual Markdown: highlight conversion, line numbers, copy, expansion, table and images'); checks++;
     await page.goto(origin + prefix + '/2026/10/12/qiushi-huaiyuan/');
     assert.equal(await page.locator('.post-ci__body-horizontal p[data-stanza-start]').count(), 1);
+    assert.equal(await page.locator('.post-ci .post-tags').count(), 0, 'ci pages omit the 系·tags line');
+    assert.equal(await page.locator('.post-ci__colophon .post-ci__petal').count(), 1, 'petal sits with the slip under the signature');
+    assert.equal(await page.locator('.post-ci__colophon [data-poem-slip-open]').count(), 1, 'poem slip sits under the signature');
+    const slipSize = await page.locator('.post-ci__colophon .share-trigger').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const dateSize = await page.locator('.post-signature__meta time').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    assert.ok(slipSize <= dateSize + 0.5, `slip text must not exceed signature date size: ${slipSize} vs ${dateSize}`);
     await page.locator('[data-poem-slip-open]').click();
     await page.locator('.poem-slip__cipai').waitFor({ state: 'visible' });
     const exportProbe = await page.evaluate(async () => {
