@@ -265,8 +265,9 @@
       scroll-margin-top: calc(var(--header-dock-height) + var(--cover-dock-height));
       scroll-snap-align: start;
       scroll-snap-stop: always; /* 一旦进入定点，不再被轻滑拽回半途 */
-      padding-top: var(--space-8);
-      min-height: var(--cover-travel);
+      padding-top: var(--space-12);
+      /* 加大定点后缓冲，克服阻力后吸住，不半途卡壳 */
+      min-height: calc(var(--cover-travel) + var(--space-16));
     }
   }
 }
@@ -380,14 +381,14 @@
   color: var(--celadon-deep);
 }
 
-/* 词作起首两句：保留断句，一句一行 */
+/* 词作起首两句：保留断句，一句一行；小号不抢题 */
 .post-item__verse {
   display: flex;
   flex-direction: column;
   margin: var(--space-3) 0 0;
   font-family: var(--font-serif);
-  font-size: var(--text-base);
-  line-height: 2;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
   letter-spacing: var(--tracking-verse);
   color: var(--ink-light);
 }
@@ -411,12 +412,12 @@
   user-select: none;
 }
 
-/* 文章摘要：与词作起首同号，避免诗文简介轻重失衡 */
+/* 文章摘要：与词作起首同号（text-sm），避免诗文简介轻重失衡 */
 .post-excerpt {
   font-family: var(--font-serif);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   color: var(--ink-light);
-  line-height: 2;
+  line-height: var(--leading-sm);
   letter-spacing: var(--tracking-verse);
   margin: var(--space-3) 0 0;
   display: -webkit-box;
@@ -938,7 +939,7 @@
   max-width: var(--stream-max);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .archive-recent__item {
@@ -954,7 +955,7 @@
   gap: var(--space-2);
   min-width: 0;
   font-family: var(--font-title);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   color: var(--ink);
   text-decoration: none;
 }
@@ -1231,7 +1232,8 @@
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
-      margin: 0 0 var(--space-3);
+      /* 上边距作定点缓冲，不占时间轴一屏高度 */
+      margin: var(--space-8) 0 var(--space-3);
       min-height: var(--archive-legend-height);
       align-items: center;
     }

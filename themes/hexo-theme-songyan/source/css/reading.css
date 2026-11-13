@@ -186,7 +186,7 @@
 }
 
 /* ============================================================
-   阅读页题头停靠：卷首大字 → 栏头小字，正文在下方展开
+   阅读页题头停靠：整屏题签封面 → 栏头小字，正文在下方展开
    ============================================================ */
 .reading-mast__meta {
   display: flex;
@@ -219,21 +219,21 @@
   display: none;
 }
 
-/* 与归档 .archive-head 同构：sticky 栏头 + 流式题簇，不用 absolute。 */
+/* sticky 栏头 + 流式题簇；首屏整屏题签，不露正文。 */
 @keyframes reading-mast-lift {
   from {
-    transform: translateY(calc(var(--reading-travel) * 0.30));
+    transform: translateY(calc(var(--reading-travel) * 0.38));
   }
   to {
     transform: translateY(0);
   }
 }
 
-@keyframes reading-title-dock {
+@keyframes reading-ci-title-dock {
   from {
-    font-size: var(--text-3xl);
-    letter-spacing: 0.3em;
-    text-indent: 0.3em;
+    font-size: var(--text-4xl);
+    letter-spacing: 0.36em;
+    text-indent: 0.36em;
   }
   to {
     font-size: var(--text-xl);
@@ -242,13 +242,41 @@
   }
 }
 
-@keyframes reading-meta-fold {
+@keyframes reading-essay-title-dock {
+  from {
+    font-size: var(--text-4xl);
+    letter-spacing: 0.1em;
+  }
+  to {
+    font-size: var(--text-xl);
+    letter-spacing: 0.06em;
+  }
+}
+
+/* 诗词：定点后作者/日期完全隐去（与末尾印章重复） */
+@keyframes reading-ci-meta-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+    margin-top: var(--space-4);
+    max-height: 3rem;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+    margin-top: 0;
+    max-height: 0;
+  }
+}
+
+/* 文章：元信息收拢为栏头淡墨一行，不完全消失 */
+@keyframes reading-essay-meta-fold {
   from {
     opacity: 1;
     margin-top: var(--space-4);
   }
   to {
-    opacity: 0.78;
+    opacity: 0.72;
     margin-top: var(--space-1);
   }
 }
@@ -258,11 +286,25 @@
     opacity: 1;
     visibility: visible;
     margin-top: var(--space-6);
+    max-height: 8rem;
   }
   to {
     opacity: 0;
     visibility: hidden;
     margin-top: 0;
+    max-height: 0;
+  }
+}
+
+/* 竖排词句：随根滚动依次淡入平移入场（右起成列） */
+@keyframes reading-ci-column-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--space-4) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -285,7 +327,10 @@
       align-items: center;
       justify-content: center;
       overflow: visible;
+      /* 素笺底：首屏题签盖住正文，正文不得探头 */
       background-color: var(--paper);
+      background-image: var(--paper-texture);
+      background-repeat: repeat;
     }
 
     .essay-header.reading-mast {
@@ -310,21 +355,40 @@
       margin: 0;
       text-wrap: nowrap;
       font-synthesis: none;
-      animation: reading-title-dock linear both;
+    }
+
+    .post-ci__header .post-title {
+      animation: reading-ci-title-dock linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--reading-travel);
     }
 
-    .reading-mast__meta {
-      animation: reading-meta-fold linear both;
+    .essay-header .post-title {
+      animation: reading-essay-title-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--reading-travel);
+    }
+
+    /* 诗词：作者/日期在行程内完全隐去 */
+    .post-ci__header .reading-mast__meta {
+      overflow: hidden;
+      animation: reading-ci-meta-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--reading-travel) * 0.72);
+    }
+
+    /* 文章：元信息收拢保留淡墨一行 */
+    .essay-header .reading-mast__meta {
+      animation: reading-essay-meta-fold linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px calc(var(--reading-travel) * 0.8);
     }
 
     .reading-mast__epigraph {
+      overflow: hidden;
       animation: reading-epigraph-fold linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--reading-travel) * 0.65);
+      animation-range: 0px calc(var(--reading-travel) * 0.58);
     }
 
     .post-ci__cipai-badge,
@@ -336,6 +400,7 @@
       position: relative;
     }
 
+    /* 盖住视口剩余高度，首屏只见题签封面 */
     .reading-head-space {
       display: block;
       height: var(--reading-travel);
@@ -348,12 +413,54 @@
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
-      padding-top: var(--space-8);
+      /* 加大与定点间距，避免半途卡壳 */
+      padding-top: var(--space-12);
+      min-height: calc(var(--reading-travel) * 0.35);
     }
 
     .reading-dock-page .post-ci__header,
     .reading-dock-page .essay-header {
       margin-bottom: 0;
+    }
+  }
+}
+
+/* 桌面竖排：靠近定点时首列已显，继续下滑各列依次入场；减弱动效关闭 */
+@media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
+  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    .reading-page .post-ci__body--vertical > p {
+      opacity: 0;
+      animation: reading-ci-column-reveal linear both;
+      animation-timeline: scroll(root block);
+    }
+
+    /* 行程末段起笔：定点时前两列已落墨，后续列随续滚入场 */
+    .reading-page .post-ci__body--vertical > p:nth-child(1) {
+      animation-range: calc(var(--reading-travel) * 0.78) calc(var(--reading-travel) * 0.92);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(2) {
+      animation-range: calc(var(--reading-travel) * 0.86) calc(var(--reading-travel) * 0.99);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(3) {
+      animation-range: calc(var(--reading-travel) * 0.94) calc(var(--reading-travel) + 6vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(4) {
+      animation-range: var(--reading-travel) calc(var(--reading-travel) + 10vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(5) {
+      animation-range: calc(var(--reading-travel) + 4vh) calc(var(--reading-travel) + 14vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(6) {
+      animation-range: calc(var(--reading-travel) + 8vh) calc(var(--reading-travel) + 18vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(7) {
+      animation-range: calc(var(--reading-travel) + 12vh) calc(var(--reading-travel) + 22vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(8) {
+      animation-range: calc(var(--reading-travel) + 16vh) calc(var(--reading-travel) + 26vh);
+    }
+    .reading-page .post-ci__body--vertical > p:nth-child(n+9) {
+      animation-range: calc(var(--reading-travel) + 20vh) calc(var(--reading-travel) + 30vh);
     }
   }
 }
@@ -368,7 +475,8 @@
   .reading-mast__cluster,
   .reading-mast .post-title,
   .reading-mast__meta,
-  .reading-mast__epigraph {
+  .reading-mast__epigraph,
+  .reading-page .post-ci__body--vertical > p {
     animation: none;
     transform: none;
   }

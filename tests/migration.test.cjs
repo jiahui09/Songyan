@@ -499,8 +499,18 @@ const pages = [
     });
     assert.equal(readingCiIntro.mastPos, 'sticky');
     assert.ok(String(readingCiIntro.clusterAnim).includes('reading-mast-lift'), JSON.stringify(readingCiIntro));
-    assert.ok(String(await desktopPage.locator('.reading-mast .post-title').evaluate(el => getComputedStyle(el).animationName)).includes('reading-title-dock'));
+    assert.ok(String(await desktopPage.locator('.reading-mast .post-title').evaluate(el => getComputedStyle(el).animationName)).includes('reading-ci-title-dock'));
     assert.ok(readingCiIntro.hasAuthor, 'ci mast shows author/date meta');
+    const readingCiCover = await desktopPage.evaluate(() => {
+      const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
+      const travel = getComputedStyle(document.documentElement).getPropertyValue('--reading-travel').trim();
+      return {
+        bodyTop: body.top,
+        viewport: innerHeight,
+        travel
+      };
+    });
+    assert.ok(readingCiCover.bodyTop >= readingCiCover.viewport - 2, 'ci cover hides body on first screen');
 
     await desktopPage.evaluate(async () => {
       const body = document.querySelector('.reading-body-anchor');
@@ -511,19 +521,27 @@ const pages = [
     });
     const readingCiDocked = await desktopPage.evaluate(() => {
       const title = document.querySelector('.reading-mast .post-title');
+      const meta = document.querySelector('.reading-mast__meta');
       const mast = document.querySelector('.reading-mast').getBoundingClientRect();
       const header = document.querySelector('.site-header').getBoundingClientRect();
       const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
+      const firstLine = document.querySelector('.post-ci__body--vertical > p');
       return {
         headerBottom: header.bottom,
         mastTop: mast.top,
         bodyTop: body.top,
-        titleSize: parseFloat(getComputedStyle(title).fontSize)
+        titleSize: parseFloat(getComputedStyle(title).fontSize),
+        metaOpacity: meta ? Number(getComputedStyle(meta).opacity) : 1,
+        metaVisibility: meta ? getComputedStyle(meta).visibility : 'visible',
+        lineAnim: firstLine ? getComputedStyle(firstLine).animationName : ''
       };
     });
     assert.ok(Math.abs(readingCiDocked.mastTop - readingCiDocked.headerBottom) <= 2, 'ci title docks under header');
     assert.ok(readingCiDocked.bodyTop >= readingCiDocked.mastTop + 40, 'ci body sits under docked mast');
     assert.ok(readingCiDocked.titleSize < 26, 'ci title compactifies');
+    assert.ok(readingCiDocked.metaOpacity < 0.05, 'ci meta fades when docked');
+    assert.equal(readingCiDocked.metaVisibility, 'hidden');
+    assert.ok(String(readingCiDocked.lineAnim).includes('reading-ci-column-reveal'), 'ci vertical lines use reveal animation');
 
     // 阅读页题头停靠（文 + 题注）
     await desktopPage.goto(origin + prefix + '/2026/10/11/qiantang-guanchao/');
@@ -562,18 +580,37 @@ const pages = [
     assert.ok(readingEssayDocked.titleSize < 26, 'essay title compactifies');
     assert.equal(readingEssayDocked.commentsMount, false, 'gitalk stays off until configured');
 
-    // 首页诗文简介字号一致
+    // 首页诗文简介字号一致且为 text-sm
     await desktopPage.goto(origin + prefix + '/');
     await desktopPage.evaluate(() => document.fonts.ready);
     const homeExcerptSizes = await desktopPage.evaluate(() => {
       const verse = document.querySelector('.post-item__verse');
       const excerpt = document.querySelector('.post-excerpt');
+      const sm = getComputedStyle(document.documentElement).getPropertyValue('--text-sm').trim();
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const expected = /rem$/.test(sm) ? `${root * parseFloat(sm)}px` : sm;
       return {
         verse: verse ? getComputedStyle(verse).fontSize : null,
-        excerpt: excerpt ? getComputedStyle(excerpt).fontSize : null
+        excerpt: excerpt ? getComputedStyle(excerpt).fontSize : null,
+        expected
       };
     });
     assert.equal(homeExcerptSizes.verse, homeExcerptSizes.excerpt, 'home poetry and essay intros share the same font size');
+    assert.equal(homeExcerptSizes.verse, homeExcerptSizes.expected, 'home intros use text-sm');
+
+    await desktopPage.goto(origin + prefix + '/archives/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const recentSize = await desktopPage.evaluate(() => {
+      const link = document.querySelector('.archive-recent__link');
+      const sm = getComputedStyle(document.documentElement).getPropertyValue('--text-sm').trim();
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const expected = /rem$/.test(sm) ? `${root * parseFloat(sm)}px` : sm;
+      return {
+        size: link ? getComputedStyle(link).fontSize : null,
+        expected
+      };
+    });
+    assert.equal(recentSize.size, recentSize.expected, 'archive recent uses text-sm');
 
     await desktopPage.goto(origin + prefix + '/archives/');
     await desktopPage.evaluate(() => document.fonts.ready);

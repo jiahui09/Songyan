@@ -144,9 +144,9 @@
   --archive-travel: calc(100svh - var(--header-dock-height));
   --archive-exit: calc(100svh - var(--header-dock-height) - var(--archive-dock-height));
   --dock-snap: none; /* 引力锚点模式：proximity | none */
-  /* 阅读页题头停靠 */
+  /* 阅读页题头停靠：整屏题签封面，首屏不露正文 */
   --reading-dock-height: 4.75rem;
-  --reading-travel: calc(78svh - var(--header-dock-height) - var(--reading-dock-height));
+  --reading-travel: calc(100svh - var(--header-dock-height));
 
   /* 打印专用：素白纸、纯黑墨 */
   --print-paper:   #FFFFFF;
