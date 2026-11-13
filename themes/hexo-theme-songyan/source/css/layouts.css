@@ -651,10 +651,13 @@
    ========================================================= */
 .chrono {
   position: relative;
-  margin-top: var(--space-8);
+  margin-top: var(--space-4);
+  scroll-margin-top: var(--header-dock-height);
 }
 
 .chrono__rail {
+  position: relative;
+  z-index: 1;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -679,10 +682,11 @@
 /* 双弧覆盖层：一条轴线、一个 SVG 坐标系承载两弧——
    赭石弧端点在 --chrono-top（拱起），朱线弧端点在 --chrono-top + --chrono-bottom（下沉），
    两弧同 sag 反向、关于内容区中线精确镜像；--chrono-sag 为唯一曲率来源，
-   路径由 main.js 按像素宽构建，不随内容横移 */
+   路径由 main.js 按像素宽构建，不随内容横移；z-index 低于墨点 */
 .chrono__axis {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -893,19 +897,33 @@
   fill: var(--celadon-deep);
 }
 
-/* 页头 */
-.archive-head {
-  text-align: center;
-  margin: var(--space-8) 0 var(--space-12);
+/* 页头：默认普通流；桌面停靠态见下方 archive-dock 规则 */
+.site-main--archive {
+  max-width: none;
 }
 
-/* 分卷图例：默认灰墨点（grayscale），悬停/选中还原彩墨；点按筛选轴体篇目 */
+.archive-dock-zone {
+  position: relative;
+}
+
+.archive-head {
+  text-align: center;
+  margin: var(--space-8) 0 var(--space-6);
+}
+
+.archive-head-space {
+  display: none;
+}
+
+/* 分卷图例：与时间轴同屏；默认灰墨点，悬停/选中还原彩墨；点按筛选轴体篇目 */
 .archive-legend {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-5);
-  margin-top: var(--space-4);
+  margin: 0 0 var(--space-5);
 }
 
 .archive-legend__item {
@@ -996,6 +1014,102 @@
   line-height: var(--leading-xs);
   letter-spacing: 0.2em;
   color: var(--ink-faint);
+}
+
+/* 归档题头停靠：首屏题头居中；下滑后收拢到页眉下，时间轴与分类图例占满画面。 */
+@keyframes archive-title-dock {
+  from {
+    transform: translateY(calc(var(--archive-travel) / 2 - var(--space-8)));
+    font-size: var(--text-2xl);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+  }
+  to {
+    transform: translateY(0);
+    font-size: var(--text-lg);
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
+  }
+}
+
+@keyframes archive-count-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+    margin-top: var(--space-3);
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    .archive-dock-zone {
+      height: calc(var(--archive-intro-height) + var(--header-dock-height));
+      margin-top: calc(var(--header-dock-height) * -1);
+      padding-top: var(--header-dock-height);
+      box-sizing: border-box;
+    }
+
+    .archive-head {
+      position: sticky;
+      top: var(--header-dock-height);
+      z-index: 2;
+      height: var(--archive-dock-height);
+      margin: 0;
+      padding: 0 var(--space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+    }
+
+    .archive-head__title {
+      animation: archive-title-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--archive-travel);
+    }
+
+    .archive-head__count {
+      animation: archive-count-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--archive-travel) * 0.7);
+    }
+
+    .archive-head-space {
+      display: block;
+      height: var(--archive-travel);
+    }
+
+    .archive-legend + .chrono,
+    .archive-legend + .archive-empty {
+      min-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - 4rem);
+    }
+  }
+}
+
+@media print {
+  .archive-dock-zone {
+    height: auto;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .archive-head {
+    position: static;
+    height: auto;
+  }
+  .archive-head__title,
+  .archive-head__count {
+    animation: none;
+    transform: none;
+  }
+  .archive-head-space {
+    display: none;
+  }
 }
 
 /* 窄屏：仅收字号与列距，滚动与手势不变 */

@@ -350,8 +350,67 @@ const pages = [
       return { contained: stage.scrollWidth > stage.clientWidth, pageFits: document.documentElement.scrollWidth <= innerWidth + 1 };
     });
     assert.deepEqual(poemOverflow, { contained: true, pageFits: true });
+    await desktopPage.emulateMedia({ reducedMotion: 'no-preference', media: 'screen' });
     await desktopPage.goto(origin + prefix + '/archives/');
     await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await desktopPage.locator('body').evaluate(el => el.classList.contains('archive-dock-page')));
+    const archiveIntro = await desktopPage.evaluate(() => {
+      const head = document.querySelector('.archive-head');
+      const title = document.querySelector('.archive-head__title');
+      const legend = document.querySelector('.archive-legend');
+      const chrono = document.querySelector('.chrono');
+      const header = document.querySelector('.site-header');
+      return {
+        headPos: getComputedStyle(head).position,
+        headerPos: getComputedStyle(header).position,
+        titleAnim: getComputedStyle(title).animationName,
+        legendAfterHead: Boolean(legend && legend.compareDocumentPosition(document.querySelector('.archive-dock-zone')) & Node.DOCUMENT_POSITION_PRECEDING),
+        titleCenter: (title.getBoundingClientRect().top + title.getBoundingClientRect().bottom) / 2,
+        railZ: Number(getComputedStyle(document.querySelector('.chrono__rail')).zIndex),
+        axisZ: Number(getComputedStyle(document.querySelector('.chrono__axis')).zIndex)
+      };
+    });
+    assert.equal(archiveIntro.headPos, 'sticky');
+    assert.equal(archiveIntro.headerPos, 'sticky');
+    assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.legendAfterHead, 'category legend sits with the timeline focus area under the title');
+    assert.ok(archiveIntro.titleCenter > 180 && archiveIntro.titleCenter < 560, JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
+
+    await desktopPage.evaluate(async () => {
+      const space = document.querySelector('.archive-head-space').getBoundingClientRect().height;
+      scrollTo({ top: space, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const archiveDocked = await desktopPage.evaluate(() => {
+      const head = document.querySelector('.archive-head').getBoundingClientRect();
+      const header = document.querySelector('.site-header').getBoundingClientRect();
+      const chrono = document.querySelector('.chrono').getBoundingClientRect();
+      const legend = document.querySelector('.archive-legend').getBoundingClientRect();
+      const count = document.querySelector('.archive-head__count');
+      const title = document.querySelector('.archive-head__title');
+      return {
+        headerTop: header.top,
+        headerBottom: header.bottom,
+        headTop: head.top,
+        headBottom: head.bottom,
+        chronoTop: chrono.top,
+        legendTop: legend.top,
+        countOpacity: Number(getComputedStyle(count).opacity),
+        titleSize: parseFloat(getComputedStyle(title).fontSize),
+        focusBottom: Math.max(chrono.bottom, legend.bottom),
+        viewport: innerHeight
+      };
+    });
+    assert.ok(archiveDocked.headerTop >= -1 && archiveDocked.headerTop <= 1, JSON.stringify(archiveDocked));
+    assert.ok(Math.abs(archiveDocked.headTop - archiveDocked.headerBottom) <= 2, 'archive title docks under the pinned header');
+    assert.ok(archiveDocked.legendTop >= archiveDocked.headBottom - 2, 'legend sits under the docked title');
+    assert.ok(archiveDocked.chronoTop >= archiveDocked.legendTop - 2, 'timeline follows the legend');
+    assert.ok(archiveDocked.countOpacity < 0.05, 'count fades as the title docks');
+    assert.ok(archiveDocked.titleSize < 28, 'archive title compactifies');
+    assert.ok(archiveDocked.focusBottom > archiveDocked.viewport * 0.85, 'timeline and legend fill the remaining viewport');
+
     const archiveCenterOffset = await desktopPage.locator('.chrono__year').evaluate(year => {
       const group = year.getBoundingClientRect();
       const rail = year.closest('.chrono__rail').getBoundingClientRect();
@@ -360,7 +419,7 @@ const pages = [
     assert.ok(archiveCenterOffset < 2, 'a short archive is centered in its rail');
     assert.equal(await desktopPage.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).textOrientation), 'mixed');
     assert.equal(await desktopPage.locator('.chrono__item').first().evaluate(el => getComputedStyle(el).animationName.includes('chrono-curve')), false);
-    console.log('PASS long poem stays in its scroll region and archive titles avoid 3D distortion'); checks++;
+    console.log('PASS archive dock: title compactifies, timeline fills view, ink dots above axis, no 3D distortion'); checks++;
     await desktopContext.close();
     const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 900 }, reducedMotion: 'reduce' });
     const staticPage = await staticContext.newPage();

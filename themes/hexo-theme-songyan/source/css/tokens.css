@@ -138,6 +138,10 @@
   --chrono-gap:    1.75rem;/* 日列左右列距 */
   --chrono-sag:    0.875rem;/* 进度朱线弧垂（中沉量） */
   --chrono-breath: clamp(var(--space-16), 12vw, var(--space-24)); /* 两端呼吸距，窄屏不过量留空 */
+  /* 归档题头停靠：下滑后题头收拢，时间轴与分类图例占满画面。 */
+  --archive-intro-height: 56svh;
+  --archive-dock-height: 3.25rem;
+  --archive-travel: calc(var(--archive-intro-height) - var(--archive-dock-height));
 
   /* 打印专用：素白纸、纯黑墨 */
   --print-paper:   #FFFFFF;

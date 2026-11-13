@@ -93,7 +93,8 @@
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
-    .home-cover-page .site-header {
+    .home-cover-page .site-header,
+    .archive-dock-page .site-header {
       position: sticky;
       top: 0;
       z-index: 100;
@@ -114,6 +115,20 @@
       animation: header-title-compact linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--cover-travel);
+    }
+
+    .archive-dock-page .site-header__inner {
+      min-height: var(--header-dock-height);
+      box-sizing: border-box;
+      animation: header-compact linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--archive-travel);
+    }
+
+    .archive-dock-page .site-header__title {
+      animation: header-title-compact linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--archive-travel);
     }
   }
 }
