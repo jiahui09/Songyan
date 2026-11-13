@@ -106,6 +106,14 @@ const pages = [
     console.log('PASS real poetry content: explicit stanza break, generated author seal, preview and PNG export'); checks++;
     await page.goto(origin + prefix + '/archives/');
     assert.equal(await page.locator('.chrono__item').count(), 4);
+    for (const time of await page.locator('.chrono__date').all()) {
+      const iso = await time.getAttribute('datetime');
+      assert.equal(await time.locator('.chrono__mo').textContent(), iso.slice(5, 7));
+      assert.equal(await time.locator('.chrono__slash').textContent(), '/');
+      assert.equal(await time.locator('.chrono__day').textContent(), iso.slice(8, 10));
+      assert.equal(await time.evaluate(el => getComputedStyle(el).flexDirection), 'column');
+      assert.ok(await time.evaluate(el => Math.abs(new DOMMatrix(getComputedStyle(el).transform).b + 0.5) < 0.001));
+    }
     await page.locator('[data-cat-filter="ci"]').click();
     assert.equal(await page.locator('.chrono__item:not([hidden])').count(), 1);
     assert.equal(await page.locator('[data-archive-count]').textContent(), '1');

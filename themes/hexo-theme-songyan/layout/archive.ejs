@@ -35,7 +35,7 @@
             <% groups[year].forEach(function (post) { var key = sectionOf(post); %>
             <li class="archive-item chrono__item" data-cat="<%= key %>">
               <span class="chrono__dot chrono__dot--<%= key %>" title="<%= cfg.categories[key] %>"></span>
-              <div class="chrono__head"><time class="chrono__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date, withYear: false}) %></time></div>
+              <div class="chrono__head"><time class="chrono__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><span class="chrono__mo"><%= date(post.date, 'MM') %></span><span class="chrono__slash">/</span><span class="chrono__day"><%= date(post.date, 'DD') %></span></time></div>
               <a href="<%= url_for(post.path) %>" class="chrono__entry"><span class="chrono__rubric"><%= cfg.categories[key] %></span><span class="chrono__sep" aria-hidden="true">·</span><span class="chrono__title"><%= post.title || config.title %></span></a>
             </li>
             <% }); %>
