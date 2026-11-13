@@ -23,7 +23,7 @@
    规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
    严禁：卡片容器、投影、条目分割线
    ========================================================= */
-/* ---- 卷首题签停靠：题句+出处上移收拢后随正文离开；页眉另轨常驻；底部淡墨下滑暗示 ---- */
+/* ---- 卷首题签停靠：题句上移收拢后随正文离开；出处随题句缩小渐隐；页眉另轨常驻；底部淡墨下滑暗示 ---- */
 .site-main--home {
   max-width: none;
   padding: 0;
@@ -173,6 +173,24 @@
   }
 }
 
+/* 出处跟随题句缩小，并逐渐隐去，不进入最终栏头。 */
+@keyframes source-fold {
+  from {
+    opacity: 1;
+    font-size: var(--text-xs);
+    letter-spacing: 0.3em;
+    margin-top: var(--space-8);
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    font-size: calc(var(--text-xs) * var(--cover-title-scale));
+    letter-spacing: 0.2em;
+    margin-top: var(--space-2);
+    visibility: hidden;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
     .home-dock-zone {
@@ -216,7 +234,9 @@
     }
 
     .home-cover .home-epigraph__source {
-      margin-top: var(--space-3);
+      animation: source-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--cover-travel) * 0.85);
     }
 
     .home-cover__hint {

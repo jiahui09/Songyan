@@ -214,7 +214,7 @@ const pages = [
     assert.ok(Math.abs(docked.coverTop - docked.headerBottom) <= 2, 'epigraph docks under the pinned header');
     assert.ok(docked.top >= docked.coverTop - 1 && docked.bottom <= docked.coverBottom + 1, JSON.stringify(docked));
     assert.ok(docked.titleVisible && docked.contentBelow, 'title docks above the naturally flowing content');
-    assert.equal(docked.sourceOpacity, '1', 'source remains after docking');
+    assert.ok(Number(docked.sourceOpacity) < 0.05, 'source fades out by the time the title docks');
     assert.ok(docked.hintHidden, 'scroll hint hides after the user scrolls');
     assert.ok(await titleHandle.evaluate(el => el === document.querySelector('.home-epigraph__text')), 'the title is the same DOM element, not a copy');
     assert.equal(await desktopPage.locator('.home-cover h1').count(), 1);
@@ -280,7 +280,8 @@ const pages = [
     assert.equal(coverMotion.middle.opacity, 1, 'title stays visible during the transition, not just at its endpoints');
     assert.equal(coverMotion.end.opacity, 1, 'title never fades or retires');
     assert.equal(coverMotion.start.sourceOpacity, 1);
-    assert.equal(coverMotion.end.sourceOpacity, 1, 'source stays visible through docking');
+    assert.ok(coverMotion.middle.sourceOpacity < coverMotion.start.sourceOpacity, 'source begins fading while the title shrinks');
+    assert.ok(coverMotion.end.sourceOpacity < 0.05, 'source is gone when docking finishes');
     assert.ok(coverMotion.start.scale > coverMotion.middle.scale && coverMotion.middle.scale > coverMotion.end.scale, 'title continuously shrinks instead of switching states');
     assert.ok(coverMotion.start.translateY > coverMotion.end.translateY, 'title group moves upward');
     assert.ok(Math.abs(coverMotion.end.scale - 0.5) < 0.02, 'title becomes a half-sized masthead');
@@ -299,26 +300,25 @@ const pages = [
       const space = document.querySelector('.home-cover-space').getBoundingClientRect().height;
       scrollTo({ top: space, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      const epigraph = document.querySelector('.home-epigraph').getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
       const dock = document.querySelector('.home-cover').getBoundingClientRect();
-      const source = document.querySelector('.home-epigraph__source').getBoundingClientRect();
+      const source = document.querySelector('.home-epigraph__source');
       const anim = document.getAnimations().find(a => a.animationName === 'title-shrink');
       return {
         progress: anim && anim.effect.getComputedTiming().progress,
         scale: parseFloat(getComputedStyle(title).fontSize) / naturalSize,
-        groupTop: epigraph.top,
-        groupBottom: source.bottom,
+        titleTop: titleRect.top,
+        titleBottom: titleRect.bottom,
         dockBottom: dock.bottom,
-        sourceOpacity: getComputedStyle(document.querySelector('.home-epigraph__source')).opacity,
-        noOverlap: source.top >= document.querySelector('.home-epigraph__text').getBoundingClientRect().bottom - 1
+        sourceOpacity: getComputedStyle(source).opacity,
+        sourceVisibility: getComputedStyle(source).visibility
       };
     });
     assert.ok(shortPageDock.progress > 0.95, JSON.stringify(shortPageDock));
     assert.ok(Math.abs(shortPageDock.scale - 0.5) < 0.02, 'short pages still finish docking');
-    assert.ok(shortPageDock.groupTop >= 0, JSON.stringify(shortPageDock));
-    assert.ok(shortPageDock.groupBottom <= shortPageDock.dockBottom + 2, JSON.stringify(shortPageDock));
-    assert.ok(shortPageDock.noOverlap, 'source sits below the title inside the masthead');
-    assert.equal(shortPageDock.sourceOpacity, '1');
+    assert.ok(shortPageDock.titleTop >= 0 && shortPageDock.titleBottom <= shortPageDock.dockBottom + 2, JSON.stringify(shortPageDock));
+    assert.ok(Number(shortPageDock.sourceOpacity) < 0.05, 'source fades on short pages too');
+    assert.equal(shortPageDock.sourceVisibility, 'hidden');
     await desktopPage.emulateMedia({ reducedMotion: 'reduce' });
     assert.equal(await desktopPage.locator('.home-epigraph__text').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion keeps the title static');
     assert.equal(await desktopPage.locator('.home-epigraph').evaluate(el => getComputedStyle(el).animationName), 'none');
@@ -393,26 +393,25 @@ const pages = [
       const title = document.querySelector('.home-epigraph__text');
       const source = document.querySelector('.home-epigraph__source');
       const shrink = document.getAnimations().find(a => a.animationName === 'title-shrink');
+      const sourceAnim = document.getAnimations().find(a => a.animationName === 'source-fold');
       const progress = shrink ? shrink.effect.getComputedTiming().progress : 0;
-      const titleBottom = title.getBoundingClientRect().bottom;
-      const sourceTop = source.getBoundingClientRect().top;
+      const sourceOpacity = Number(getComputedStyle(source).opacity);
       const hint = document.querySelector('.home-cover__hint');
       return {
         progress,
-        sourceVisible: getComputedStyle(source).opacity === '1',
+        sourceOpacity,
+        sourceProgress: sourceAnim ? sourceAnim.effect.getComputedTiming().progress : 0,
         coverPos: getComputedStyle(document.querySelector('.home-cover')).position,
         headerPos: getComputedStyle(document.querySelector('.site-header')).position,
         headerTop: document.querySelector('.site-header').getBoundingClientRect().top,
-        noOverlap: sourceTop >= titleBottom - 1,
         hintHidden: getComputedStyle(hint).visibility === 'hidden' || Number(getComputedStyle(hint).opacity) < 0.2
       };
     });
-    assert.ok(midDock.sourceVisible, 'source remains visible without JavaScript');
     assert.equal(midDock.coverPos, 'sticky');
     assert.equal(midDock.headerPos, 'sticky');
     assert.ok(midDock.headerTop >= -1 && midDock.headerTop <= 1, 'header stays pinned without JavaScript');
     assert.ok(midDock.progress > 0.2 && midDock.progress < 0.95, JSON.stringify(midDock));
-    assert.ok(midDock.noOverlap, 'source remains under the title while docking');
+    assert.ok(midDock.sourceOpacity < 1 && midDock.sourceProgress > 0.2, 'source shrinks and fades while docking without JavaScript');
     assert.ok(midDock.hintHidden, 'hint folds away after scrolling');
 
     await staticPage.evaluate(() => {

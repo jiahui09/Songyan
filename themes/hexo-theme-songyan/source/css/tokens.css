@@ -126,7 +126,7 @@
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
   /* 卷首题签停靠：行程后释放；页眉收拢并常驻顶部。 */
   --cover-height: 62svh;
-  --cover-dock-height: 7.5rem; /* 栏头：缩小题句 + 出处 */
+  --cover-dock-height: 5.5rem; /* 栏头：缩小后的题句；出处渐隐不占位 */
   --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
   --cover-title-scale: 0.5;
   --cover-title-lift: var(--space-16);
