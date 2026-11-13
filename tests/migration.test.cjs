@@ -56,14 +56,22 @@ const pages = [
           assert.equal(await page.locator('.post-signature').evaluate(el => getComputedStyle(el).flexDirection), 'row');
         }
         if (width === 1280 && (name === 'index' || name === 'archive' || name === 'about')) {
-          const activeNav = await page.evaluate(() => {
-            const active = [...document.querySelectorAll('.site-header__nav-link--active')].map(el => el.textContent.trim());
-            const current = [...document.querySelectorAll('.site-header__nav-link[aria-current="page"]')].map(el => el.textContent.trim());
-            return { active, current };
-          });
           const expected = name === 'index' ? '首页' : name === 'archive' ? '归档' : '关于';
-          assert.deepEqual(activeNav.active, [expected], `${name}: only the current nav item is underlined`);
+          const activeNav = await page.evaluate(() => {
+            const activeEl = document.querySelector('.site-header__nav-link--active');
+            return {
+              active: [...document.querySelectorAll('.site-header__nav-link--active')].map(el => el.textContent.trim()),
+              current: [...document.querySelectorAll('.site-header__nav-link[aria-current="page"]')].map(el => el.textContent.trim()),
+              activeUnderline: activeEl ? getComputedStyle(activeEl).backgroundSize : null
+            };
+          });
+          assert.deepEqual(activeNav.active, [expected], `${name}: only the current nav item is marked active`);
           assert.deepEqual(activeNav.current, [expected]);
+          assert.ok(!String(activeNav.activeUnderline).startsWith('100%'), `${name}: active nav has no persistent underline`);
+          const link = page.locator('.site-header__nav-link', { hasText: expected });
+          await link.hover();
+          await page.waitForTimeout(200);
+          assert.ok(String(await link.evaluate(el => getComputedStyle(el).backgroundSize)).startsWith('100%'), `${name}: underline appears on hover`);
         }
         if (['archive', 'category', 'tag'].includes(name)) assert.ok(await page.locator('.chrono__entry').count() > 0);
         if (name === 'index' && width < 900) {

@@ -63,10 +63,14 @@
 }
 
 .site-header__nav-link:hover,
-.site-header__nav-link:focus-visible,
-.site-header__nav-link--active {
+.site-header__nav-link:focus-visible {
   color: var(--ink);
   background-size: 100% 1px;
+}
+
+/* 当前页只加深墨色，不常驻下划线；下划线仅悬停/键盘聚焦时出现。 */
+.site-header__nav-link--active {
+  color: var(--ink);
 }
 
 
