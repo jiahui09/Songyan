@@ -17,7 +17,7 @@
 </head>
 <% var readingPage = page.layout === 'post' || page.layout === 'page' || page.layout === 'about'; %>
 <body<% if (readingPage) { %> class="reading-page"<% } %>>
-  <% if (readingPage) { %><a href="#reading-main" class="reading-skip"><%= theme.labels.skip_content %></a><% } %>
+  <% if (readingPage) { %><a href="#reading-main" class="skip-link"><%= theme.labels.skip_content %></a><% } %>
   <%- partial('_partial/header') %>
 
   <%- body %>

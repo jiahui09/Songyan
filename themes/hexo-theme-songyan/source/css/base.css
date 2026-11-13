@@ -124,6 +124,21 @@ img {
   display: block;
 }
 
+/* 跳过链接：键盘用户越过页头直达正文 */
+.skip-link {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-4);
+  transform: translateY(-200%);
+  z-index: 20;
+  padding: var(--space-2) var(--space-4);
+  background: var(--paper);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
 /* 全站唯一入场动效：「落墨」——只动透明度与位移，交由合成层完成 */
 @keyframes luo-mo {
   from {

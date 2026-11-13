@@ -32,7 +32,7 @@ function initPoemSlip() {
   const saveBtn = overlay.querySelector('[data-poem-slip-save]');
   const closeBtn = overlay.querySelector('[data-poem-slip-close]');
   let lastFocused = null;
-  const background = document.querySelectorAll('body > header, body > main, body > footer, body > .reading-skip');
+  const background = document.querySelectorAll('body > header, body > main, body > footer, body > .skip-link');
   const originalInert = new Map();
 
   function checkPreviewFit() {

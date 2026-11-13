@@ -12,16 +12,6 @@
   outline: 2px solid var(--celadon-deep);
   outline-offset: var(--space-1);
 }
-.reading-skip {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-start: var(--space-4);
-  transform: translateY(-200%);
-  z-index: 20;
-  padding: var(--space-2) var(--space-4);
-  background: var(--paper);
-}
-.reading-skip:focus { transform: none; }
 .reading-body {
   font-family: var(--font-serif);
   font-size: var(--text-base);
@@ -183,7 +173,7 @@
   .reading-page .poem-slip-overlay * { transition-property: none; }
 }
 @media print {
-  .reading-skip, .reading-code__tools, .reading-page .poem-slip-overlay, .reading-page .share-trigger { display: none; }
+  .skip-link, .reading-code__tools, .reading-page .poem-slip-overlay, .reading-page .share-trigger { display: none; }
   .reading-code.is-collapsed pre { max-height: none; }
   .reading-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .reading-body pre code { white-space: pre-wrap; }
