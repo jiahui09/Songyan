@@ -69,6 +69,56 @@
   background-size: 100% 1px;
 }
 
+
+/* 首页封面：页眉随滚动收拢，并常驻钉在顶部（不随正文离开）。 */
+@keyframes header-compact {
+  from {
+    padding-block: var(--space-8) var(--space-4);
+  }
+  to {
+    padding-block: var(--space-3) var(--space-2);
+  }
+}
+
+@keyframes header-title-compact {
+  from {
+    font-size: var(--text-lg);
+    letter-spacing: 0.3em;
+  }
+  to {
+    font-size: var(--text-sm);
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    .home-cover-page .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--paper);
+      background-image: var(--paper-texture);
+      background-repeat: repeat;
+    }
+
+    .home-cover-page .site-header__inner {
+      min-height: var(--header-dock-height);
+      box-sizing: border-box;
+      animation: header-compact linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--cover-travel);
+    }
+
+    .home-cover-page .site-header__title {
+      animation: header-title-compact linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--cover-travel);
+    }
+  }
+}
+
+
 /* =========================================================
    2. 印章变体体系 (Seals)
    ========================================================= */

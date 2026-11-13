@@ -19,7 +19,7 @@
   var readingPage = page.layout === 'post' || page.layout === 'page' || page.layout === 'about';
   var coverPage = is_home() && !(page.current > 1) && (theme.home || {}).cover !== false;
 %>
-<body<% if (readingPage) { %> class="reading-page"<% } %>>
+<body<% if (readingPage && coverPage) { %> class="reading-page home-cover-page"<% } else if (readingPage) { %> class="reading-page"<% } else if (coverPage) { %> class="home-cover-page"<% } %>>
   <% if (readingPage || coverPage) { %><a href="<%= readingPage ? '#reading-main' : '#home-stream' %>" class="skip-link"><%= theme.labels.skip_content %></a><% } %>
   <%- partial('_partial/header') %>
 

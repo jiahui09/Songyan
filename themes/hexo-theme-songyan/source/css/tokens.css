@@ -124,12 +124,13 @@
   --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
   --dur-unfold:    200ms;  /* 折角纸笺展开 */
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
-  /* 卷首题签停靠：行程结束后释放固定，出处与入卷保留可见。 */
+  /* 卷首题签停靠：行程后释放；页眉收拢并常驻顶部。 */
   --cover-height: 62svh;
-  --cover-dock-height: 9rem; /* 栏头：缩小题句 + 出处 + 入卷，同组排列 */
+  --cover-dock-height: 7.5rem; /* 栏头：缩小题句 + 出处 */
+  --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
   --cover-title-scale: 0.5;
   --cover-title-lift: var(--space-16);
-  --cover-travel: calc(var(--cover-height) - var(--cover-dock-height));
+  --cover-travel: calc(var(--cover-height) - var(--cover-dock-height) - var(--header-dock-height));
 
   /* 岁时笺纸：字形不作透视缩放，长题可折列；两弧与月日共用轴位。 */
   --chrono-top:    8rem;   /* 轴上区：竖排年份与月日 */

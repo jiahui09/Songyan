@@ -14,12 +14,10 @@
       <section class="home-cover" aria-label="<%= theme.theme_name %>">
         <div class="home-epigraph">
           <h1 class="home-epigraph__text"><% if (verses.length) { verses.forEach(function (verse) { %><span class="home-epigraph__line"><%= verse %></span><% }); } else { %><%= config.title %><% } %></h1>
-          <div class="home-cover__details">
-            <% if (cfg.hero_source) { %><p class="home-epigraph__source"><%= cfg.hero_source %></p><% } %>
-            <a class="home-cover__enter" href="#home-stream"><%= theme.labels.cover_enter %></a>
-          </div>
+          <% if (cfg.hero_source) { %><p class="home-epigraph__source"><%= cfg.hero_source %></p><% } %>
         </div>
       </section>
+      <p class="home-cover__hint" aria-hidden="true"><span class="home-cover__hint-mark"></span></p>
       <div class="home-cover-space" aria-hidden="true"></div>
     </div>
     <% } %>

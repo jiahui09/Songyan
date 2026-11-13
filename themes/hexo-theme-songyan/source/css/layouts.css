@@ -23,7 +23,7 @@
    规范：640px 居中版心 · 卷首题句为唯一主角 · 诗文两轨同一垂直骨骼
    严禁：卡片容器、投影、条目分割线
    ========================================================= */
-/* ---- 卷首题签停靠：同一组题句/出处/入卷上移收拢；停靠后与正文同层离开 ---- */
+/* ---- 卷首题签停靠：题句+出处上移收拢后随正文离开；页眉另轨常驻；底部淡墨下滑暗示 ---- */
 .site-main--home {
   max-width: none;
   padding: 0;
@@ -33,7 +33,7 @@
   position: relative;
 }
 
-/* 停靠区高度 = 栏头 + 行程：sticky 只在本区内生效，行程结束后随正文一起离开。 */
+/* 停靠区高度 = 页眉下方行程：题签 sticky 只在本区内生效，结束后随正文离开。 */
 .home-dock-zone {
   position: relative;
   min-height: var(--cover-height);
@@ -55,17 +55,11 @@
   text-align: center;
 }
 
-.home-cover__details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .home-cover-space {
   display: none;
 }
 
-/* 正文与栏头同层展开，不压在标题之上，也不被标题罩住。 */
+/* 正文与题签同层展开；页眉另层常驻顶部。 */
 .home-sheet {
   position: relative;
   z-index: 0;
@@ -123,26 +117,27 @@
   text-indent: 0.3em;
 }
 
-/* 「入卷」：封面唯一的动作，是真实锚点而非脚本 */
-.home-cover__enter {
-  margin-top: var(--space-16);
-  font-family: var(--font-title);
-  font-size: var(--text-xs);
-  line-height: var(--leading-xs);
-  letter-spacing: 0.3em;
-  text-indent: 0.3em;
-  color: var(--ink-faint);
-  padding-bottom: var(--space-1);
-  background: var(--rain-thread-h-celadon) no-repeat 50% 100% / 100% 1px;
-  transition: color var(--dur-feedback) var(--ease-ink);
+/* 底部下滑暗示：挂在停靠区底部（视口底），不跟收矮后的栏头走；下滑后收起 */
+.home-cover__hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-8);
+  z-index: 1;
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
-.home-cover__enter:hover,
-.home-cover__enter:focus-visible {
-  color: var(--celadon-deep);
+.home-cover__hint-mark {
+  display: block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-inline-end: 1px solid var(--ink-faint);
+  border-block-end: 1px solid var(--ink-faint);
+  transform: rotate(45deg);
+  opacity: 0.65;
 }
 
-/* 整组题签上移：出处与入卷始终跟在题句下方，不隐藏、不脱节。 */
 @keyframes epigraph-dock {
   from {
     transform: translateY(calc(var(--cover-travel) / 2 - var(--cover-title-lift)));
@@ -152,7 +147,6 @@
   }
 }
 
-/* 字号缩小会改变布局盒，详情自然跟在题句下面，不会与 transform:scale 重叠。 */
 @keyframes title-shrink {
   from {
     font-size: var(--text-epigraph);
@@ -168,15 +162,32 @@
   }
 }
 
+@keyframes hint-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
     .home-dock-zone {
+      /* 高度仍为一屏：负 margin 让封面伸到页眉下，但不得缩短 sticky 行程，
+         否则停靠终点题签会被顶进页眉。 */
       height: var(--cover-height);
       min-height: 0;
+      margin-top: calc(var(--header-dock-height) * -1);
+      padding-top: var(--header-dock-height);
+      box-sizing: border-box;
     }
 
     .home-cover {
       position: sticky;
+      top: var(--header-dock-height);
       min-height: 0;
       height: var(--cover-dock-height);
       padding: 0 var(--space-6);
@@ -204,16 +215,14 @@
       animation-range: 0px var(--cover-travel);
     }
 
-    .home-cover__details {
-      gap: var(--space-1);
-    }
-
-    .home-cover__details .home-epigraph__source {
+    .home-cover .home-epigraph__source {
       margin-top: var(--space-3);
     }
 
-    .home-cover__enter {
-      margin-top: var(--space-2);
+    .home-cover__hint {
+      animation: hint-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--cover-travel) / 3);
     }
 
     .home-cover-space {
@@ -222,9 +231,8 @@
     }
 
     .home-dock-zone + .home-sheet {
-      scroll-margin-top: 0;
+      scroll-margin-top: var(--header-dock-height);
       padding-top: var(--space-8);
-      /* 短文也要留出完整停靠行程，否则滚动到底也到不了缩放终点。 */
       min-height: var(--cover-travel);
     }
   }
@@ -235,6 +243,8 @@
   .home-dock-zone {
     min-height: 0;
     height: auto;
+    margin-top: 0;
+    padding-top: 0;
   }
   .home-cover {
     position: static;
@@ -252,13 +262,10 @@
   .home-cover .home-epigraph__text {
     animation: none;
   }
-  .home-cover__details {
-    position: static;
-  }
   .home-cover-space {
     display: none;
   }
-  .home-cover__enter {
+  .home-cover__hint {
     display: none;
   }
   .home-sheet {
@@ -1090,8 +1097,8 @@
   .home-cover {
     padding: var(--space-12) var(--space-5);
   }
-  .home-cover__enter {
-    margin-top: var(--space-10);
+  .home-cover__hint {
+    bottom: var(--space-6);
   }
   .home-sheet {
     padding: var(--space-12) var(--space-5) var(--space-16);
