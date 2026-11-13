@@ -296,7 +296,7 @@ body.poem-slip-open {
   text-orientation: mixed;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* 顶对齐，不再天地居中 */
   gap: calc(var(--slip-w) * 0.01458);
   overflow: hidden;
   font-family: var(--font-serif);
@@ -341,15 +341,14 @@ body.poem-slip-open {
   color: var(--ink-light);
 }
 
-/* 正中：每句一列垂直流淌，长条留白上下均分（text-align 于竖排沿行内轴居中）；
-   句读只以留白相隔，绝不落黑点 */
+/* 词句列：顶格竖写流淌；句读只以留白相隔，绝不落黑点 */
 .poem-slip__line {
   margin: 0;
   font-family: var(--font-serif);
   font-size: calc(var(--slip-w) * 0.041);
   letter-spacing: 0.15em;
   line-height: 1.25;
-  text-align: center;
+  text-align: start;
   color: var(--ink);
 }
 
@@ -384,6 +383,36 @@ body.poem-slip-open {
   display: block;
   width: calc(var(--slip-w) * 0.0944);
   height: calc(var(--slip-w) * 0.0944);
+}
+
+/* 左下角署名 + 日期（竖排款识） */
+.poem-slip__sign {
+  position: absolute;
+  left: calc(var(--slip-w) * 0.0778);
+  bottom: calc(var(--slip-w) * 0.12);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: calc(var(--slip-w) * 0.018);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--font-title);
+  font-size: calc(var(--slip-w) * 0.032);
+  line-height: 1.35;
+  letter-spacing: 0.14em;
+  color: var(--ink-light);
+  pointer-events: none;
+}
+
+.poem-slip__sign-author,
+.poem-slip__sign-date {
+  margin: 0;
+}
+
+.poem-slip__sign-date {
+  font-size: calc(var(--slip-w) * 0.028);
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
 }
 
 /* 笺底极小浅灰水印 */

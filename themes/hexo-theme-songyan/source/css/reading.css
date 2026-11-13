@@ -130,7 +130,7 @@
 .reading-page .post-ending .post-tags { margin: 0 0 var(--space-6); justify-content: flex-start; }
 .reading-page .post-ending .post-signature { margin-top: 0; }
 .reading-page .post-ci .post-ending .post-signature { margin-bottom: 0; }
-/* 题笺紧挨作者名下，中间落花隔开；字号不大于落款日期 */
+/* 姓名列：题笺紧挨作者名下，中间落花隔开；日期/印章另开一列 */
 .reading-page .post-signature__meta:has(.post-signature__slip) {
   display: flex;
   flex-direction: column;
@@ -142,7 +142,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
-  margin: var(--space-2) 0;
+  margin: var(--space-2) 0 0;
 }
 .reading-page .post-signature__slip .post-signature-actions {
   margin-top: 0;
@@ -175,7 +175,21 @@
 }
 .reading-page .post-signature__meta { min-width: 0; text-align: right; font-size: var(--text-sm); line-height: var(--leading-sm); }
 .reading-page .post-signature__author { margin: 0 0 var(--space-1); font-family: var(--font-title); font-size: var(--text-base); line-height: var(--leading-sm); }
-.reading-page .post-signature__meta time { display: block; font-family: var(--font-title); font-size: var(--text-xs); line-height: var(--leading-xs); letter-spacing: .1em; }
+.reading-page .post-signature__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+.reading-page .post-signature__mark time {
+  display: block;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: .1em;
+  color: var(--ink-faint);
+}
 .reading-page .post-signature .seal--signature { flex: 0 0 auto; margin: 0; transform: translateY(var(--space-2)); }
 .post-signature-actions { display: flex; justify-content: flex-end; margin-top: var(--space-3); }
 .post-signature-actions .share-trigger { margin: 0; }
@@ -188,11 +202,11 @@
 @media (min-width: 1024px) {
   .reading-page .post-ci__body--vertical > p { margin: 0 0 0 var(--space-4); }
   .reading-page .post-ci__body--vertical > p[data-stanza-start] { margin-top: 0; margin-right: var(--ci-stanza-gap); }
-  /* 竖排落款：跟在词列后成一列；vertical-rl 下 row＝自上而下 */
+  /* 竖排落款：姓名+题笺一列，日期+印章另开一列 */
   .reading-page .post-ci__body--vertical > .post-signature--vertical {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     gap: var(--space-3);
     margin: 0 0 0 var(--ci-stanza-gap);
@@ -201,7 +215,6 @@
     max-height: 100%;
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
-    /* 在竖排词列里仍用横向堆叠，保证姓名/落花/题笺同列，不向左开新列 */
     writing-mode: horizontal-tb;
     font-size: var(--text-sm);
     line-height: 2;
@@ -214,7 +227,12 @@
     font-size: var(--text-base);
     letter-spacing: var(--tracking-verse);
   }
-  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta time {
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__mark {
+    writing-mode: horizontal-tb;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__mark time {
     writing-mode: vertical-rl;
     text-orientation: mixed;
     letter-spacing: 0.12em;

@@ -115,13 +115,14 @@ function initPoemSlip() {
 }
 
 /**
- * 取词：词牌 / 题注 / 词句 / 水印，皆来自词页既有内容
- * 落款文字不取——笺上以款印代署名，不再重复书写
+ * 取词：词牌 / 题注 / 词句 / 署名日期 / 水印，皆来自词页既有内容
  */
 function collectPoemSlipData() {
   const badge = document.querySelector('.post-ci__cipai-badge');
   const title = document.querySelector('.post-title');
   const watermark = document.querySelector('.poem-slip__watermark');
+  const authorEl = document.querySelector('.post-signature__author');
+  const dateEl = document.querySelector('.post-signature__mark time, .post-signature__meta time, .reading-mast__meta time');
   const lineEls = document.querySelectorAll('.post-ci__body-horizontal .post-ci__line, .post-ci__body-horizontal > p');
 
   const titleText = title ? title.textContent.trim() : '';
@@ -139,6 +140,8 @@ function collectPoemSlipData() {
     tizhu: sepIndex > -1 ? titleText.slice(sepIndex + 1).trim() : (titleText !== cipaiText ? titleText : ''),
     lines: Array.prototype.map.call(lineEls, (el) => cleanCiLine(el)),
     lowerIndex: lowerIndex,
+    author: authorEl ? authorEl.textContent.trim() : '',
+    date: dateEl ? dateEl.textContent.trim() : '',
     watermark: watermark ? watermark.textContent.trim() : ''
   };
 }
@@ -154,11 +157,15 @@ function cleanCiLine(lineEl) {
 }
 
 /**
- * 竖排成笺：右起 词牌 → 题注（低一格）→ 词句（阕间空一列，长条上下留天地）
- * → 款印（沉底压角，以印代署名）
+ * 竖排成笺：右起 词牌 → 题注（低一格）→ 词句顶对齐（阕间空一列）
+ * → 款印（沉底压角）；左下另落署名与日期
  */
 function renderPoemSlip(cols) {
   const data = collectPoemSlipData();
+  const slip = cols.closest('.poem-slip');
+  const sign = slip ? slip.querySelector('[data-poem-slip-sign]') : null;
+  const signAuthor = slip ? slip.querySelector('[data-poem-slip-author]') : null;
+  const signDate = slip ? slip.querySelector('[data-poem-slip-date]') : null;
 
   while (cols.firstChild) cols.removeChild(cols.firstChild);
 
@@ -172,12 +179,18 @@ function renderPoemSlip(cols) {
   });
 
   const seal = buildSlipSeal();
-  if (!seal) return;
+  if (seal) {
+    const sigCol = document.createElement('p');
+    sigCol.className = 'poem-slip__sealcol';
+    sigCol.appendChild(seal);
+    cols.appendChild(sigCol);
+  }
 
-  const sigCol = document.createElement('p');
-  sigCol.className = 'poem-slip__sealcol';
-  sigCol.appendChild(seal);
-  cols.appendChild(sigCol);
+  if (sign && signAuthor && signDate) {
+    signAuthor.textContent = data.author || '';
+    signDate.textContent = data.date || '';
+    sign.hidden = !(data.author || data.date);
+  }
 }
 
 /**
@@ -320,14 +333,16 @@ async function drawPoemSlip(data) {
   ctx.fillStyle = token('--slip-paper');
   ctx.fillRect(0, 0, W, H);
 
-  // 2. 列位：天地同 inset，列区净高供词句居中
+  // 2. 列位：天地同 inset，词句顶对齐；左下另落署名日期
   const inset = W * 0.0778;
   const areaH = H - inset * 2;
   const metric = {
     cipai:   { size: W * 0.062, ls: 0.2,  lh: 1.25, weight: '400', font: fontTitle, color: token('--ink') },
     tizhu:   { size: W * 0.036, ls: 0.12, lh: 1.4,  weight: '400', font: fontTitle, color: token('--ink-light'), top: 0.05 },
-    line:    { size: W * 0.041, ls: 0.15, lh: 1.25, weight: '400', font: fontSerif, color: token('--ink'), align: 'center' },
+    line:    { size: W * 0.041, ls: 0.15, lh: 1.25, weight: '400', font: fontSerif, color: token('--ink') },
     sealcol: { size: W * 0.0944, align: 'end', padBottom: 0.13 },
+    sign:    { size: W * 0.032, ls: 0.14, lh: 1.35, weight: '400', font: fontTitle, color: token('--ink-light') },
+    date:    { size: W * 0.028, ls: 0.12, lh: 1.35, weight: '400', font: fontTitle, color: token('--ink-faint') },
     mark:    { size: W * 0.028, ls: 0.14, lh: 1.4,  weight: '400', font: fontTitle, color: token('--slip-watermark') }
   };
 
@@ -347,11 +362,10 @@ async function drawPoemSlip(data) {
     return { cx: cx, bottom: bottom };
   };
 
-  // 竖排文字列：列宽 = 字号×行距；align 'center' 时于列区居中（天头地脚均分）
+  // 竖排文字列：列宽 = 字号×行距；默认顶对齐
   const place = (clauses, m) => {
     if (ciTextHeight(clauses, m) > areaH) throw new RangeError('poem slip text exceeds paper height');
-    const top = inset + (m.top || 0) * W +
-      (m.align === 'center' ? (areaH - ciTextHeight(clauses, m)) / 2 : 0);
+    const top = inset + (m.top || 0) * W;
     return placeBox(m.size * m.lh, top, (cx, y) => drawVerticalClauses(ctx, clauses, cx, y, m));
   };
 
@@ -391,7 +405,31 @@ async function drawPoemSlip(data) {
   });
   ctx.stroke();
 
-  // 5. 笺底水印：左下角极小浅灰小字；基线按 DOM 行盒下沉量回算，与 .poem-slip__watermark 同位
+  // 5. 左下角署名 + 日期（竖排款识，自下而上写）
+  if (data.author || data.date) {
+    const signMetric = metric.sign;
+    const dateMetric = metric.date;
+    const gapY = W * 0.018;
+    let y = H - inset - W * 0.02;
+    const drawUp = (text, m) => {
+      if (!text) return;
+      const chars = Array.from(text);
+      const advance = m.size * (1 + m.ls);
+      ctx.font = m.weight + ' ' + m.size + 'px ' + m.font;
+      ctx.fillStyle = m.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = chars.length - 1; i >= 0; i--) {
+        ctx.fillText(chars[i], inset + m.size / 2, y - m.size / 2);
+        y -= advance;
+      }
+      y -= gapY;
+    };
+    drawUp(data.date, dateMetric);
+    drawUp(data.author, signMetric);
+  }
+
+  // 6. 笺底水印：左下角极小浅灰小字；基线按 DOM 行盒下沉量回算，与 .poem-slip__watermark 同位
   if (data.watermark) {
     const m = metric.mark;
     ctx.font = m.weight + ' ' + m.size + 'px ' + m.font;

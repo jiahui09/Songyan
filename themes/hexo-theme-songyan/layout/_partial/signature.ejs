@@ -17,7 +17,9 @@
       <%- partial('_partial/poem-slip') %>
     </div>
     <% } %>
-    <% if (written) { %><time datetime="<%= date(written, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: written}) %></time><% } %>
   </div>
-  <% if (showSeal) { %><%- render_seal(text, style, 60, 'seal--signature') %><% } %>
+  <div class="post-signature__mark">
+    <% if (written) { %><time datetime="<%= date(written, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: written}) %></time><% } %>
+    <% if (showSeal) { %><%- render_seal(text, style, 60, 'seal--signature') %><% } %>
+  </div>
 </div>

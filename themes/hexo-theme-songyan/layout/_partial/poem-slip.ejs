@@ -3,7 +3,7 @@
 </div>
 <div class="poem-slip-overlay" data-poem-slip aria-hidden="true" data-overflow-notice="<%= theme.labels.poem_overflow %>">
   <div class="poem-slip__stack" id="poem-slip-dialog" role="dialog" aria-modal="true" aria-label="<%= theme.labels.poem_preview %>" tabindex="-1">
-    <div class="poem-slip"><div class="poem-slip__cols" data-poem-slip-cols></div><span class="poem-slip__watermark"><%= theme.theme_name %></span></div>
+    <div class="poem-slip"><div class="poem-slip__cols" data-poem-slip-cols></div><div class="poem-slip__sign" data-poem-slip-sign hidden><p class="poem-slip__sign-author" data-poem-slip-author></p><p class="poem-slip__sign-date" data-poem-slip-date></p></div><span class="poem-slip__watermark"><%= theme.theme_name %></span></div>
     <div class="poem-slip__actions"><button type="button" class="poem-slip-action poem-slip-action--save" data-poem-slip-save><%= theme.labels.poem_save %></button><button type="button" class="poem-slip-action" data-poem-slip-close><%= theme.labels.poem_close %></button></div>
     <p class="poem-slip__status" data-poem-slip-status aria-live="polite"></p>
   </div>

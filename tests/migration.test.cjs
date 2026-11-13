@@ -114,15 +114,39 @@ const pages = [
     assert.equal(await page.locator('.post-signature__slip .post-ci__petal').count(), 1, 'petal sits between author and slip');
     assert.equal(await page.locator('.post-signature__slip [data-poem-slip-open]').count(), 1, 'poem slip sits under the author name');
     const slipSize = await page.locator('.post-signature__slip .share-trigger').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
-    const dateSize = await page.locator('.post-signature__meta time').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const dateSize = await page.locator('.post-signature__mark time').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
     assert.ok(slipSize <= dateSize + 0.5, `slip text must not exceed signature date size: ${slipSize} vs ${dateSize}`);
     await page.locator('[data-poem-slip-open]').click();
     await page.locator('.poem-slip__cipai').waitFor({ state: 'visible' });
     const exportProbe = await page.evaluate(async () => {
-      try { const data = collectPoemSlipData(); const canvas = await drawPoemSlip(data); return { width: canvas.width, data }; }
-      catch (error) { return { error: error.message, data: collectPoemSlipData() }; }
+      try {
+        const data = collectPoemSlipData();
+        const canvas = await drawPoemSlip(data);
+        const sign = document.querySelector('[data-poem-slip-sign]');
+        const lineAlign = getComputedStyle(document.querySelector('.poem-slip__line')).textAlign;
+        const colsJustify = getComputedStyle(document.querySelector('.poem-slip__cols')).justifyContent;
+        return {
+          width: canvas.width,
+          height: canvas.height,
+          data,
+          signVisible: sign && !sign.hidden,
+          signAuthor: document.querySelector('[data-poem-slip-author]')?.textContent.trim() || '',
+          signDate: document.querySelector('[data-poem-slip-date]')?.textContent.trim() || '',
+          lineAlign,
+          colsJustify
+        };
+      } catch (error) {
+        return { error: error.message, data: collectPoemSlipData() };
+      }
     });
     assert.ok(!exportProbe.error, JSON.stringify(exportProbe));
+    assert.ok(exportProbe.data.author, 'poem slip export includes author');
+    assert.ok(exportProbe.data.date, 'poem slip export includes date');
+    assert.equal(exportProbe.signVisible, true, 'preview shows author/date block');
+    assert.ok(exportProbe.signAuthor, 'preview author is filled');
+    assert.ok(exportProbe.signDate, 'preview date is filled');
+    assert.ok(['flex-start', 'start', 'flow-start'].includes(exportProbe.colsJustify), 'poem slip columns are top-aligned');
+    assert.ok(['start', 'left', 'flex-start'].includes(exportProbe.lineAlign), 'verse columns are top-aligned');
     const downloadPromise = page.waitForEvent('download').catch(async error => { console.error('POEM STATUS:', await page.locator('[data-poem-slip-status]').textContent()); throw error; });
     await page.locator('[data-poem-slip-save]').click();
     const download = await downloadPromise;
@@ -613,31 +637,38 @@ const pages = [
     assert.equal(readingCiColumns.stamped, true, 'seal stamps as the final beat');
     assert.equal(readingCiColumns.lockedAfter, false, 'page unlocks after the final stamp');
 
-    // 桌面竖排：题笺与作者同列，不另开左列
+    // 桌面竖排：题笺与作者同列；日期/印章另开一列
     const slipColumn = await desktopPage.evaluate(() => {
-      const meta = document.querySelector('.post-ci__body--vertical .post-signature__meta');
+      const signature = document.querySelector('.post-ci__body--vertical > .post-signature--vertical');
+      const meta = signature.querySelector('.post-signature__meta');
+      const mark = signature.querySelector('.post-signature__mark');
       const author = meta.querySelector('.post-signature__author');
       const slip = meta.querySelector('.post-signature__slip');
-      const time = meta.querySelector('time');
+      const time = mark.querySelector('time');
+      const seal = mark.querySelector('.seal--signature');
       const petal = slip.querySelector('.post-ci__petal');
       const trigger = slip.querySelector('[data-poem-slip-open]');
       const a = author.getBoundingClientRect();
       const s = slip.getBoundingClientRect();
-      const t = time.getBoundingClientRect();
+      const m = mark.getBoundingClientRect();
       return {
         metaDirection: getComputedStyle(meta).flexDirection,
         writingMode: getComputedStyle(trigger).writingMode,
         sameColumn: Math.abs(((a.left + a.right) / 2) - ((s.left + s.right) / 2)) < 24,
         slipBelowAuthor: s.top >= a.bottom - 2,
-        timeBelowSlip: t.top >= s.bottom - 2,
+        markSeparate: Math.abs(((a.left + a.right) / 2) - ((m.left + m.right) / 2)) > 12,
+        hasDate: Boolean(time),
+        hasSeal: Boolean(seal),
         petalBeforeTrigger: !!(petal.compareDocumentPosition(trigger) & Node.DOCUMENT_POSITION_FOLLOWING)
       };
     });
-    assert.equal(slipColumn.metaDirection, 'column', 'author/slip/date stay in one vertical stack');
+    assert.equal(slipColumn.metaDirection, 'column', 'author and slip stay in one vertical stack');
     assert.ok(String(slipColumn.writingMode).includes('vertical'), 'slip label remains vertical');
     assert.equal(slipColumn.sameColumn, true, 'slip stays in the author column, not to the left');
     assert.equal(slipColumn.slipBelowAuthor, true, 'slip sits under the author name');
-    assert.equal(slipColumn.timeBelowSlip, true, 'date follows the slip in the same column');
+    assert.equal(slipColumn.markSeparate, true, 'date/seal open a separate column');
+    assert.equal(slipColumn.hasDate, true);
+    assert.equal(slipColumn.hasSeal, true);
     assert.equal(slipColumn.petalBeforeTrigger, true, 'petal sits between author and slip');
 
     // 阅读页题头停靠（文 + 题注）
