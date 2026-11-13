@@ -140,7 +140,8 @@
 
 @keyframes epigraph-dock {
   from {
-    transform: translateY(calc(var(--cover-travel) / 2 - var(--cover-title-lift)));
+    /* 首屏题句落在栏头盒几何中心，不再额外上抬 */
+    transform: translateY(calc(var(--cover-travel) / 2));
   }
   to {
     transform: translateY(var(--space-3));
@@ -252,21 +253,23 @@
     }
 
     /*
-     * 引力锚点只设在「停靠完成 / 正文起点」：
-     * 首屏不设 snap，避免把已出现的题头再拉回去；
-     * proximity = 靠近完成点才吸住，要么停在卷首，要么停在定点。
+     * 双锚点 mandatory：卷首与定点二选一，避免半隐半出卡在行程中段。
      */
     html:has(body.home-cover-page) {
-      scroll-snap-type: y proximity;
-      --dock-snap: proximity;
+      scroll-snap-type: y mandatory;
+      --dock-snap: mandatory;
+    }
+
+    .home-dock-zone {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
     }
 
     .home-dock-zone + .home-sheet {
       scroll-margin-top: calc(var(--header-dock-height) + var(--cover-dock-height));
       scroll-snap-align: start;
-      scroll-snap-stop: always; /* 一旦进入定点，不再被轻滑拽回半途 */
+      scroll-snap-stop: always;
       padding-top: var(--space-12);
-      /* 加大定点后缓冲，克服阻力后吸住，不半途卡壳 */
       min-height: calc(var(--cover-travel) + var(--space-16));
     }
   }
@@ -1097,7 +1100,8 @@
 /* 归档题头停靠：首屏题头偏上居中，篇数贴题头下；近期随之上移；定点后只留缩小题头。 */
 @keyframes archive-mast-dock {
   from {
-    transform: translateY(calc(var(--archive-travel) * 0.28));
+    /* 首屏题头落在栏头盒几何中心 */
+    transform: translateY(calc(var(--archive-travel) / 2));
   }
   to {
     transform: translateY(0);
@@ -1211,8 +1215,8 @@
       position: absolute;
       left: 0;
       right: 0;
-      /* 跟随偏上题头：落在题头/篇数下方；行程前半完全隐去，不越题头 */
-      top: calc(40% + var(--space-12));
+      /* 居中题头+篇数下方，避免与题簇重叠 */
+      top: calc(50% + var(--space-16) + 2.75rem);
       max-width: min(var(--stream-max), 34rem);
       margin-inline: auto;
       z-index: 0;
@@ -1247,17 +1251,23 @@
       max-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
     }
 
-    /* 继续下滑：留出离场行程，时间轴整片上移隐去，不半截停住 */
+    /* 去掉整屏离场跑道：时间轴上移后直接接页脚，素笺栏头遮住残留 */
     .archive-exit-space {
-      display: block;
-      height: var(--archive-exit);
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-      scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
+      display: none;
+      height: 0;
     }
 
     .archive-dock-page .chrono__track {
       padding-bottom: var(--space-4);
+    }
+
+    .archive-dock-page .site-main--archive {
+      padding-bottom: 0;
+    }
+
+    body.archive-dock-page .site-footer {
+      margin-top: 0;
+      padding-top: var(--space-8);
     }
 
     .archive-dock-page .chrono__entry {

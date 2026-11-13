@@ -154,9 +154,43 @@
 .post-signature-actions button.share-trigger { border: 0; background: none; padding: 0; }
 .reading-page .post-ci__body-horizontal > p { margin-bottom: var(--space-3); letter-spacing: var(--tracking-verse); }
 .reading-page .post-ci__body-horizontal > p[data-stanza-start] { margin-top: var(--ci-stanza-gap); }
+.reading-page .post-ci__body-horizontal > .post-signature--vertical {
+  margin-top: var(--space-10);
+}
 @media (min-width: 1024px) {
   .reading-page .post-ci__body--vertical > p { margin: 0 0 0 var(--space-4); }
   .reading-page .post-ci__body--vertical > p[data-stanza-start] { margin-top: 0; margin-right: var(--ci-stanza-gap); }
+  /* 竖排落款：跟在词列后成一列；vertical-rl 下 row＝自上而下 */
+  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    margin: 0 0 0 var(--ci-stanza-gap);
+    padding: 0;
+    height: auto;
+    max-height: 100%;
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
+    text-align: start;
+    font-size: var(--text-sm);
+    line-height: 2;
+    letter-spacing: var(--tracking-verse);
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__author {
+    margin: 0;
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-verse);
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta time {
+    letter-spacing: 0.12em;
+  }
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
+    margin: 0;
+    transform: none;
+    transform-origin: center center;
+  }
 }
 .reading-page .poem-slip-overlay { overflow-y: auto; }
 .reading-page .poem-slip__actions { flex-wrap: wrap; justify-content: center; }
@@ -219,10 +253,10 @@
   display: none;
 }
 
-/* sticky 栏头 + 流式题簇；首屏整屏题签，不露正文。 */
+/* sticky 栏头 + 流式题簇；首屏整屏题签居中，不露正文。 */
 @keyframes reading-mast-lift {
   from {
-    transform: translateY(calc(var(--reading-travel) * 0.38));
+    transform: translateY(calc(var(--reading-travel) / 2 - var(--reading-dock-height) / 2));
   }
   to {
     transform: translateY(0);
@@ -269,15 +303,19 @@
   }
 }
 
-/* 文章：元信息收拢为栏头淡墨一行，不完全消失 */
+/* 文章：作者/日期等与末尾印章重复，行程内完全隐去 */
 @keyframes reading-essay-meta-fold {
   from {
     opacity: 1;
+    visibility: visible;
     margin-top: var(--space-4);
+    max-height: 4rem;
   }
   to {
-    opacity: 0.72;
-    margin-top: var(--space-1);
+    opacity: 0;
+    visibility: hidden;
+    margin-top: 0;
+    max-height: 0;
   }
 }
 
@@ -296,23 +334,48 @@
   }
 }
 
-/* 竖排词句：随根滚动依次淡入平移入场（右起成列） */
+/* 竖排词句：整列自视口下方升入（右起成列）；入场由列锁页驱动 */
 @keyframes reading-ci-column-reveal {
   from {
     opacity: 0;
-    transform: translateX(calc(var(--space-4) * -1));
+    transform: translateY(2.5rem);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes reading-ci-seal-stamp {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-3) * -1)) scale(1.12);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    /*
+     * 双锚点 mandatory：卷首封面与正文定点二选一。
+     * 定点完成后栏头随正文上移离开（sticky 随 dock-zone 离场）。
+     */
     html:has(body.reading-dock-page) {
-      scroll-snap-type: y proximity;
-      --dock-snap: proximity;
+      scroll-snap-type: y mandatory;
+      --dock-snap: mandatory;
+    }
+
+    .reading-dock-zone {
+      position: relative;
+      /* 与首页相同：负 margin 让停靠区顶边贴视口，mandatory 卷首锚点不发生首屏微移 */
+      margin-top: calc(var(--header-dock-height) * -1);
+      padding-top: var(--header-dock-height);
+      box-sizing: border-box;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
     }
 
     .reading-mast {
@@ -369,18 +432,17 @@
       animation-range: 0px var(--reading-travel);
     }
 
-    /* 诗词：作者/日期在行程内完全隐去 */
-    .post-ci__header .reading-mast__meta {
+    /* 诗词 / 文章：作者/日期在行程内完全隐去 */
+    .post-ci__header .reading-mast__meta,
+    .essay-header .reading-mast__meta {
       overflow: hidden;
       animation: reading-ci-meta-fold linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px calc(var(--reading-travel) * 0.72);
     }
 
-    /* 文章：元信息收拢保留淡墨一行 */
     .essay-header .reading-mast__meta {
-      animation: reading-essay-meta-fold linear both;
-      animation-timeline: scroll(root block);
+      animation-name: reading-essay-meta-fold;
       animation-range: 0px calc(var(--reading-travel) * 0.8);
     }
 
@@ -396,10 +458,6 @@
       margin-bottom: var(--space-2);
     }
 
-    .reading-dock-zone {
-      position: relative;
-    }
-
     /* 盖住视口剩余高度，首屏只见题签封面 */
     .reading-head-space {
       display: block;
@@ -413,7 +471,6 @@
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
-      /* 加大与定点间距，避免半途卡壳 */
       padding-top: var(--space-12);
       min-height: calc(var(--reading-travel) * 0.35);
     }
@@ -425,43 +482,42 @@
   }
 }
 
-/* 桌面竖排：靠近定点时首列已显，继续下滑各列依次入场；减弱动效关闭 */
+/* 桌面竖排：定点后锁页，滚轮驱动整列自下而上升入；落款印章落墨 */
 @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
-  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
-    .reading-page .post-ci__body--vertical > p {
-      opacity: 0;
-      animation: reading-ci-column-reveal linear both;
-      animation-timeline: scroll(root block);
-    }
+  .reading-page .post-ci__body--vertical > p,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+    opacity: 0;
+    transform: translateY(2.5rem);
+  }
 
-    /* 行程末段起笔：定点时前两列已落墨，后续列随续滚入场 */
-    .reading-page .post-ci__body--vertical > p:nth-child(1) {
-      animation-range: calc(var(--reading-travel) * 0.78) calc(var(--reading-travel) * 0.92);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(2) {
-      animation-range: calc(var(--reading-travel) * 0.86) calc(var(--reading-travel) * 0.99);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(3) {
-      animation-range: calc(var(--reading-travel) * 0.94) calc(var(--reading-travel) + 6vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(4) {
-      animation-range: var(--reading-travel) calc(var(--reading-travel) + 10vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(5) {
-      animation-range: calc(var(--reading-travel) + 4vh) calc(var(--reading-travel) + 14vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(6) {
-      animation-range: calc(var(--reading-travel) + 8vh) calc(var(--reading-travel) + 18vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(7) {
-      animation-range: calc(var(--reading-travel) + 12vh) calc(var(--reading-travel) + 22vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(8) {
-      animation-range: calc(var(--reading-travel) + 16vh) calc(var(--reading-travel) + 26vh);
-    }
-    .reading-page .post-ci__body--vertical > p:nth-child(n+9) {
-      animation-range: calc(var(--reading-travel) + 20vh) calc(var(--reading-travel) + 30vh);
-    }
+  .reading-page .post-ci__body--vertical > p.is-revealed,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity var(--dur-enter) var(--ease-ink),
+      transform var(--dur-enter) var(--ease-ink);
+  }
+
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .seal--signature {
+    animation: reading-ci-seal-stamp var(--dur-stamp) var(--ease-ink) both;
+  }
+
+  .reading-page .post-ci__stage--columns.is-locked {
+    overflow: hidden;
+  }
+}
+
+/* 列锁页期间禁止整页滚动条跳动（滚轮由 JS 接管） */
+html.ci-columns-locked {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 1023px) {
+  .reading-page .post-ci__body--vertical > p,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -470,14 +526,17 @@
   .reading-mast {
     position: static;
     height: auto;
+    min-height: 0;
     background: none;
   }
   .reading-mast__cluster,
   .reading-mast .post-title,
   .reading-mast__meta,
   .reading-mast__epigraph,
-  .reading-page .post-ci__body--vertical > p {
+  .reading-page .post-ci__body--vertical > p,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical {
     animation: none;
     transform: none;
+    opacity: 1;
   }
 }

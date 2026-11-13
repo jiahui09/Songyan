@@ -41,7 +41,7 @@ type_mapping:
 # 词卷配置 (type: ci)
 ci:
   vertical_desktop: true   # 桌面端 (≥1024px) 词作右起竖排，窄屏自动降级横排
-  show_annotation: true    # 难词旁落淡胭脂着重点，点按跳至文末笺注
+  show_annotation: false   # 难词旁落淡胭脂着重点，点按跳至文末笺注；默认关闭解释笺
   share: true
 
 # 卷首首页配置

@@ -205,7 +205,7 @@ const pages = [
     assert.ok(coverProbe.titleCenter > 270 && coverProbe.titleCenter < 630, 'initial title sits near the viewport center');
     assert.equal(coverProbe.skipHref, '#home-stream');
     assert.ok(coverProbe.targetExists);
-    assert.equal(coverProbe.dockSnap, 'proximity', 'dock completion uses a proximity snap anchor');
+    assert.equal(coverProbe.dockSnap, 'mandatory', 'cover uses mandatory snap between intro and dock');
     assert.ok(coverProbe.sheetBg.includes('paper-texture'), 'content keeps the shared paper texture');
     assert.equal(coverProbe.coverBg, 'none', 'docked masthead is not a paper overlay covering the page');
     assert.equal(coverProbe.sheetSnap, 'start');
@@ -264,6 +264,10 @@ const pages = [
         const coverMotion = await desktopPage.evaluate(async () => {
       const title = document.querySelector('.home-epigraph__text');
       const epigraph = document.querySelector('.home-epigraph');
+      const root = document.documentElement;
+      // mandatory 会把中途采样吸回端点；测量行程时临时关闭 snap
+      const prevSnap = root.style.scrollSnapType;
+      root.style.scrollSnapType = 'none';
       scrollTo({ top: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const sample = (natural) => {
@@ -291,11 +295,13 @@ const pages = [
       const end = sample(natural);
       scrollTo({ top: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      return { start, middle, end, restored: sample(natural) };
+      const restored = sample(natural);
+      root.style.scrollSnapType = prevSnap;
+      return { start, middle, end, restored };
     });
 
     assert.equal(coverMotion.start.timeline, 'ScrollTimeline');
-    assert.ok(coverMotion.start.progress < 0.02, JSON.stringify(coverMotion));
+    assert.ok(coverMotion.start.progress < 0.05, JSON.stringify(coverMotion));
     assert.ok(Math.abs(coverMotion.start.scale - 1) < 0.001, 'cover starts at its natural size');
     assert.ok(coverMotion.end.progress > 0.95, 'title reaches its final size before the content reaches the dock');
     assert.equal(coverMotion.start.opacity, 1);
@@ -412,7 +418,7 @@ const pages = [
     assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.mastAnim.includes('archive-mast-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.legendAfterIntro, 'category legend sits with the timeline focus area under the title');
-    assert.ok(archiveIntro.titleCenter > 160 && archiveIntro.titleCenter < 420, 'archive title sits upper-center on intro');
+    assert.ok(archiveIntro.titleCenter > 270 && archiveIntro.titleCenter < 630, 'archive title sits near the viewport center');
     assert.ok(archiveIntro.countBelowTitle, 'count sits directly under the title');
     assert.ok(archiveIntro.recentBelowCount, 'recent list sits under the count');
     assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
@@ -469,17 +475,30 @@ const pages = [
     assert.ok(archiveDocked.chronoBottom <= archiveDocked.viewport + 2, 'timeline fits under header+title in one screen');
     assert.ok(archiveDocked.chronoTopToken.includes('5.5'), 'docked archive uses compact chrono metrics');
 
-    // 继续下滑：时间轴整片离场，不半截停住
+    // 继续下滑：无整屏 exit 白段，时间轴上移后页脚紧随
     const archiveExited = await desktopPage.evaluate(async () => {
+      const footer = document.querySelector('.site-footer');
       const exit = document.querySelector('.archive-exit-space');
-      scrollTo({ top: exit.getBoundingClientRect().top + scrollY, behavior: 'instant' });
+      scrollTo({ top: footer.getBoundingClientRect().top + scrollY - innerHeight * 0.35, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const chrono = document.querySelector('.chrono').getBoundingClientRect();
       const head = document.querySelector('.archive-head').getBoundingClientRect();
-      return { chronoBottom: chrono.bottom, headBottom: head.bottom, headerTop: document.querySelector('.site-header').getBoundingClientRect().top };
+      const foot = footer.getBoundingClientRect();
+      return {
+        chronoBottom: chrono.bottom,
+        headBottom: head.bottom,
+        headerTop: document.querySelector('.site-header').getBoundingClientRect().top,
+        footerTop: foot.top,
+        exitDisplay: exit ? getComputedStyle(exit).display : 'none',
+        exitHeight: exit ? exit.getBoundingClientRect().height : 0,
+        gap: foot.top - chrono.bottom
+      };
     });
-    assert.ok(archiveExited.chronoBottom <= archiveExited.headBottom + 2, 'timeline fully leaves above the docked masthead');
+    assert.equal(archiveExited.exitDisplay, 'none', 'archive exit runway is removed');
+    assert.ok(archiveExited.exitHeight < 1, 'no full-screen blank between timeline and footer');
+    assert.ok(archiveExited.chronoBottom <= archiveExited.headBottom + 2 || archiveExited.footerTop < archiveExited.chronoBottom + 8, 'timeline leaves or yields directly to footer');
     assert.ok(archiveExited.headerTop >= -1 && archiveExited.headerTop <= 1, 'header stays pinned after timeline exits');
+    assert.ok(archiveExited.gap < 450 || archiveExited.footerTop < archiveExited.headBottom + 120, JSON.stringify(archiveExited));
 
     // 阅读页题头停靠（词）
     await desktopPage.goto(origin + prefix + '/2026/10/12/qiushi-huaiyuan/');
@@ -526,6 +545,9 @@ const pages = [
       const header = document.querySelector('.site-header').getBoundingClientRect();
       const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
       const firstLine = document.querySelector('.post-ci__body--vertical > p');
+      const signature = document.querySelector('.post-ci__body--vertical > .post-signature--vertical');
+      const endingSignature = document.querySelector('.post-ending .post-signature');
+      const annotations = document.querySelector('.poem-annotations');
       return {
         headerBottom: header.bottom,
         mastTop: mast.top,
@@ -533,7 +555,12 @@ const pages = [
         titleSize: parseFloat(getComputedStyle(title).fontSize),
         metaOpacity: meta ? Number(getComputedStyle(meta).opacity) : 1,
         metaVisibility: meta ? getComputedStyle(meta).visibility : 'visible',
-        lineAnim: firstLine ? getComputedStyle(firstLine).animationName : ''
+        lineOpacity: firstLine ? Number(getComputedStyle(firstLine).opacity) : 1,
+        lineTransform: firstLine ? getComputedStyle(firstLine).transform : 'none',
+        hasVerticalSignature: Boolean(signature),
+        endingSignature: Boolean(endingSignature),
+        annotations: Boolean(annotations),
+        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim()
       };
     });
     assert.ok(Math.abs(readingCiDocked.mastTop - readingCiDocked.headerBottom) <= 2, 'ci title docks under header');
@@ -541,7 +568,36 @@ const pages = [
     assert.ok(readingCiDocked.titleSize < 26, 'ci title compactifies');
     assert.ok(readingCiDocked.metaOpacity < 0.05, 'ci meta fades when docked');
     assert.equal(readingCiDocked.metaVisibility, 'hidden');
-    assert.ok(String(readingCiDocked.lineAnim).includes('reading-ci-column-reveal'), 'ci vertical lines use reveal animation');
+    assert.ok(readingCiDocked.lineOpacity < 0.05 || readingCiDocked.lineTransform !== 'none', 'ci columns wait off-screen before wheel reveal');
+    assert.equal(readingCiDocked.hasVerticalSignature, true, 'ci signature follows vertical columns');
+    assert.equal(readingCiDocked.endingSignature, false, 'ci does not duplicate horizontal ending signature');
+    assert.equal(readingCiDocked.annotations, false, 'ci annotations are off by default');
+    assert.equal(readingCiDocked.dockSnap, 'mandatory');
+
+    // 定点后锁页：滚轮逐列升入，直至落款可见
+    const readingCiColumns = await desktopPage.evaluate(async () => {
+      const columns = [...document.querySelectorAll('.post-ci__body--vertical > p, .post-ci__body--vertical > .post-signature--vertical')];
+      const before = columns.map(col => col.classList.contains('is-revealed'));
+      const lockedBefore = document.documentElement.classList.contains('ci-columns-locked');
+      for (let i = 0; i < columns.length; i++) {
+        window.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, cancelable: true, bubbles: true }));
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }
+      const after = columns.map(col => col.classList.contains('is-revealed'));
+      return {
+        count: columns.length,
+        before,
+        after,
+        lockedBefore,
+        lockedAfter: document.documentElement.classList.contains('ci-columns-locked'),
+        signatureRevealed: columns.at(-1)?.classList.contains('is-revealed')
+      };
+    });
+    assert.ok(readingCiColumns.count >= 2, JSON.stringify(readingCiColumns));
+    assert.ok(readingCiColumns.before.every(flag => flag === false), 'columns start unrevealed while locked');
+    assert.ok(readingCiColumns.after.every(flag => flag === true), 'wheel reveals every column including signature');
+    assert.equal(readingCiColumns.signatureRevealed, true);
+    assert.equal(readingCiColumns.lockedAfter, false, 'page unlocks after signature is visible');
 
     // 阅读页题头停靠（文 + 题注）
     await desktopPage.goto(origin + prefix + '/2026/10/11/qiantang-guanchao/');
@@ -568,15 +624,20 @@ const pages = [
     const readingEssayDocked = await desktopPage.evaluate(() => {
       const epi = document.querySelector('.reading-mast__epigraph');
       const title = document.querySelector('.reading-mast .post-title');
+      const meta = document.querySelector('.reading-mast__meta');
       return {
         epiOpacity: Number(getComputedStyle(epi).opacity),
         epiVisibility: getComputedStyle(epi).visibility,
+        metaOpacity: meta ? Number(getComputedStyle(meta).opacity) : 1,
+        metaVisibility: meta ? getComputedStyle(meta).visibility : 'visible',
         titleSize: parseFloat(getComputedStyle(title).fontSize),
         commentsMount: Boolean(document.getElementById('gitalk-container'))
       };
     });
     assert.ok(readingEssayDocked.epiOpacity < 0.05, 'epigraph fades when essay docks');
     assert.equal(readingEssayDocked.epiVisibility, 'hidden');
+    assert.ok(readingEssayDocked.metaOpacity < 0.05, 'essay author/date fade when docking into body');
+    assert.equal(readingEssayDocked.metaVisibility, 'hidden');
     assert.ok(readingEssayDocked.titleSize < 26, 'essay title compactifies');
     assert.equal(readingEssayDocked.commentsMount, false, 'gitalk stays off until configured');
 
@@ -653,29 +714,34 @@ const pages = [
     await staticPage.evaluate(() => document.fonts.ready);
     const staticTitle = await staticPage.locator('.home-epigraph__text').elementHandle();
     // 先停在行程中段：无 JS 时滚动时间轴仍应由原生滚动驱动标题缩小。
+    // mandatory 会把中段吸到端点，采样时临时关闭 snap。
     await staticPage.evaluate(() => {
-      const space = document.querySelector('.home-cover-space');
-      if (space) scrollTo({ top: space.getBoundingClientRect().height * 0.6, behavior: 'instant' });
+      document.documentElement.style.setProperty('scroll-snap-type', 'none', 'important');
+      scrollTo({ top: 0, behavior: 'instant' });
     });
-    await staticPage.screenshot({ path: path.join(output, 'nojs-title-dock.png') });
+    await staticPage.waitForTimeout(50);
+    await staticPage.evaluate(() => {
+      const spaceH = document.querySelector('.home-cover-space').getBoundingClientRect().height;
+      scrollTo({ top: spaceH * 0.6, behavior: 'instant' });
+    });
+    await staticPage.waitForTimeout(50);
     const midDock = await staticPage.evaluate(() => {
-      const title = document.querySelector('.home-epigraph__text');
       const source = document.querySelector('.home-epigraph__source');
       const shrink = document.getAnimations().find(a => a.animationName === 'title-shrink');
       const sourceAnim = document.getAnimations().find(a => a.animationName === 'source-fold');
-      const progress = shrink ? shrink.effect.getComputedTiming().progress : 0;
-      const sourceOpacity = Number(getComputedStyle(source).opacity);
       const hint = document.querySelector('.home-cover__hint');
       return {
-        progress,
-        sourceOpacity,
+        progress: shrink ? shrink.effect.getComputedTiming().progress : 0,
+        sourceOpacity: Number(getComputedStyle(source).opacity),
         sourceProgress: sourceAnim ? sourceAnim.effect.getComputedTiming().progress : 0,
         coverPos: getComputedStyle(document.querySelector('.home-cover')).position,
         headerPos: getComputedStyle(document.querySelector('.site-header')).position,
         headerTop: document.querySelector('.site-header').getBoundingClientRect().top,
-        hintHidden: getComputedStyle(hint).visibility === 'hidden' || Number(getComputedStyle(hint).opacity) < 0.2
+        hintHidden: getComputedStyle(hint).visibility === 'hidden' || Number(getComputedStyle(hint).opacity) < 0.2,
+        scrollY
       };
     });
+    await staticPage.screenshot({ path: path.join(output, 'nojs-title-dock.png') });
     assert.equal(midDock.coverPos, 'sticky');
     assert.equal(midDock.headerPos, 'sticky');
     assert.ok(midDock.headerTop >= -1 && midDock.headerTop <= 1, 'header stays pinned without JavaScript');

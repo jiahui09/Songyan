@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. 归档页「岁时笺纸」横轴：滚轮横移（仅轴区内）+ 指针拖曳 + 进度朱点
   initChronoRail();
+
+  // 3. 诗词竖排：定点后锁页，滚轮驱动整列自下而上升入，直至落款可见
+  initCiColumnLock();
 });
 
 /**
@@ -302,4 +305,131 @@ function initChronoRail() {
   scrollTarget = rail.scrollLeft;
   refresh();
   document.fonts.ready.then(refresh);
+}
+
+/**
+ * 诗词竖排列锁页：
+ * 1. 题头停靠到正文锚点后，锁住整页纵向滚动
+ * 2. 滚轮改为逐列揭示（整列自下上升入），顺序右起
+ * 3. 全部列与竖排落款入场后解锁，继续下滑到页脚
+ * 4. prefers-reduced-motion / 窄屏 / 无竖排舞台时直接全显
+ */
+function initCiColumnLock() {
+  const stage = document.querySelector('[data-ci-columns]');
+  if (!stage) return;
+
+  const body = stage.querySelector('.post-ci__body--vertical');
+  const anchor = document.querySelector('.reading-body-anchor');
+  if (!body || !anchor) return;
+
+  const columns = Array.from(body.querySelectorAll(':scope > p, :scope > .post-signature--vertical'));
+  if (!columns.length) return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const desktop = window.matchMedia('(min-width: 1024px)');
+  const STEP = 80; // 累计滚轮阈值：约一次刻度揭示一列
+  let revealed = 0;
+  let locked = false;
+  let lockY = 0;
+  let pending = 0;
+
+  function revealAll() {
+    columns.forEach((col) => col.classList.add('is-revealed'));
+    revealed = columns.length;
+    pending = 0;
+    unlock();
+  }
+
+  function unlock() {
+    if (!locked) return;
+    locked = false;
+    pending = 0;
+    stage.classList.remove('is-locked');
+    document.documentElement.classList.remove('ci-columns-locked');
+  }
+
+  function lockAtAnchor() {
+    if (locked || revealed >= columns.length) return;
+    const header = document.querySelector('.site-header');
+    const mast = document.querySelector('.reading-mast');
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    const mastH = mast ? mast.getBoundingClientRect().height : 0;
+    lockY = Math.max(0, Math.round(anchor.getBoundingClientRect().top + window.scrollY - headerH - mastH));
+    locked = true;
+    pending = 0;
+    stage.classList.add('is-locked');
+    document.documentElement.classList.add('ci-columns-locked');
+    window.scrollTo({ top: lockY, behavior: 'instant' });
+  }
+
+  function syncLock() {
+    if (reduceMotion.matches || !desktop.matches) {
+      revealAll();
+      return;
+    }
+    const header = document.querySelector('.site-header');
+    const mast = document.querySelector('.reading-mast');
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    const mastH = mast ? mast.getBoundingClientRect().height : 0;
+    const target = Math.max(0, Math.round(anchor.getBoundingClientRect().top + window.scrollY - headerH - mastH));
+    const y = window.scrollY;
+    if (y >= target - 2) {
+      if (revealed < columns.length) lockAtAnchor();
+      else unlock();
+    } else if (locked && y < lockY - 8) {
+      // 上滑离开定点：收回未完成的揭示，恢复封面行程
+      unlock();
+    }
+  }
+
+  function onWheel(event) {
+    if (!locked || reduceMotion.matches || !desktop.matches) return;
+    if (event.ctrlKey) return;
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+    pending += event.deltaY;
+    event.preventDefault();
+
+    while (pending >= STEP && revealed < columns.length) {
+      columns[revealed].classList.add('is-revealed');
+      revealed += 1;
+      pending -= STEP;
+    }
+    while (pending <= -STEP && revealed > 0) {
+      revealed -= 1;
+      columns[revealed].classList.remove('is-revealed');
+      pending += STEP;
+    }
+
+    if (revealed >= columns.length) unlock();
+    else if (revealed === 0 && pending < -STEP) unlock();
+  }
+
+  function onScroll() {
+    if (locked) {
+      if (Math.abs(window.scrollY - lockY) > 1) {
+        window.scrollTo({ top: lockY, behavior: 'instant' });
+      }
+      return;
+    }
+    syncLock();
+  }
+
+  window.addEventListener('wheel', onWheel, { passive: false });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  desktop.addEventListener('change', () => {
+    if (!desktop.matches || reduceMotion.matches) revealAll();
+    else syncLock();
+  });
+  reduceMotion.addEventListener('change', () => {
+    if (reduceMotion.matches) revealAll();
+    else {
+      columns.forEach((col) => col.classList.remove('is-revealed'));
+      revealed = 0;
+      syncLock();
+    }
+  });
+
+  if (reduceMotion.matches || !desktop.matches) revealAll();
+  else syncLock();
 }

@@ -129,7 +129,6 @@
   --cover-dock-height: 5.5rem; /* 栏头：缩小后的题句；出处渐隐不占位 */
   --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
   --cover-title-scale: 0.5;
-  --cover-title-lift: var(--space-16);
   --cover-travel: calc(var(--cover-height) - var(--cover-dock-height) - var(--header-dock-height));
 
   /* 岁时笺纸：字形不作透视缩放，长题可折列；两弧与月日共用轴位。 */
@@ -142,8 +141,7 @@
   --archive-dock-height: 3rem;
   --archive-legend-height: 2.75rem;
   --archive-travel: calc(100svh - var(--header-dock-height));
-  --archive-exit: calc(100svh - var(--header-dock-height) - var(--archive-dock-height));
-  --dock-snap: none; /* 引力锚点模式：proximity | none */
+  --dock-snap: none; /* 引力锚点模式：mandatory | proximity | none */
   /* 阅读页题头停靠：整屏题签封面，首屏不露正文 */
   --reading-dock-height: 4.75rem;
   --reading-travel: calc(100svh - var(--header-dock-height));
