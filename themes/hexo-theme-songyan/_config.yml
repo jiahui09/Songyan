@@ -77,6 +77,23 @@ labels:
   post: 文稿            # 无分类文章的元信息/题头回退文案
   location: 驻足        # 详情页元信息「驻足」槽位前缀（front-matter location 缺省即隐藏）
   back_to_home: 返回卷首
+  comments: 笔谈
+
+# 评论（Gitalk）：默认关闭；填入 GitHub OAuth 与仓库信息后开启
+comments:
+  enable: true
+  gitalk:
+    enable: false
+    clientID:
+    clientSecret:
+    repo:
+    owner:
+    admin: []
+    distractionFreeMode: false
+    language: zh-CN
+    perPage: 10
+    pagerDirection: last
+    createIssueManually: false
 
 # 页脚
 footer:

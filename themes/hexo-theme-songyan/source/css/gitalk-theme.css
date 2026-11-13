@@ -1,0 +1,175 @@
+/**
+ * 松烟 · Gitalk 主题化
+ * 跟随纸色、松烟墨、天青雨丝；评论区作为阅读收束，带停靠引力。
+ */
+
+.comments {
+  margin-top: var(--space-16);
+  padding-top: var(--space-8);
+  border-top: 1px solid transparent;
+  border-image: var(--rain-thread) 1;
+  scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
+}
+
+.comments__title {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.comments__mount {
+  max-width: var(--prose-max);
+  margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  @supports (animation-timeline: scroll(root block)) {
+    html:has(body.reading-dock-page) .comments {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+  }
+}
+
+/* ---- Gitalk 皮肤覆盖：只动颜色/字体，不改交互逻辑 ---- */
+.gt-container {
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+.gt-container a {
+  color: var(--celadon-deep);
+}
+
+.gt-container a:hover {
+  color: var(--ink);
+  border-color: var(--celadon);
+}
+
+.gt-container .gt-svg svg {
+  fill: var(--ink-secondary);
+}
+
+.gt-container .gt-ico-text {
+  color: var(--ink-secondary);
+}
+
+.gt-container .gt-header-comment,
+.gt-container .gt-comment-content {
+  background-color: var(--paper);
+  border: 1px solid var(--line-wash);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.gt-container .gt-header-textarea {
+  background-color: transparent;
+  color: var(--ink);
+  border: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  line-height: 1.8;
+}
+
+.gt-container .gt-header-textarea:hover,
+.gt-container .gt-header-textarea:focus {
+  outline: none;
+  border: 0;
+  background-color: transparent;
+  box-shadow: inset 0 -1px 0 var(--celadon);
+}
+
+.gt-container .gt-header-preview {
+  background-color: transparent;
+  color: var(--ink);
+  border: 0;
+}
+
+.gt-container .gt-btn {
+  border-radius: 0;
+  border: 1px solid var(--line-wash);
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  letter-spacing: 0.2em;
+  transition: color var(--dur-feedback) var(--ease-ink), border-color var(--dur-feedback) var(--ease-ink);
+}
+
+.gt-container .gt-btn:hover {
+  color: var(--ink);
+  border-color: var(--celadon-deep);
+  background: transparent;
+}
+
+.gt-container .gt-btn-login,
+.gt-container .gt-btn-public {
+  background: transparent;
+  border-color: var(--celadon);
+  color: var(--celadon-deep);
+}
+
+.gt-container .gt-btn-login:hover,
+.gt-container .gt-btn-public:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.gt-container .gt-comment-admin .gt-comment-content {
+  background-color: var(--paper);
+  box-shadow: none;
+  border-color: var(--celadon);
+}
+
+.gt-container .gt-comment-body {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.9;
+}
+
+.gt-container .gt-comment-username {
+  font-family: var(--font-title);
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+
+.gt-container .gt-comment-date {
+  font-family: var(--font-date);
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
+}
+
+.gt-container .gt-counts,
+.gt-container .gt-user .gt-ico,
+.gt-container .gt-popup {
+  color: var(--ink-secondary);
+}
+
+.gt-container .gt-popup {
+  background: var(--paper);
+  border: 1px solid var(--line-wash);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.gt-container .gt-copyright {
+  color: var(--ink-faint);
+}
+
+.gt-container .gt-no-init,
+.gt-container .gt-error,
+.gt-container .gt-loader {
+  color: var(--ink-secondary);
+  font-family: var(--font-title);
+  letter-spacing: 0.12em;
+}
+
+@media print {
+  .comments {
+    display: none;
+  }
+}

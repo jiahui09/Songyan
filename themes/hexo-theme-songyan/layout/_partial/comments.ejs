@@ -1,0 +1,12 @@
+<%
+  var comments = theme.comments || {};
+  var gitalk = comments.gitalk || {};
+  var enabled = comments.enable !== false && gitalk.enable && gitalk.clientID && gitalk.clientSecret && gitalk.repo && gitalk.owner;
+  var onPost = page.layout === 'post';
+%>
+<% if (enabled && onPost) { %>
+<section class="comments comments--gitalk" id="comments" aria-label="<%= theme.labels.comments %>" data-comments-dock>
+  <h2 class="comments__title"><%= theme.labels.comments %></h2>
+  <div id="gitalk-container" class="comments__mount"></div>
+</section>
+<% } %>

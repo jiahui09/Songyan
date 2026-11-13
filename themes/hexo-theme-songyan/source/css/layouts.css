@@ -411,14 +411,14 @@
   user-select: none;
 }
 
-/* 文章摘要：一行半为度，不抢题目 */
+/* 文章摘要：与词作起首同号，避免诗文简介轻重失衡 */
 .post-excerpt {
   font-family: var(--font-serif);
-  font-size: var(--text-sm);
-  color: var(--ink-secondary);
-  line-height: 1.9;
-  letter-spacing: 0.02em;
-  margin: var(--space-2) 0 0;
+  font-size: var(--text-base);
+  color: var(--ink-light);
+  line-height: 2;
+  letter-spacing: var(--tracking-verse);
+  margin: var(--space-3) 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -594,7 +594,8 @@
   letter-spacing: 0.06em;
 }
 
-.essay-meta-strip {
+.essay-meta-strip,
+.reading-mast__meta {
   display: flex;
   align-items: center;
   gap: var(--space-2) var(--space-4);
@@ -924,7 +925,8 @@
   margin: var(--space-8) 0 var(--space-6);
 }
 
-.archive-head-space {
+.archive-head-space,
+.archive-exit-space {
   display: none;
 }
 
@@ -1161,7 +1163,7 @@
     .archive-head {
       position: sticky;
       top: var(--header-dock-height);
-      z-index: 2;
+      z-index: 3;
       height: var(--archive-dock-height);
       margin: 0;
       padding: 0 var(--space-6);
@@ -1170,7 +1172,10 @@
       align-items: center;
       justify-content: center;
       overflow: visible; /* 首屏大题头+篇数需溢出栏头盒 */
-      background-color: transparent;
+      /* 素笺底：近期上滑至题头底即被遮住，无法越过 */
+      background-color: var(--paper);
+      background-image: var(--paper-texture);
+      background-repeat: repeat;
     }
 
     .archive-head__mast {
@@ -1188,7 +1193,7 @@
     .archive-head__count {
       animation: archive-count-fold linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--archive-travel) * 0.55);
+      animation-range: 0px calc(var(--archive-travel) * 0.45);
     }
 
     .archive-intro {
@@ -1198,19 +1203,21 @@
       padding-top: var(--archive-dock-height);
       box-sizing: border-box;
       overflow: hidden;
+      z-index: 1;
     }
 
     .archive-recent {
       position: absolute;
       left: 0;
       right: 0;
-      /* 跟随偏上题头：约在题头/篇数下方，不再贴视口中线 */
-      top: calc(38% + var(--space-10));
+      /* 跟随偏上题头：落在题头/篇数下方；行程前半完全隐去，不越题头 */
+      top: calc(40% + var(--space-12));
       max-width: min(var(--stream-max), 34rem);
       margin-inline: auto;
+      z-index: 0;
       animation: archive-recent-fold linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0px calc(var(--archive-travel) * 0.6);
+      animation-range: 0px calc(var(--archive-travel) * 0.42);
     }
 
     .archive-head-space {
@@ -1219,6 +1226,8 @@
     }
 
     .archive-legend {
+      position: relative;
+      z-index: 1;
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
@@ -1228,10 +1237,21 @@
     }
 
     .archive-dock-page .chrono {
+      position: relative;
+      z-index: 1;
       margin-top: 0;
       /* 再扣一点底边余量，避免竖排尾字贴视口底 */
       height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
       max-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
+    }
+
+    /* 继续下滑：留出离场行程，时间轴整片上移隐去，不半截停住 */
+    .archive-exit-space {
+      display: block;
+      height: var(--archive-exit);
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
     }
 
     .archive-dock-page .chrono__track {
@@ -1269,7 +1289,8 @@
     animation: none;
     transform: none;
   }
-  .archive-head-space {
+  .archive-head-space,
+  .archive-exit-space {
     display: none;
   }
 }

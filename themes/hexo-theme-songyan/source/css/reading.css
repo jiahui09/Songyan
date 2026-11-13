@@ -121,6 +121,9 @@
 .reading-specimen[open] > summary { margin-bottom: var(--space-6); }
 .reading-notice { font-size: var(--text-sm); color: var(--ink-secondary); }
 .reading-page .post-title { overflow-wrap: anywhere; }
+.reading-mast .post-title {
+  overflow-wrap: normal;
+}
 .reading-page :is(.essay-header, .post-ci__header) { padding-top: var(--space-6); }
 .reading-page .post-ending { margin-top: var(--space-12); }
 .reading-page .post-ci .post-ending { max-width: 28rem; margin-inline: auto; }
@@ -131,7 +134,8 @@
 .reading-page .post-ci__body-horizontal ruby { ruby-position: over; }
 .reading-page .post-ci__body-horizontal rt { font-size: .55em; letter-spacing: normal; }
 .reading-page .poem-clause { display: inline-block; max-width: 100%; vertical-align: baseline; }
-.reading-page .essay-meta-strip time { font-family: var(--font-date); }
+.reading-page .essay-meta-strip time,
+.reading-page .reading-mast__meta time { font-family: var(--font-date); }
 .reading-page .post-signature {
   display: flex;
   flex-direction: row;
@@ -165,7 +169,8 @@
   .reading-page .post-title { font-size: var(--text-2xl); }
   .reading-page .post-ci__body-horizontal { font-size: var(--text-lg); }
   .reading-page .post-ci__body-horizontal > p { letter-spacing: .04em; text-wrap: balance; }
-  .reading-page .essay-meta-strip { gap: var(--space-1) var(--space-2); }
+  .reading-page .essay-meta-strip,
+  .reading-page .reading-mast__meta { gap: var(--space-1) var(--space-2); }
   .reading-body blockquote { padding-inline: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -178,4 +183,193 @@
   .reading-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .reading-body pre code { white-space: pre-wrap; }
   .reading-table { overflow: visible; }
+}
+
+/* ============================================================
+   阅读页题头停靠：卷首大字 → 栏头小字，正文在下方展开
+   ============================================================ */
+.reading-mast__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-4);
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.essay-header .reading-mast__meta {
+  justify-content: flex-start;
+}
+
+.reading-mast__epigraph {
+  margin: var(--space-6) 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.9;
+  letter-spacing: 0.08em;
+  color: var(--ink-secondary);
+}
+
+.reading-head-space {
+  display: none;
+}
+
+/* 与归档 .archive-head 同构：sticky 栏头 + 流式题簇，不用 absolute。 */
+@keyframes reading-mast-lift {
+  from {
+    transform: translateY(calc(var(--reading-travel) * 0.30));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes reading-title-dock {
+  from {
+    font-size: var(--text-3xl);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+  }
+  to {
+    font-size: var(--text-xl);
+    letter-spacing: 0.12em;
+    text-indent: 0.12em;
+  }
+}
+
+@keyframes reading-meta-fold {
+  from {
+    opacity: 1;
+    margin-top: var(--space-4);
+  }
+  to {
+    opacity: 0.78;
+    margin-top: var(--space-1);
+  }
+}
+
+@keyframes reading-epigraph-fold {
+  from {
+    opacity: 1;
+    visibility: visible;
+    margin-top: var(--space-6);
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
+    html:has(body.reading-dock-page) {
+      scroll-snap-type: y proximity;
+      --dock-snap: proximity;
+    }
+
+    .reading-mast {
+      position: sticky;
+      top: var(--header-dock-height);
+      z-index: 2;
+      height: var(--reading-dock-height);
+      margin: 0;
+      padding: 0 var(--space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      background-color: var(--paper);
+    }
+
+    .essay-header.reading-mast {
+      align-items: flex-start;
+    }
+
+    .reading-mast__cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: min(var(--prose-max), 100%);
+      animation: reading-mast-lift linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--reading-travel);
+    }
+
+    .essay-header .reading-mast__cluster {
+      align-items: flex-start;
+    }
+
+    .reading-mast .post-title {
+      margin: 0;
+      text-wrap: nowrap;
+      font-synthesis: none;
+      animation: reading-title-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--reading-travel);
+    }
+
+    .reading-mast__meta {
+      animation: reading-meta-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--reading-travel) * 0.8);
+    }
+
+    .reading-mast__epigraph {
+      animation: reading-epigraph-fold linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--reading-travel) * 0.65);
+    }
+
+    .post-ci__cipai-badge,
+    .post-detail__eyebrow {
+      margin-bottom: var(--space-2);
+    }
+
+    .reading-dock-zone {
+      position: relative;
+    }
+
+    .reading-head-space {
+      display: block;
+      height: var(--reading-travel);
+      margin-top: calc(var(--reading-dock-height) * -1);
+    }
+
+    .reading-body-anchor {
+      position: relative;
+      z-index: 0;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
+      padding-top: var(--space-8);
+    }
+
+    .reading-dock-page .post-ci__header,
+    .reading-dock-page .essay-header {
+      margin-bottom: 0;
+    }
+  }
+}
+
+@media print {
+  .reading-head-space { display: none; }
+  .reading-mast {
+    position: static;
+    height: auto;
+    background: none;
+  }
+  .reading-mast__cluster,
+  .reading-mast .post-title,
+  .reading-mast__meta,
+  .reading-mast__epigraph {
+    animation: none;
+    transform: none;
+  }
 }

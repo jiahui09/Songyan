@@ -469,6 +469,121 @@ const pages = [
     assert.ok(archiveDocked.chronoBottom <= archiveDocked.viewport + 2, 'timeline fits under header+title in one screen');
     assert.ok(archiveDocked.chronoTopToken.includes('5.5'), 'docked archive uses compact chrono metrics');
 
+    // 继续下滑：时间轴整片离场，不半截停住
+    const archiveExited = await desktopPage.evaluate(async () => {
+      const exit = document.querySelector('.archive-exit-space');
+      scrollTo({ top: exit.getBoundingClientRect().top + scrollY, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const chrono = document.querySelector('.chrono').getBoundingClientRect();
+      const head = document.querySelector('.archive-head').getBoundingClientRect();
+      return { chronoBottom: chrono.bottom, headBottom: head.bottom, headerTop: document.querySelector('.site-header').getBoundingClientRect().top };
+    });
+    assert.ok(archiveExited.chronoBottom <= archiveExited.headBottom + 2, 'timeline fully leaves above the docked masthead');
+    assert.ok(archiveExited.headerTop >= -1 && archiveExited.headerTop <= 1, 'header stays pinned after timeline exits');
+
+    // 阅读页题头停靠（词）
+    await desktopPage.goto(origin + prefix + '/2026/10/12/qiushi-huaiyuan/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await desktopPage.locator('body').evaluate(el => el.classList.contains('reading-dock-page')));
+    const readingCiIntro = await desktopPage.evaluate(() => {
+      const title = document.querySelector('.reading-mast .post-title');
+      const meta = document.querySelector('.reading-mast__meta');
+      const cluster = document.querySelector('.reading-mast__cluster');
+      return {
+        mastPos: getComputedStyle(document.querySelector('.reading-mast')).position,
+        clusterAnim: getComputedStyle(cluster).animationName,
+        hasAuthor: Boolean(meta && meta.textContent.trim()),
+        titleCenter: (title.getBoundingClientRect().top + title.getBoundingClientRect().bottom) / 2
+      };
+    });
+    assert.equal(readingCiIntro.mastPos, 'sticky');
+    assert.ok(String(readingCiIntro.clusterAnim).includes('reading-mast-lift'), JSON.stringify(readingCiIntro));
+    assert.ok(String(await desktopPage.locator('.reading-mast .post-title').evaluate(el => getComputedStyle(el).animationName)).includes('reading-title-dock'));
+    assert.ok(readingCiIntro.hasAuthor, 'ci mast shows author/date meta');
+
+    await desktopPage.evaluate(async () => {
+      const body = document.querySelector('.reading-body-anchor');
+      const header = document.querySelector('.site-header');
+      const mast = document.querySelector('.reading-mast');
+      scrollTo({ top: body.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - mast.getBoundingClientRect().height, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const readingCiDocked = await desktopPage.evaluate(() => {
+      const title = document.querySelector('.reading-mast .post-title');
+      const mast = document.querySelector('.reading-mast').getBoundingClientRect();
+      const header = document.querySelector('.site-header').getBoundingClientRect();
+      const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
+      return {
+        headerBottom: header.bottom,
+        mastTop: mast.top,
+        bodyTop: body.top,
+        titleSize: parseFloat(getComputedStyle(title).fontSize)
+      };
+    });
+    assert.ok(Math.abs(readingCiDocked.mastTop - readingCiDocked.headerBottom) <= 2, 'ci title docks under header');
+    assert.ok(readingCiDocked.bodyTop >= readingCiDocked.mastTop + 40, 'ci body sits under docked mast');
+    assert.ok(readingCiDocked.titleSize < 26, 'ci title compactifies');
+
+    // 阅读页题头停靠（文 + 题注）
+    await desktopPage.goto(origin + prefix + '/2026/10/11/qiantang-guanchao/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const readingEssayIntro = await desktopPage.evaluate(() => {
+      const epi = document.querySelector('.reading-mast__epigraph');
+      return {
+        hasEpigraph: Boolean(epi),
+        epiOpacity: epi ? Number(getComputedStyle(epi).opacity) : 0,
+        epiText: epi ? epi.textContent.trim() : ''
+      };
+    });
+    assert.ok(readingEssayIntro.hasEpigraph, 'essay mast shows epigraph');
+    assert.ok(readingEssayIntro.epiOpacity > 0.8, JSON.stringify(readingEssayIntro));
+
+    await desktopPage.evaluate(async () => {
+      const body = document.querySelector('.reading-body-anchor');
+      const header = document.querySelector('.site-header');
+      const mast = document.querySelector('.reading-mast');
+      scrollTo({ top: body.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - mast.getBoundingClientRect().height, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const readingEssayDocked = await desktopPage.evaluate(() => {
+      const epi = document.querySelector('.reading-mast__epigraph');
+      const title = document.querySelector('.reading-mast .post-title');
+      return {
+        epiOpacity: Number(getComputedStyle(epi).opacity),
+        epiVisibility: getComputedStyle(epi).visibility,
+        titleSize: parseFloat(getComputedStyle(title).fontSize),
+        commentsMount: Boolean(document.getElementById('gitalk-container'))
+      };
+    });
+    assert.ok(readingEssayDocked.epiOpacity < 0.05, 'epigraph fades when essay docks');
+    assert.equal(readingEssayDocked.epiVisibility, 'hidden');
+    assert.ok(readingEssayDocked.titleSize < 26, 'essay title compactifies');
+    assert.equal(readingEssayDocked.commentsMount, false, 'gitalk stays off until configured');
+
+    // 首页诗文简介字号一致
+    await desktopPage.goto(origin + prefix + '/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const homeExcerptSizes = await desktopPage.evaluate(() => {
+      const verse = document.querySelector('.post-item__verse');
+      const excerpt = document.querySelector('.post-excerpt');
+      return {
+        verse: verse ? getComputedStyle(verse).fontSize : null,
+        excerpt: excerpt ? getComputedStyle(excerpt).fontSize : null
+      };
+    });
+    assert.equal(homeExcerptSizes.verse, homeExcerptSizes.excerpt, 'home poetry and essay intros share the same font size');
+
+    await desktopPage.goto(origin + prefix + '/archives/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(async () => {
+      const legend = document.querySelector('.archive-legend');
+      const head = document.querySelector('.archive-head');
+      const header = document.querySelector('.site-header');
+      scrollTo({ top: legend.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - head.getBoundingClientRect().height, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
     const archiveCenterOffset = await desktopPage.locator('.chrono__year').evaluate(year => {
       const group = year.getBoundingClientRect();
       const rail = year.closest('.chrono__rail').getBoundingClientRect();
@@ -477,7 +592,7 @@ const pages = [
     assert.ok(archiveCenterOffset < 2, 'a short archive is centered in its rail');
     assert.equal(await desktopPage.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).textOrientation), 'mixed');
     assert.equal(await desktopPage.locator('.chrono__item').first().evaluate(el => getComputedStyle(el).animationName.includes('chrono-curve')), false);
-    console.log('PASS archive dock: recent fades, title compactifies, snap anchor, timeline fills view, ink dots above axis'); checks++;
+    console.log('PASS archive/reading docks: no overlap, timeline exits, reading mast docks, home intros balanced'); checks++;
     await desktopContext.close();
     const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 900 }, reducedMotion: 'reduce' });
     const staticPage = await staticContext.newPage();

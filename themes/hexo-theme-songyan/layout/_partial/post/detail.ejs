@@ -6,36 +6,45 @@
   var eyebrow = page.header || page.cipai || (categories[0] && categories[0].name) || (isCi ? theme.archive.categories.ci : labels.post);
   var tags = page.tags && page.tags.length ? page.tags.toArray() : [];
   var notes = isCi && ciCfg.show_annotation && Array.isArray(page.annotations) ? page.annotations : [];
+  var author = page.signature || (theme.author && theme.author.name) || config.author;
+  var written = page.date || page.updated;
+  var epigraph = !isCi && (page.epigraph || page.lead || page.subtitle || '');
 %>
-<main class="site-main site-main--narrow" id="reading-main">
+<main class="site-main site-main--narrow site-main--reading" id="reading-main">
   <article class="<%= isCi ? 'post-ci' : 'essay-article' %>">
-    <header class="<%= isCi ? 'post-ci__header' : 'essay-header' %>">
-      <p class="<%= isCi ? 'post-ci__cipai-badge' : 'post-detail__eyebrow' %>"><%= eyebrow %></p>
-      <h1 class="post-title enter"><%= page.title || config.title %></h1>
-      <% if (!isCi) { %>
-      <div class="essay-meta-strip">
-        <time datetime="<%= date(page.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: page.date}) %></time>
-        <% if (categories.length && categories[0].name !== eyebrow) { %><span><%= categories[0].name %></span><% } %>
-        <% ['location', 'weather', 'mood'].forEach(function (key) { if (page[key]) { %><span class="essay-meta-item"><span class="essay-meta-label"><%= labels[key] %>：</span><%= page[key] %></span><% } }); %>
-      </div>
-      <% } else if (page.rhyme) { %>
-      <p class="post-ci__rhyme"><%= page.rhyme %></p>
-      <% } %>
-    </header>
-    <% if (isCi) { %>
-    <div class="post-ci__stage">
-      <div class="post-ci__body-horizontal<%= ciCfg.vertical_desktop ? ' post-ci__body--vertical' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+    <div class="reading-dock-zone">
+      <header class="<%= isCi ? 'post-ci__header' : 'essay-header' %> reading-mast">
+        <div class="reading-mast__cluster">
+          <p class="<%= isCi ? 'post-ci__cipai-badge' : 'post-detail__eyebrow' %>"><%= eyebrow %></p>
+          <h1 class="post-title"><%= page.title || config.title %></h1>
+          <div class="reading-mast__meta">
+            <% if (author) { %><span class="reading-mast__author"><%= author %></span><% } %>
+            <% if (written) { %><time datetime="<%= date(written, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: written}) %></time><% } %>
+            <% if (!isCi && categories.length && categories[0].name !== eyebrow) { %><span><%= categories[0].name %></span><% } %>
+            <% if (!isCi) { ['location', 'weather', 'mood'].forEach(function (key) { if (page[key]) { %><span class="essay-meta-item"><span class="essay-meta-label"><%= labels[key] %>：</span><%= page[key] %></span><% } }); } %>
+            <% if (isCi && page.rhyme) { %><span class="post-ci__rhyme"><%= page.rhyme %></span><% } %>
+          </div>
+          <% if (epigraph) { %><p class="reading-mast__epigraph"><%= epigraph %></p><% } %>
+        </div>
+      </header>
+      <div class="reading-head-space" aria-hidden="true"></div>
     </div>
-    <span class="post-ci__petal" aria-hidden="true"></span>
-    <% if (notes.length) { %>
-    <aside class="poem-annotations" aria-label="<%= labels.annotations %>">
-      <h2 class="poem-annotations__title"><%= labels.annotations %></h2>
-      <dl><% notes.forEach(function (note, index) { %><div class="poem-annotations__item" id="poem-note-<%= index + 1 %>"><dt><%= note.word %></dt><dd><%= note.meaning %></dd></div><% }); %></dl>
-    </aside>
-    <% } %>
-    <% } else { %>
-    <div class="essay-body reading-body<%= page.literary === true ? ' reading-body--literary' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
-    <% } %>
+    <div class="reading-body-anchor" id="reading-body" tabindex="-1">
+      <% if (isCi) { %>
+      <div class="post-ci__stage">
+        <div class="post-ci__body-horizontal<%= ciCfg.vertical_desktop ? ' post-ci__body--vertical' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+      </div>
+      <span class="post-ci__petal" aria-hidden="true"></span>
+      <% if (notes.length) { %>
+      <aside class="poem-annotations" aria-label="<%= labels.annotations %>">
+        <h2 class="poem-annotations__title"><%= labels.annotations %></h2>
+        <dl><% notes.forEach(function (note, index) { %><div class="poem-annotations__item" id="poem-note-<%= index + 1 %>"><dt><%= note.word %></dt><dd><%= note.meaning %></dd></div><% }); %></dl>
+      </aside>
+      <% } %>
+      <% } else { %>
+      <div class="essay-body reading-body<%= page.literary === true ? ' reading-body--literary' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+      <% } %>
+    </div>
     <footer class="post-ending">
     <% if (tags.length) { %>
     <p class="post-tags"><span class="post-tags__label"><%= labels.tags %></span><% tags.forEach(function (tag, index) { %><% if (index) { %><span class="meta-separator" aria-hidden="true">·</span><% } %><a href="<%= url_for(tag.path) %>"><%= tag.name %></a><% }); %></p>
@@ -43,5 +52,6 @@
     <%- partial('_partial/signature') %>
     <% if (isCi && ciCfg.share) { %><%- partial('_partial/poem-slip') %><% } %>
     </footer>
+    <%- partial('_partial/comments') %>
   </article>
 </main>

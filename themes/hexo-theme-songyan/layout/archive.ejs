@@ -69,6 +69,7 @@
     </div>
     <div class="chrono__axis" aria-hidden="true"><svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg"><path class="chrono__axis-line"/><path class="chrono__curve-line"/><circle class="chrono__curve-dot"/></svg></div>
   </div>
+  <div class="archive-exit-space" aria-hidden="true"></div>
   <p class="archive-empty" data-archive-empty role="status" hidden><%= theme.labels.empty %></p>
   <% } else { %><p class="archive-empty" id="archive-chrono" tabindex="-1"><%= theme.labels.empty %></p><% } %>
   <%- partial('_partial/pagination') %>

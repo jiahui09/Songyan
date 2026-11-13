@@ -6,6 +6,7 @@ categories:
   - 随笔
 weather: 晴
 location: 杭州 · 六和塔畔
+epigraph: 潮来潮去，常亦奇也。
 tags:
   - 观潮
 ---
