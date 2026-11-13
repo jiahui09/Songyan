@@ -140,8 +140,8 @@
 
 @keyframes epigraph-dock {
   from {
-    /* 首屏题句落在栏头盒几何中心，不再额外上抬 */
-    transform: translateY(calc(var(--cover-travel) / 2));
+    /* 光学居中：略高于几何中心，避免视觉偏下 */
+    transform: translateY(calc(var(--cover-travel) * 0.42));
   }
   to {
     transform: translateY(var(--space-3));
@@ -253,22 +253,18 @@
     }
 
     /*
-     * 双锚点 mandatory：卷首与定点二选一，避免半隐半出卡在行程中段。
+     * 只在定点设 proximity 锚点：首屏不 snap，避免来回吸；
+     * 克服阻力后吸住定点，之后可继续滑到页脚。
      */
     html:has(body.home-cover-page) {
-      scroll-snap-type: y mandatory;
-      --dock-snap: mandatory;
-    }
-
-    .home-dock-zone {
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
+      scroll-snap-type: y proximity;
+      --dock-snap: proximity;
     }
 
     .home-dock-zone + .home-sheet {
       scroll-margin-top: calc(var(--header-dock-height) + var(--cover-dock-height));
       scroll-snap-align: start;
-      scroll-snap-stop: always;
+      scroll-snap-stop: normal;
       padding-top: var(--space-12);
       min-height: calc(var(--cover-travel) + var(--space-16));
     }
@@ -1100,8 +1096,8 @@
 /* 归档题头停靠：首屏题头偏上居中，篇数贴题头下；近期随之上移；定点后只留缩小题头。 */
 @keyframes archive-mast-dock {
   from {
-    /* 首屏题头落在栏头盒几何中心 */
-    transform: translateY(calc(var(--archive-travel) / 2));
+    /* 首屏题头光学居中偏上，篇数/近期落其下 */
+    transform: translateY(calc(var(--archive-travel) * 0.32));
   }
   to {
     transform: translateY(0);
@@ -1215,8 +1211,8 @@
       position: absolute;
       left: 0;
       right: 0;
-      /* 居中题头+篇数下方，避免与题簇重叠 */
-      top: calc(50% + var(--space-16) + 2.75rem);
+      /* 跟随偏上题头：落在题头/篇数下方 */
+      top: calc(38% + var(--space-16));
       max-width: min(var(--stream-max), 34rem);
       margin-inline: auto;
       z-index: 0;
@@ -1234,7 +1230,7 @@
       position: relative;
       z-index: 1;
       scroll-snap-align: start;
-      scroll-snap-stop: always;
+      scroll-snap-stop: normal;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
       /* 上边距作定点缓冲，不占时间轴一屏高度 */
       margin: var(--space-8) 0 var(--space-3);
@@ -1330,8 +1326,16 @@
   margin-bottom: var(--space-12);
 }
 
+.page-about__header.reading-mast {
+  text-align: start;
+}
+
 .page-about__brand {
   margin-bottom: var(--space-3);
+}
+
+.reading-mast .page-about__brand {
+  margin-bottom: var(--space-2);
 }
 
 .page-about__name {

@@ -30,7 +30,7 @@
   @supports (animation-timeline: scroll(root block)) {
     html:has(body.reading-dock-page) .comments {
       scroll-snap-align: start;
-      scroll-snap-stop: always;
+      scroll-snap-stop: normal;
     }
   }
 }

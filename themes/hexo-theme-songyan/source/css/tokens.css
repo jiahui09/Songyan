@@ -141,7 +141,7 @@
   --archive-dock-height: 3rem;
   --archive-legend-height: 2.75rem;
   --archive-travel: calc(100svh - var(--header-dock-height));
-  --dock-snap: none; /* 引力锚点模式：mandatory | proximity | none */
+  --dock-snap: none; /* 引力锚点模式：proximity | none */
   /* 阅读页题头停靠：整屏题签封面，首屏不露正文 */
   --reading-dock-height: 4.75rem;
   --reading-travel: calc(100svh - var(--header-dock-height));

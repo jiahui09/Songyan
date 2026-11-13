@@ -1,12 +1,19 @@
-<main class="site-main site-main--narrow" id="reading-main">
+<main class="site-main site-main--narrow site-main--reading" id="reading-main">
   <article class="page-about">
-    <header class="page-about__header">
-      <div class="page-about__brand">
-        <h1 class="page-about__name"><%= theme.author.name || config.author %></h1>
-      </div>
-      <p class="page-about__tagline"><%= theme.about.tagline %></p>
-    </header>
-    <div class="page-content reading-body"><% if (page.content) { %><%- partial('_partial/content', {content: page.content}) %><% } else { %><p><%= theme.about.introduction %></p><h2><%= theme.about.heading %></h2><p><%= theme.about.description %></p><% } %></div>
+    <div class="reading-dock-zone">
+      <header class="page-about__header reading-mast">
+        <div class="reading-mast__cluster">
+          <div class="page-about__brand">
+            <h1 class="page-about__name"><%= theme.author.name || config.author %></h1>
+          </div>
+          <p class="page-about__tagline"><%= theme.about.tagline %></p>
+        </div>
+      </header>
+      <div class="reading-head-space" aria-hidden="true"></div>
+    </div>
+    <div class="reading-body-anchor" id="reading-body" tabindex="-1">
+      <div class="page-content reading-body"><% if (page.content) { %><%- partial('_partial/content', {content: page.content}) %><% } else { %><p><%= theme.about.introduction %></p><h2><%= theme.about.heading %></h2><p><%= theme.about.description %></p><% } %></div>
+    </div>
     <%- partial('_partial/signature') %>
   </article>
 </main>

@@ -17,7 +17,7 @@
 </head>
 <%
   var readingPage = page.layout === 'post' || page.layout === 'page' || page.layout === 'about';
-  var readingDockPage = page.layout === 'post';
+  var readingDockPage = page.layout === 'post' || page.layout === 'page' || page.layout === 'about';
   var coverPage = is_home() && !(page.current > 1) && (theme.home || {}).cover !== false;
   var archiveDockPage = is_archive() || is_category() || is_tag();
   var bodyClass = [];
@@ -26,7 +26,6 @@
   if (coverPage) bodyClass.push('home-cover-page');
   if (archiveDockPage) bodyClass.push('archive-dock-page');
   var skipHref = readingPage ? '#reading-body' : (coverPage ? '#home-stream' : '#archive-chrono');
-  if (readingPage && page.layout !== 'post') skipHref = '#reading-main';
 %>
 <body<% if (bodyClass.length) { %> class="<%= bodyClass.join(' ') %>"<% } %>>
   <% if (readingPage || coverPage || archiveDockPage) { %><a href="<%= skipHref %>" class="skip-link"><%= theme.labels.skip_content %></a><% } %>

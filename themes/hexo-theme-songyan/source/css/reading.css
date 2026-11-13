@@ -253,10 +253,10 @@
   display: none;
 }
 
-/* sticky 栏头 + 流式题簇；首屏整屏题签居中，不露正文。 */
+/* sticky 栏头 + 流式题簇；首屏整屏题签光学居中偏上，不露正文。 */
 @keyframes reading-mast-lift {
   from {
-    transform: translateY(calc(var(--reading-travel) / 2 - var(--reading-dock-height) / 2));
+    transform: translateY(calc(var(--reading-travel) * 0.36));
   }
   to {
     transform: translateY(0);
@@ -360,22 +360,16 @@
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
   @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1px) {
     /*
-     * 双锚点 mandatory：卷首封面与正文定点二选一。
-     * 定点完成后栏头随正文上移离开（sticky 随 dock-zone 离场）。
+     * 只在正文定点设 proximity：首屏不 snap，克服阻力后吸住，
+     * 之后可继续滑到页脚，不被卷首锚点拉回。
      */
     html:has(body.reading-dock-page) {
-      scroll-snap-type: y mandatory;
-      --dock-snap: mandatory;
+      scroll-snap-type: y proximity;
+      --dock-snap: proximity;
     }
 
     .reading-dock-zone {
       position: relative;
-      /* 与首页相同：负 margin 让停靠区顶边贴视口，mandatory 卷首锚点不发生首屏微移 */
-      margin-top: calc(var(--header-dock-height) * -1);
-      padding-top: var(--header-dock-height);
-      box-sizing: border-box;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
     }
 
     .reading-mast {
@@ -396,7 +390,8 @@
       background-repeat: repeat;
     }
 
-    .essay-header.reading-mast {
+    .essay-header.reading-mast,
+    .page-about__header.reading-mast {
       align-items: flex-start;
     }
 
@@ -410,11 +405,13 @@
       animation-range: 0px var(--reading-travel);
     }
 
-    .essay-header .reading-mast__cluster {
+    .essay-header .reading-mast__cluster,
+    .page-about__header .reading-mast__cluster {
       align-items: flex-start;
     }
 
-    .reading-mast .post-title {
+    .reading-mast .post-title,
+    .reading-mast .page-about__name {
       margin: 0;
       text-wrap: nowrap;
       font-synthesis: none;
@@ -426,13 +423,14 @@
       animation-range: 0px var(--reading-travel);
     }
 
-    .essay-header .post-title {
+    .essay-header .post-title,
+    .page-about__header .page-about__name {
       animation: reading-essay-title-dock linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--reading-travel);
     }
 
-    /* 诗词 / 文章：作者/日期在行程内完全隐去 */
+    /* 诗词 / 文章 / 独立页：作者/日期或副题在行程内完全隐去 */
     .post-ci__header .reading-mast__meta,
     .essay-header .reading-mast__meta {
       overflow: hidden;
@@ -446,7 +444,8 @@
       animation-range: 0px calc(var(--reading-travel) * 0.8);
     }
 
-    .reading-mast__epigraph {
+    .reading-mast__epigraph,
+    .page-about__header .page-about__tagline {
       overflow: hidden;
       animation: reading-epigraph-fold linear both;
       animation-timeline: scroll(root block);
@@ -469,37 +468,59 @@
       position: relative;
       z-index: 0;
       scroll-snap-align: start;
-      scroll-snap-stop: always;
+      scroll-snap-stop: normal;
       scroll-margin-top: calc(var(--header-dock-height) + var(--reading-dock-height));
       padding-top: var(--space-12);
       min-height: calc(var(--reading-travel) * 0.35);
     }
 
     .reading-dock-page .post-ci__header,
-    .reading-dock-page .essay-header {
+    .reading-dock-page .essay-header,
+    .reading-dock-page .page-about__header {
       margin-bottom: 0;
     }
   }
 }
 
-/* 桌面竖排：定点后锁页，滚轮驱动整列自下而上升入；落款印章落墨 */
+/* 桌面竖排：定点后锁页，滚轮驱动整列自下升入并淡入淡出；印章末拍盖章 */
 @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
-  .reading-page .post-ci__body--vertical > p,
-  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+  .reading-page .post-ci__body--vertical > p {
     opacity: 0;
     transform: translateY(2.5rem);
-  }
-
-  .reading-page .post-ci__body--vertical > p.is-revealed,
-  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed {
-    opacity: 1;
-    transform: translateY(0);
     transition:
       opacity var(--dur-enter) var(--ease-ink),
       transform var(--dur-enter) var(--ease-ink);
   }
 
-  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .seal--signature {
+  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity var(--dur-enter) var(--ease-ink),
+      transform var(--dur-enter) var(--ease-ink);
+  }
+
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
+    opacity: 0;
+    transform: translateY(calc(var(--space-3) * -1)) scale(1.12);
+  }
+
+  .reading-page .post-ci__body--vertical > p.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .post-signature__meta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-stamped .seal--signature {
     animation: reading-ci-seal-stamp var(--dur-stamp) var(--ease-ink) both;
   }
 
@@ -508,9 +529,9 @@
   }
 }
 
-/* 列锁页期间禁止整页滚动条跳动（滚轮由 JS 接管） */
+/* 列锁页期间仍允许页面几何存在，仅由 JS 钉住纵坐标 */
 html.ci-columns-locked {
-  overflow: hidden;
+  overscroll-behavior-y: none;
 }
 
 @media (prefers-reduced-motion: reduce), (max-width: 1023px) {
@@ -531,10 +552,14 @@ html.ci-columns-locked {
   }
   .reading-mast__cluster,
   .reading-mast .post-title,
+  .reading-mast .page-about__name,
   .reading-mast__meta,
   .reading-mast__epigraph,
+  .page-about__header .page-about__tagline,
   .reading-page .post-ci__body--vertical > p,
-  .reading-page .post-ci__body--vertical > .post-signature--vertical {
+  .reading-page .post-ci__body--vertical > .post-signature--vertical,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
     animation: none;
     transform: none;
     opacity: 1;

@@ -205,11 +205,11 @@ const pages = [
     assert.ok(coverProbe.titleCenter > 270 && coverProbe.titleCenter < 630, 'initial title sits near the viewport center');
     assert.equal(coverProbe.skipHref, '#home-stream');
     assert.ok(coverProbe.targetExists);
-    assert.equal(coverProbe.dockSnap, 'mandatory', 'cover uses mandatory snap between intro and dock');
+    assert.equal(coverProbe.dockSnap, 'proximity', 'cover uses proximity snap at the dock point');
     assert.ok(coverProbe.sheetBg.includes('paper-texture'), 'content keeps the shared paper texture');
     assert.equal(coverProbe.coverBg, 'none', 'docked masthead is not a paper overlay covering the page');
     assert.equal(coverProbe.sheetSnap, 'start');
-    assert.equal(coverProbe.sheetSnapStop, 'always', 'once docked, light scrolls do not pull the masthead back');
+    assert.equal(coverProbe.sheetSnapStop, 'normal', 'after docking the page can continue to the footer');
     await desktopPage.evaluate(async () => {
       const space = document.querySelector('.home-cover-space').getBoundingClientRect().height;
       scrollTo({ top: space, behavior: 'instant' });
@@ -265,9 +265,6 @@ const pages = [
       const title = document.querySelector('.home-epigraph__text');
       const epigraph = document.querySelector('.home-epigraph');
       const root = document.documentElement;
-      // mandatory 会把中途采样吸回端点；测量行程时临时关闭 snap
-      const prevSnap = root.style.scrollSnapType;
-      root.style.scrollSnapType = 'none';
       scrollTo({ top: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const sample = (natural) => {
@@ -296,7 +293,6 @@ const pages = [
       scrollTo({ top: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const restored = sample(natural);
-      root.style.scrollSnapType = prevSnap;
       return { start, middle, end, restored };
     });
 
@@ -418,7 +414,7 @@ const pages = [
     assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.mastAnim.includes('archive-mast-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.legendAfterIntro, 'category legend sits with the timeline focus area under the title');
-    assert.ok(archiveIntro.titleCenter > 270 && archiveIntro.titleCenter < 630, 'archive title sits near the viewport center');
+    assert.ok(archiveIntro.titleCenter > 180 && archiveIntro.titleCenter < 480, 'archive title sits upper-center on intro');
     assert.ok(archiveIntro.countBelowTitle, 'count sits directly under the title');
     assert.ok(archiveIntro.recentBelowCount, 'recent list sits under the count');
     assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
@@ -426,7 +422,7 @@ const pages = [
     assert.ok(archiveIntro.recentOpacity > 0.8, 'recent posts are visible on the archive intro');
     assert.equal(archiveIntro.dockSnap, 'proximity', JSON.stringify(archiveIntro));
     assert.equal(archiveIntro.legendSnap, 'start');
-    assert.equal(archiveIntro.legendSnapStop, 'always');
+    assert.equal(archiveIntro.legendSnapStop, 'normal');
     assert.deepEqual(archiveIntro.activeNav, ['归档']);
 
     await desktopPage.evaluate(async () => {
@@ -572,32 +568,40 @@ const pages = [
     assert.equal(readingCiDocked.hasVerticalSignature, true, 'ci signature follows vertical columns');
     assert.equal(readingCiDocked.endingSignature, false, 'ci does not duplicate horizontal ending signature');
     assert.equal(readingCiDocked.annotations, false, 'ci annotations are off by default');
-    assert.equal(readingCiDocked.dockSnap, 'mandatory');
+    assert.equal(readingCiDocked.dockSnap, 'proximity');
 
-    // 定点后锁页：滚轮逐列升入，直至落款可见
+    // 定点后锁页：滚轮逐列淡入，落款字后再末拍盖章
     const readingCiColumns = await desktopPage.evaluate(async () => {
-      const columns = [...document.querySelectorAll('.post-ci__body--vertical > p, .post-ci__body--vertical > .post-signature--vertical')];
-      const before = columns.map(col => col.classList.contains('is-revealed'));
-      const lockedBefore = document.documentElement.classList.contains('ci-columns-locked');
-      for (let i = 0; i < columns.length; i++) {
+      const lines = [...document.querySelectorAll('.post-ci__body--vertical > p')];
+      const signature = document.querySelector('.post-ci__body--vertical > .post-signature--vertical');
+      const steps = lines.length + (signature ? 2 : 0);
+      const before = {
+        lines: lines.map(col => col.classList.contains('is-revealed')),
+        meta: signature ? signature.classList.contains('is-revealed') : false,
+        stamped: signature ? signature.classList.contains('is-stamped') : false
+      };
+      for (let i = 0; i < steps; i++) {
         window.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, cancelable: true, bubbles: true }));
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       }
-      const after = columns.map(col => col.classList.contains('is-revealed'));
       return {
-        count: columns.length,
+        steps,
         before,
-        after,
-        lockedBefore,
+        afterLines: lines.map(col => col.classList.contains('is-revealed')),
+        meta: signature ? signature.classList.contains('is-revealed') : false,
+        stamped: signature ? signature.classList.contains('is-stamped') : false,
         lockedAfter: document.documentElement.classList.contains('ci-columns-locked'),
-        signatureRevealed: columns.at(-1)?.classList.contains('is-revealed')
+        footerReachable: document.querySelector('.site-footer').getBoundingClientRect().top > 0
       };
     });
-    assert.ok(readingCiColumns.count >= 2, JSON.stringify(readingCiColumns));
-    assert.ok(readingCiColumns.before.every(flag => flag === false), 'columns start unrevealed while locked');
-    assert.ok(readingCiColumns.after.every(flag => flag === true), 'wheel reveals every column including signature');
-    assert.equal(readingCiColumns.signatureRevealed, true);
-    assert.equal(readingCiColumns.lockedAfter, false, 'page unlocks after signature is visible');
+    assert.ok(readingCiColumns.steps >= 3, JSON.stringify(readingCiColumns));
+    assert.ok(readingCiColumns.before.lines.every(flag => flag === false), 'columns start unrevealed while locked');
+    assert.equal(readingCiColumns.before.meta, false);
+    assert.equal(readingCiColumns.before.stamped, false);
+    assert.ok(readingCiColumns.afterLines.every(flag => flag === true), 'wheel fades in every verse column');
+    assert.equal(readingCiColumns.meta, true, 'signature text reveals after columns');
+    assert.equal(readingCiColumns.stamped, true, 'seal stamps as the final beat');
+    assert.equal(readingCiColumns.lockedAfter, false, 'page unlocks after the final stamp');
 
     // 阅读页题头停靠（文 + 题注）
     await desktopPage.goto(origin + prefix + '/2026/10/11/qiantang-guanchao/');
@@ -640,6 +644,47 @@ const pages = [
     assert.equal(readingEssayDocked.metaVisibility, 'hidden');
     assert.ok(readingEssayDocked.titleSize < 26, 'essay title compactifies');
     assert.equal(readingEssayDocked.commentsMount, false, 'gitalk stays off until configured');
+
+    // 独立页（关于）同款题头停靠，并可继续滑到页脚
+    await desktopPage.goto(origin + prefix + '/about/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await desktopPage.locator('body').evaluate(el => el.classList.contains('reading-dock-page')));
+    const aboutIntro = await desktopPage.evaluate(() => {
+      const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
+      return {
+        mastPos: getComputedStyle(document.querySelector('.reading-mast')).position,
+        bodyTop: body.top,
+        viewport: innerHeight,
+        hasTagline: Boolean(document.querySelector('.page-about__tagline'))
+      };
+    });
+    assert.equal(aboutIntro.mastPos, 'sticky');
+    assert.ok(aboutIntro.bodyTop >= aboutIntro.viewport - 2, 'about cover hides body on first screen');
+    assert.ok(aboutIntro.hasTagline);
+    await desktopPage.evaluate(async () => {
+      const body = document.querySelector('.reading-body-anchor');
+      const header = document.querySelector('.site-header');
+      const mast = document.querySelector('.reading-mast');
+      scrollTo({ top: body.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - mast.getBoundingClientRect().height, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const aboutDocked = await desktopPage.evaluate(async () => {
+      const title = document.querySelector('.page-about__name');
+      const tagline = document.querySelector('.page-about__tagline');
+      scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const footer = document.querySelector('.site-footer').getBoundingClientRect();
+      return {
+        titleSize: parseFloat(getComputedStyle(title).fontSize),
+        tagOpacity: tagline ? Number(getComputedStyle(tagline).opacity) : 1,
+        footerBottomVisible: footer.bottom <= innerHeight + 2,
+        scrollY
+      };
+    });
+    assert.ok(aboutDocked.titleSize < 28, 'about title compactifies');
+    assert.ok(aboutDocked.tagOpacity < 0.05, 'about tagline fades when docking');
+    assert.ok(aboutDocked.footerBottomVisible, 'about page can reach the footer after docking');
 
     // 首页诗文简介字号一致且为 text-sm
     await desktopPage.goto(origin + prefix + '/');
@@ -714,12 +759,6 @@ const pages = [
     await staticPage.evaluate(() => document.fonts.ready);
     const staticTitle = await staticPage.locator('.home-epigraph__text').elementHandle();
     // 先停在行程中段：无 JS 时滚动时间轴仍应由原生滚动驱动标题缩小。
-    // mandatory 会把中段吸到端点，采样时临时关闭 snap。
-    await staticPage.evaluate(() => {
-      document.documentElement.style.setProperty('scroll-snap-type', 'none', 'important');
-      scrollTo({ top: 0, behavior: 'instant' });
-    });
-    await staticPage.waitForTimeout(50);
     await staticPage.evaluate(() => {
       const spaceH = document.querySelector('.home-cover-space').getBoundingClientRect().height;
       scrollTo({ top: spaceH * 0.6, behavior: 'instant' });

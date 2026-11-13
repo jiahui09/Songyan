@@ -53,9 +53,11 @@ async function build(name, overrides, source) {
   const noSeal = await fs.readFile(path.join(paginated, '2026/10/02/entry-1/index.html'), 'utf8');
   assert.ok(!noSeal.includes('seal--signature'), 'per-post seal:false respected');
   const generic = await fs.readFile(path.join(paginated, 'notes/index.html'), 'utf8');
-  assert.ok(generic.includes('Generic page is rendered.') && generic.includes('class="reading-page"'));
+  assert.ok(generic.includes('Generic page is rendered.') && /class="[^"]*\breading-page\b/.test(generic), 'generic page uses reading stylesheet scope');
+  assert.ok(/class="[^"]*\breading-dock-page\b/.test(generic) && generic.includes('reading-body-anchor'), 'standalone pages share the reading cover dock');
   const about = await fs.readFile(path.join(paginated, 'about/index.html'), 'utf8');
   assert.ok(about.includes('About content from author.'), 'author-provided about content replaces fallback');
+  assert.ok(/class="[^"]*\breading-dock-page\b/.test(about) && about.includes('reading-mast'), 'about page uses the reading cover dock');
   console.log('PASS isolated 13-post fixture: pagination, complete archive, generic page, custom about, missing metadata, unknown type and per-post seal switch');
 
   const emptySource = path.join(output, 'empty-source');

@@ -322,8 +322,10 @@ function initCiColumnLock() {
   const anchor = document.querySelector('.reading-body-anchor');
   if (!body || !anchor) return;
 
-  const columns = Array.from(body.querySelectorAll(':scope > p, :scope > .post-signature--vertical'));
-  if (!columns.length) return;
+  const lines = Array.from(body.querySelectorAll(':scope > p'));
+  const signature = body.querySelector(':scope > .post-signature--vertical');
+  const steps = lines.length + (signature ? 2 : 0); // 列… → 落款字 → 末拍盖章
+  if (!steps) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const desktop = window.matchMedia('(min-width: 1024px)');
@@ -333,9 +335,21 @@ function initCiColumnLock() {
   let lockY = 0;
   let pending = 0;
 
+  function applyStep(count) {
+    lines.forEach((line, index) => {
+      line.classList.toggle('is-revealed', index < count);
+    });
+    if (signature) {
+      const showMeta = count > lines.length;
+      const showSeal = count > lines.length + 1;
+      signature.classList.toggle('is-revealed', showMeta);
+      signature.classList.toggle('is-stamped', showSeal);
+    }
+  }
+
   function revealAll() {
-    columns.forEach((col) => col.classList.add('is-revealed'));
-    revealed = columns.length;
+    revealed = steps;
+    applyStep(revealed);
     pending = 0;
     unlock();
   }
@@ -349,7 +363,7 @@ function initCiColumnLock() {
   }
 
   function lockAtAnchor() {
-    if (locked || revealed >= columns.length) return;
+    if (locked || revealed >= steps) return;
     const header = document.querySelector('.site-header');
     const mast = document.querySelector('.reading-mast');
     const headerH = header ? header.getBoundingClientRect().height : 0;
@@ -374,7 +388,7 @@ function initCiColumnLock() {
     const target = Math.max(0, Math.round(anchor.getBoundingClientRect().top + window.scrollY - headerH - mastH));
     const y = window.scrollY;
     if (y >= target - 2) {
-      if (revealed < columns.length) lockAtAnchor();
+      if (revealed < steps) lockAtAnchor();
       else unlock();
     } else if (locked && y < lockY - 8) {
       // 上滑离开定点：收回未完成的揭示，恢复封面行程
@@ -390,18 +404,18 @@ function initCiColumnLock() {
     pending += event.deltaY;
     event.preventDefault();
 
-    while (pending >= STEP && revealed < columns.length) {
-      columns[revealed].classList.add('is-revealed');
+    while (pending >= STEP && revealed < steps) {
       revealed += 1;
+      applyStep(revealed);
       pending -= STEP;
     }
     while (pending <= -STEP && revealed > 0) {
       revealed -= 1;
-      columns[revealed].classList.remove('is-revealed');
+      applyStep(revealed);
       pending += STEP;
     }
 
-    if (revealed >= columns.length) unlock();
+    if (revealed >= steps) unlock();
     else if (revealed === 0 && pending < -STEP) unlock();
   }
 
@@ -424,8 +438,8 @@ function initCiColumnLock() {
   reduceMotion.addEventListener('change', () => {
     if (reduceMotion.matches) revealAll();
     else {
-      columns.forEach((col) => col.classList.remove('is-revealed'));
       revealed = 0;
+      applyStep(0);
       syncLock();
     }
   });
