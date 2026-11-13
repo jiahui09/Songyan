@@ -108,10 +108,50 @@ const pages = [
     assert.equal(await page.locator('.chrono__item').count(), 4);
     await page.locator('[data-cat-filter="ci"]').click();
     assert.equal(await page.locator('.chrono__item:not([hidden])').count(), 1);
+    assert.equal(await page.locator('[data-archive-count]').textContent(), '1');
     await page.locator('[data-cat-filter="ci"]').click();
     assert.equal(await page.locator('.chrono__item:not([hidden])').count(), 4);
+    await page.locator('[data-cat-filter="project"]').click();
+    assert.equal(await page.locator('[data-archive-count]').textContent(), '0');
+    assert.ok(await page.locator('[data-archive-empty]').isVisible());
+    assert.ok(await page.locator('.chrono').isHidden());
+    await page.locator('[data-cat-filter="project"]').click();
+    assert.equal(await page.locator('[data-archive-count]').textContent(), '4');
+    assert.ok(await page.locator('.chrono').isVisible());
+    assert.ok(await page.locator('[data-archive-empty]').isHidden());
     console.log('PASS archive data binding and category filtering'); checks++;
+    const wheelProbe = await page.locator('[data-chrono-rail]').evaluate(rail => {
+      rail.scrollLeft = 0;
+      rail.dispatchEvent(new Event('scroll'));
+      const atEdge = rail.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }));
+      const towardContent = rail.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, cancelable: true }));
+      return { atEdge, towardContent, hasOverflow: rail.scrollWidth > rail.clientWidth };
+    });
+    assert.deepEqual(wheelProbe, { atEdge: true, towardContent: false, hasOverflow: true });
+    console.log('PASS archive wheel boundary releases page scrolling and consumes interior scrolling'); checks++;
     await context.close();
+    const desktopContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const desktopPage = await desktopContext.newPage();
+    await desktopPage.goto(origin + prefix + '/2026/10/12/qiushi-huaiyuan/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const poemOverflow = await desktopPage.locator('.post-ci__body-horizontal').evaluate(body => {
+      for (let i = 0; i < 20; i++) body.appendChild(body.querySelector('p').cloneNode(true));
+      const stage = body.closest('.post-ci__stage');
+      return { contained: stage.scrollWidth > stage.clientWidth, pageFits: document.documentElement.scrollWidth <= innerWidth + 1 };
+    });
+    assert.deepEqual(poemOverflow, { contained: true, pageFits: true });
+    await desktopPage.goto(origin + prefix + '/archives/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    const archiveCenterOffset = await desktopPage.locator('.chrono__year').evaluate(year => {
+      const group = year.getBoundingClientRect();
+      const rail = year.closest('.chrono__rail').getBoundingClientRect();
+      return Math.abs((group.left + group.right - rail.left - rail.right) / 2);
+    });
+    assert.ok(archiveCenterOffset < 2, 'a short archive is centered in its rail');
+    assert.equal(await desktopPage.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).textOrientation), 'mixed');
+    assert.equal(await desktopPage.locator('.chrono__item').first().evaluate(el => getComputedStyle(el).animationName.includes('chrono-curve')), false);
+    console.log('PASS long poem stays in its scroll region and archive titles avoid 3D distortion'); checks++;
+    await desktopContext.close();
     const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 900 }, reducedMotion: 'reduce' });
     const staticPage = await staticContext.newPage();
     for (const [name, route] of pages) {

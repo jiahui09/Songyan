@@ -62,7 +62,7 @@ function initLuoMoAnimation() {
 /**
  * 归档页「岁时笺纸」横轴交互：
  * 1. 滚轮横移——监听只挂在轴体（.chrono__rail）上，指针在轴区内才接管；
- *    纵向滚轮一律只作用于轴体，不外传页面滚动（到端点即停，不链动页面）
+ *    轴体可滚时横移，到端点将纵向滚动交还页面
  * 2. 指针拖曳（原生滚动条已隐藏，桌面必需）
  * 3. 进度朱点——弧路径按像素宽重建，端点内缩 ≥ 朱点半径防视口裁切；
  *    朱点按滚动进度映射弧长（右端＝最新，左端＝最旧）
@@ -75,6 +75,7 @@ function initChronoRail() {
   if (!rail) return;
 
   const track = rail.querySelector('.chrono__track');
+  const chrono = rail.closest('.chrono');
   const curveLine = document.querySelector('.chrono__curve-line');
   const curveDot = document.querySelector('.chrono__curve-dot');
   const axisLine = document.querySelector('.chrono__axis-line');
@@ -87,7 +88,7 @@ function initChronoRail() {
 
   // 读取指定长度 token 并换算为 px，保持 token 为唯一来源（曲率与轴位同源）
   function readTokenPx(name, fallback) {
-    const raw = getComputedStyle(document.documentElement)
+    const raw = getComputedStyle(chrono)
       .getPropertyValue(name)
       .trim();
     const num = parseFloat(raw);
@@ -135,7 +136,7 @@ function initChronoRail() {
   function updateDot() {
     if (!pathLen) return;
     const max = rail.scrollWidth - rail.clientWidth;
-    const q = max > 0 ? clamp(rail.scrollLeft / max, 0, 1) : 0;
+    const q = max > 0 ? clamp(rail.scrollLeft / max, 0, 1) : 1;
     const pt = curveLine.getPointAtLength(q * pathLen);
     curveDot.setAttribute('cx', pt.x);
     curveDot.setAttribute('cy', pt.y);
@@ -195,12 +196,14 @@ function initChronoRail() {
   }
 
   // 滚轮横移：ltr 坐标（scrollLeft 0 在左＝最旧端，max 在右＝最新端）；
-  // 向下滚＝向旧端（左移）。轴区内的纵向滚轮始终只推动轴体：
-  // 目标位被钳制于两端，不外传页面纵向滚动
+  // 向下滚＝向旧端（左移）；端点放行，避免横轴困住页面滚动。
   function wheelScroll(deltaY) {
     if (maxScroll() <= 1) return false;
     const settling = glideRaf || Math.abs(scrollTarget - rail.scrollLeft) > 1;
-    glideTo((settling ? scrollTarget : rail.scrollLeft) - deltaY);
+    const current = settling ? scrollTarget : rail.scrollLeft;
+    const next = clamp(current - deltaY, 0, maxScroll());
+    if (Math.abs(next - current) < 0.5) return false;
+    glideTo(next);
     return true;
   }
 
@@ -216,17 +219,27 @@ function initChronoRail() {
 
   // 指针拖曳：内容随手势而动（拖曳跟手，接管时先打断缓动）
   let dragFrom = null;
+  let dragged = false;
   rail.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse') return; // 触屏保留浏览器原生惯性与纵向手势
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     cancelAnimationFrame(glideRaf);
     glideRaf = 0;
+    dragged = false;
     dragFrom = { x: e.clientX, scroll: rail.scrollLeft };
   });
   rail.addEventListener('pointermove', (e) => {
     if (!dragFrom) return;
+    if (Math.abs(e.clientX - dragFrom.x) > 5) dragged = true;
+    if (!dragged) return;
     scrollTarget = clamp(dragFrom.scroll - (e.clientX - dragFrom.x), 0, maxScroll());
     rail.scrollLeft = scrollTarget;
   });
+  rail.addEventListener('click', (e) => {
+    if (!dragged) return;
+    e.preventDefault();
+    dragged = false;
+  }, true);
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((evt) =>
     rail.addEventListener(evt, () => {
       dragFrom = null;
@@ -251,6 +264,8 @@ function initChronoRail() {
     const items = rail.querySelectorAll('.chrono__item');
     const years = rail.querySelectorAll('.chrono__year');
     const applyFilter = (cat) => {
+      cancelAnimationFrame(glideRaf);
+      glideRaf = 0;
       legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
         btn.setAttribute('aria-pressed', String(btn.dataset.catFilter === cat));
       });
@@ -260,6 +275,12 @@ function initChronoRail() {
       years.forEach((group) => {
         group.hidden = !group.querySelector('.chrono__item:not([hidden])');
       });
+      const visibleCount = rail.querySelectorAll('.chrono__item:not([hidden])').length;
+      const count = document.querySelector('[data-archive-count]');
+      const empty = document.querySelector('[data-archive-empty]');
+      if (count) count.textContent = String(visibleCount);
+      chrono.hidden = visibleCount === 0;
+      if (empty) empty.hidden = visibleCount !== 0;
       // 版面变了：弧线按新宽重建，回停最新端
       rail.scrollLeft = rail.scrollWidth;
       scrollTarget = rail.scrollLeft;
@@ -280,4 +301,5 @@ function initChronoRail() {
   rail.scrollLeft = rail.scrollWidth;
   scrollTarget = rail.scrollLeft;
   refresh();
+  document.fonts.ready.then(refresh);
 }

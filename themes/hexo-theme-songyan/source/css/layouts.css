@@ -227,7 +227,9 @@
 
 .post-ci__stage {
   display: flex;
-  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-wash) transparent;
 }
 
 .post-ci__body-horizontal {
@@ -247,7 +249,8 @@
     text-orientation: mixed;
     height: var(--ci-column-height);
     max-width: none;
-    margin: 0;
+    margin: 0 auto;
+    flex-shrink: 0;
     text-align: start;
     line-height: 2.25;
     letter-spacing: var(--tracking-verse);
@@ -270,6 +273,9 @@
 .poem-annotations {
   max-width: 28rem;
   margin: var(--space-12) auto 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid transparent;
+  border-image: var(--rain-thread) 1;
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   color: var(--ink-secondary);
@@ -280,7 +286,7 @@
   font-size: var(--text-xs);
   letter-spacing: 0.4em;
   color: var(--ink-faint);
-  text-align: center;
+  text-align: left;
 }
 
 .poem-annotations dl {
@@ -288,7 +294,9 @@
 }
 
 .poem-annotations__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: fit-content(6em) minmax(0, 1fr);
+  overflow-wrap: anywhere;
   gap: var(--space-4);
   padding: var(--space-1) 0;
   scroll-margin-block-start: var(--space-16);
@@ -354,7 +362,7 @@
 .essay-meta-strip {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-4);
   font-family: var(--font-title);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
@@ -372,7 +380,6 @@
 /* 元信息前缀（驻足 / 天候 / 心境）：更淡一层 */
 .essay-meta-label {
   color: var(--ink-faint);
-  opacity: 0.8;
 }
 
 /* 文末题签：标签以汉字「题」引出，烟青小字 */
@@ -418,7 +425,7 @@
    结构：.chrono（外框）> .chrono__rail（横向滚动）
         > .chrono__track（轴体）> .chrono__year（年份组）；双弧覆盖层 .chrono__axis（赭线 + 朱线朱点）
         > .archive-item（日列：轴上月日 + 轴下题头题目）
-   右端为新、向左渐旧；无原生滚动条，代偿：朱线朱点 + 边缘渐隐 + 抓手
+   右端为新、向左渐旧；保留细滚动条与进度墨点，字形保持平面
    ========================================================= */
 .chrono {
   position: relative;
@@ -429,16 +436,18 @@
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
-  /* 去原生滚动条（初始停驻最新端与滚轮/拖曳由 main.js 接管，仅在轴区内） */
-  scrollbar-width: none;
+  /* 保留细滚动条作为横向阅读提示，鼠标、触屏、键盘均可原生操作。 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-wash) transparent;
   cursor: grab;
-  /* 左右淡入淡出：不支持滚动驱动动画的浏览器亦有柔和边缘 */
+  /* 两端轻淡出，中央文字保持完整对比。 */
   -webkit-mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
   mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
 }
 
-.chrono__rail::-webkit-scrollbar {
-  display: none;
+.chrono__rail:focus-visible {
+  outline: 2px solid var(--celadon-deep);
+  outline-offset: var(--space-1);
 }
 
 .chrono__rail:active {
@@ -458,6 +467,7 @@
 .chrono__track {
   position: relative;
   display: flex;
+  justify-content: center; /* 少量篇目时居中，不把留白全部堆在左侧。 */
   /* 视觉序右起：首子（最新年组）居右。用 row-reverse 而非 rtl——
      rtl 会把竖排的行内轴翻成自下而上，并颠倒 view() 的进入边 */
   flex-direction: row-reverse;
@@ -465,9 +475,7 @@
   min-width: 100%;
   /* 两端留白：停驻位不落入渐隐区，滚动亦有呼吸程 */
   padding-inline: var(--chrono-breath);
-  /* 底部投影余量：中央列放大（≈1.115）后题字底外扩 ≤51px，
-     留 3rem 供 overflow-y:hidden 裁切前缓冲（朱线在覆盖层中，另行定位） */
-  padding-bottom: 3rem;
+  padding-bottom: var(--space-8);
 }
 
 .chrono__year {
@@ -589,13 +597,13 @@
   color: var(--ink-secondary);
 }
 
-/* 轴下区：题头·题目，墨点相隔，一列直下（nowrap，不折列）；整列即文章链接 */
+/* 轴下区：中文直排，西文按词侧排，不逐字母拉成长串；超长题目可折列。 */
 .chrono__entry {
   height: var(--chrono-bottom);
   padding-top: var(--space-3);
   writing-mode: vertical-rl;
-  text-orientation: upright; /* 西文随竖排直立，不横倒 */
-  white-space: nowrap;
+  text-orientation: mixed;
+  overflow-wrap: anywhere;
   font-family: var(--font-title);
   font-size: var(--text-lg);
   color: var(--ink);
@@ -604,6 +612,10 @@
 
 .chrono__entry:hover {
   color: var(--celadon-deep);
+}
+
+.chrono__title {
+  letter-spacing: var(--tracking-verse);
 }
 
 .chrono__rubric {
@@ -615,62 +627,6 @@
 
 .chrono__sep {
   color: var(--ink-faint);
-}
-
-/* 曲面滑动：每列随视口距离旋转退侧 + 左右渐隐（滚动驱动动画，渐进增强） */
-/* 曲面全程变形：cover 相位（刚完全入框→将出框）映射整段可见行程。
-   字号按曲面透视近大远小，以当前字号为平均水平：
-   中央 translateZ(+64px) → 投影 620/556 ≈ 1.115（放大 11.5%），
-   两端 translateZ(-130px) → 620/750 ≈ 0.827（缩小 17%），
-   平坦区 30% + 两斜坡 70% 沿行程积分 ≈ 1.00——中凸边凹、平均不变；
-   两端再 ±44° 起翘收窄，渐隐 0.4，平坦区仅 35%–65% */
-@keyframes chrono-curve {
-  0% {
-    opacity: 0.4;
-    transform: perspective(620px) translateZ(-130px) rotateY(44deg);
-  }
-
-  35% {
-    opacity: 1;
-    transform: perspective(620px) translateZ(64px) rotateY(0deg);
-  }
-
-  65% {
-    opacity: 1;
-    transform: perspective(620px) translateZ(64px) rotateY(0deg);
-  }
-
-  100% {
-    opacity: 0.4;
-    transform: perspective(620px) translateZ(-130px) rotateY(-44deg);
-  }
-}
-
-/* 降级序：支持浏览器由 .archive-item 的曲面动画接管（声明在 .enter 之后）；
-   不支持者回落 main.js 落墨入场；reduced-motion 全部关闭。
-   transform-origin 锚定轴线行（--chrono-top）：透视除法以轴线为不动点——
-   轴上（月日/公元）向轴压、轴下（题目/干支）向轴收，字号随面缩放，
-   而骑轴墨点/年号赭点恰在锚线上，任意深度投影后仍钉在拱弧上 */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .archive-item,
-    .chrono__year-mark {
-      transform-origin: 50% var(--chrono-top);
-    }
-
-    .archive-item {
-      animation: chrono-curve linear both;
-      animation-timeline: view(inline);
-      animation-range: cover;
-    }
-
-    /* 年号同轴入面：公元/干支字号随曲面透视中凸边凹，与篇目列同步 */
-    .chrono__year-mark {
-      animation: chrono-curve linear both;
-      animation-timeline: view(inline);
-      animation-range: cover;
-    }
-  }
 }
 
 /* 进度朱线（画在 .chrono__axis 同一 SVG 坐标系内）：与赭石弧同曲率反向、
@@ -710,6 +666,7 @@
 .archive-legend {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: var(--space-5);
   margin-top: var(--space-4);
 }
@@ -719,6 +676,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: 0;
+  min-height: var(--space-10);
   border: 0;
   background: none;
   font: inherit;
@@ -732,6 +690,23 @@
 .archive-legend__item:hover,
 .archive-legend__item[aria-pressed="true"] {
   color: var(--ink);
+}
+
+.archive-legend__item[aria-pressed="true"] {
+  text-decoration: underline;
+  text-underline-offset: var(--space-2);
+  text-decoration-color: var(--celadon-deep);
+}
+
+.archive-empty {
+  text-align: center;
+  color: var(--ink-secondary);
+  margin-block: var(--space-12);
+}
+
+.chrono[hidden],
+.archive-empty[hidden] {
+  display: none;
 }
 
 .archive-legend__dot {

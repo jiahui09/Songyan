@@ -19,7 +19,7 @@
 <main class="site-main">
   <header class="archive-head">
     <h1 class="archive-head__title enter"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
-    <p class="archive-head__count"><%= cfg.count_prefix %>：<%= ordered.length %> <%= cfg.count_suffix %></p>
+    <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
     <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">
       <% Object.keys(cfg.categories).forEach(function (key) { %><button type="button" class="archive-legend__item" data-cat-filter="<%= key %>" aria-pressed="false"><span class="archive-legend__dot archive-legend__dot--<%= key %>"></span><%= cfg.categories[key] %></button><% }); %>
     </nav>
@@ -36,7 +36,7 @@
             <li class="archive-item chrono__item" data-cat="<%= key %>">
               <span class="chrono__dot chrono__dot--<%= key %>" title="<%= cfg.categories[key] %>"></span>
               <div class="chrono__head"><time class="chrono__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date, withYear: false}) %></time></div>
-              <a href="<%= url_for(post.path) %>" class="chrono__entry"><span class="chrono__rubric"><%= cfg.categories[key] %></span><span class="chrono__sep">·</span><%= post.title || config.title %></a>
+              <a href="<%= url_for(post.path) %>" class="chrono__entry"><span class="chrono__rubric"><%= cfg.categories[key] %></span><span class="chrono__sep" aria-hidden="true">·</span><span class="chrono__title"><%= post.title || config.title %></span></a>
             </li>
             <% }); %>
           </ul>
@@ -46,6 +46,7 @@
     </div>
     <div class="chrono__axis" aria-hidden="true"><svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg"><path class="chrono__axis-line"/><path class="chrono__curve-line"/><circle class="chrono__curve-dot"/></svg></div>
   </div>
+  <p class="archive-empty" data-archive-empty role="status" hidden><%= theme.labels.empty %></p>
   <% } else { %><p class="archive-empty"><%= theme.labels.empty %></p><% } %>
   <%- partial('_partial/pagination') %>
 </main>

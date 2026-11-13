@@ -15,8 +15,8 @@
       <% if (!isCi) { %>
       <div class="essay-meta-strip">
         <time datetime="<%= date(page.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: page.date}) %></time>
-        <% if (categories.length && categories[0].name !== eyebrow) { %><span class="meta-separator" aria-hidden="true">·</span><span><%= categories[0].name %></span><% } %>
-        <% ['location', 'weather', 'mood'].forEach(function (key) { if (page[key]) { %><span class="meta-separator" aria-hidden="true">·</span><span class="essay-meta-item"><span class="essay-meta-label"><%= labels[key] %>：</span><%= page[key] %></span><% } }); %>
+        <% if (categories.length && categories[0].name !== eyebrow) { %><span><%= categories[0].name %></span><% } %>
+        <% ['location', 'weather', 'mood'].forEach(function (key) { if (page[key]) { %><span class="essay-meta-item"><span class="essay-meta-label"><%= labels[key] %>：</span><%= page[key] %></span><% } }); %>
       </div>
       <% } else if (page.rhyme) { %>
       <p class="post-ci__rhyme"><%= page.rhyme %></p>
@@ -36,10 +36,12 @@
     <% } else { %>
     <div class="essay-body reading-body<%= page.literary === true ? ' reading-body--literary' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
     <% } %>
-    <%- partial('_partial/signature') %>
+    <footer class="post-ending">
     <% if (tags.length) { %>
     <p class="post-tags"><span class="post-tags__label"><%= labels.tags %></span><% tags.forEach(function (tag, index) { %><% if (index) { %><span class="meta-separator" aria-hidden="true">·</span><% } %><a href="<%= url_for(tag.path) %>"><%= tag.name %></a><% }); %></p>
     <% } %>
+    <%- partial('_partial/signature') %>
     <% if (isCi && ciCfg.share) { %><%- partial('_partial/poem-slip') %><% } %>
+    </footer>
   </article>
 </main>

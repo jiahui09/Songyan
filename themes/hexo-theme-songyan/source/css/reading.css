@@ -39,7 +39,8 @@
 }
 .reading-body h2 { font-size: var(--text-2xl); }
 .reading-body h3 { font-size: var(--text-xl); }
-.reading-body :is(h4,h5,h6) { font-size: var(--text-lg); }
+.reading-body h4 { font-size: var(--text-lg); }
+.reading-body :is(h5,h6) { font-size: var(--text-base); }
 .reading-body > :first-child { margin-block-start: 0; }
 .reading-body a { text-decoration: underline; text-decoration-color: var(--celadon); text-decoration-thickness: 1px; text-underline-offset: .28em; }
 .reading-body a:hover { text-decoration-color: currentColor; }
@@ -130,6 +131,11 @@
 .reading-specimen[open] > summary { margin-bottom: var(--space-6); }
 .reading-notice { font-size: var(--text-sm); color: var(--ink-secondary); }
 .reading-page .post-title { overflow-wrap: anywhere; }
+.reading-page :is(.essay-header, .post-ci__header) { padding-top: var(--space-6); }
+.reading-page .post-ending { margin-top: var(--space-12); }
+.reading-page .post-ci .post-ending { max-width: 28rem; margin-inline: auto; }
+.reading-page .post-ending .post-tags { margin: 0 0 var(--space-6); justify-content: flex-start; }
+.reading-page .post-ending .post-signature { margin-top: 0; }
 .reading-page .post-ci__body-horizontal { overflow-wrap: anywhere; }
 .reading-page .post-ci__body-horizontal p { line-height: inherit; }
 .reading-page .post-ci__body-horizontal ruby { ruby-position: over; }
@@ -167,7 +173,7 @@
 @media (max-width: 640px) {
   .reading-page .site-main { padding-inline: var(--space-5); }
   .reading-page .post-title { font-size: var(--text-2xl); }
-  .reading-page .post-ci__body-horizontal { font-size: var(--text-base); }
+  .reading-page .post-ci__body-horizontal { font-size: var(--text-lg); }
   .reading-page .post-ci__body-horizontal > p { letter-spacing: .04em; text-wrap: balance; }
   .reading-page .essay-meta-strip { gap: var(--space-1) var(--space-2); }
   .reading-body blockquote { padding-inline: var(--space-4); }

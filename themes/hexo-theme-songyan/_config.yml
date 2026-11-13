@@ -93,7 +93,7 @@ menu:
 
 archive:
   title: 岁时笺纸 · 历年归档
-  count_prefix: 记录篇什总计
+  count_prefix: 当前篇什
   count_suffix: 篇
   filter_label: 按分卷筛选
   categories:
