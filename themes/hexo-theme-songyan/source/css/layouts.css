@@ -1067,16 +1067,23 @@
   display: none;
 }
 
+.archive-head__mast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .archive-head__title {
   font-family: var(--font-title);
   font-size: var(--text-2xl);
   letter-spacing: 0.3em;
   text-indent: 0.3em;
   color: var(--ink);
+  margin: 0;
 }
 
 .archive-head__count {
-  margin-top: var(--space-3);
+  margin: var(--space-3) 0 0;
   font-family: var(--font-title);
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
@@ -1084,16 +1091,23 @@
   color: var(--ink-faint);
 }
 
-/* 归档题头停靠：首屏题头+近期；下滑后题头常驻页眉下，近期隐去，时间轴一屏完整展示。 */
+/* 归档题头停靠：首屏题头偏上居中，篇数贴题头下；近期随之上移；定点后只留缩小题头。 */
+@keyframes archive-mast-dock {
+  from {
+    transform: translateY(calc(var(--archive-travel) * 0.28));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 @keyframes archive-title-dock {
   from {
-    transform: translateY(calc(var(--archive-travel) / 2 - var(--space-8)));
     font-size: var(--text-2xl);
     letter-spacing: 0.3em;
     text-indent: 0.3em;
   }
   to {
-    transform: translateY(0);
     font-size: var(--text-lg);
     letter-spacing: 0.2em;
     text-indent: 0.2em;
@@ -1155,8 +1169,14 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: visible; /* 首屏大题头需溢出栏头盒向下居中 */
+      overflow: visible; /* 首屏大题头+篇数需溢出栏头盒 */
       background-color: transparent;
+    }
+
+    .archive-head__mast {
+      animation: archive-mast-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px var(--archive-travel);
     }
 
     .archive-head__title {
@@ -1184,8 +1204,8 @@
       position: absolute;
       left: 0;
       right: 0;
-      /* 落在居中大题头下方，避免与题头/时间轴重叠 */
-      top: calc(50% + var(--space-16));
+      /* 跟随偏上题头：约在题头/篇数下方，不再贴视口中线 */
+      top: calc(38% + var(--space-10));
       max-width: min(var(--stream-max), 34rem);
       margin-inline: auto;
       animation: archive-recent-fold linear both;
@@ -1242,6 +1262,7 @@
     position: static;
     height: auto;
   }
+  .archive-head__mast,
   .archive-head__title,
   .archive-head__count,
   .archive-recent {

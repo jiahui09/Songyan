@@ -55,6 +55,16 @@ const pages = [
           assert.equal(await page.locator('.post-signature').count(), 1);
           assert.equal(await page.locator('.post-signature').evaluate(el => getComputedStyle(el).flexDirection), 'row');
         }
+        if (width === 1280 && (name === 'index' || name === 'archive' || name === 'about')) {
+          const activeNav = await page.evaluate(() => {
+            const active = [...document.querySelectorAll('.site-header__nav-link--active')].map(el => el.textContent.trim());
+            const current = [...document.querySelectorAll('.site-header__nav-link[aria-current="page"]')].map(el => el.textContent.trim());
+            return { active, current };
+          });
+          const expected = name === 'index' ? '首页' : name === 'archive' ? '归档' : '关于';
+          assert.deepEqual(activeNav.active, [expected], `${name}: only the current nav item is underlined`);
+          assert.deepEqual(activeNav.current, [expected]);
+        }
         if (['archive', 'category', 'tag'].includes(name)) assert.ok(await page.locator('.chrono__entry').count() > 0);
         if (name === 'index' && width < 900) {
           assert.equal(await page.locator('.home-cover').evaluate(el => getComputedStyle(el).position), 'static', 'narrow screens drop the pin');
@@ -362,35 +372,48 @@ const pages = [
     const archiveIntro = await desktopPage.evaluate(() => {
       const head = document.querySelector('.archive-head');
       const title = document.querySelector('.archive-head__title');
+      const count = document.querySelector('.archive-head__count');
+      const mast = document.querySelector('.archive-head__mast');
       const legend = document.querySelector('.archive-legend');
       const recent = document.querySelector('.archive-recent');
       const header = document.querySelector('.site-header');
+      const titleRect = title.getBoundingClientRect();
+      const countRect = count.getBoundingClientRect();
+      const recentRect = recent.getBoundingClientRect();
       return {
         headPos: getComputedStyle(head).position,
         headerPos: getComputedStyle(header).position,
         titleAnim: getComputedStyle(title).animationName,
+        mastAnim: getComputedStyle(mast).animationName,
         legendAfterIntro: Boolean(legend && legend.compareDocumentPosition(document.querySelector('.archive-intro')) & Node.DOCUMENT_POSITION_PRECEDING),
-        titleCenter: (title.getBoundingClientRect().top + title.getBoundingClientRect().bottom) / 2,
+        titleCenter: (titleRect.top + titleRect.bottom) / 2,
+        countBelowTitle: countRect.top >= titleRect.bottom - 1,
+        recentBelowCount: recentRect.top >= countRect.bottom - 1,
         railZ: Number(getComputedStyle(document.querySelector('.chrono__rail')).zIndex),
         axisZ: Number(getComputedStyle(document.querySelector('.chrono__axis')).zIndex),
         recentCount: recent ? recent.querySelectorAll('.archive-recent__item').length : 0,
         recentOpacity: recent ? Number(getComputedStyle(recent).opacity) : 0,
         dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
         legendSnap: getComputedStyle(legend).scrollSnapAlign,
-        legendSnapStop: getComputedStyle(legend).scrollSnapStop
+        legendSnapStop: getComputedStyle(legend).scrollSnapStop,
+        activeNav: [...document.querySelectorAll('.site-header__nav-link--active')].map(el => el.textContent.trim())
       };
     });
     assert.equal(archiveIntro.headPos, 'sticky');
     assert.equal(archiveIntro.headerPos, 'sticky');
     assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.mastAnim.includes('archive-mast-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.legendAfterIntro, 'category legend sits with the timeline focus area under the title');
-    assert.ok(archiveIntro.titleCenter > 180 && archiveIntro.titleCenter < 560, JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.titleCenter > 160 && archiveIntro.titleCenter < 420, 'archive title sits upper-center on intro');
+    assert.ok(archiveIntro.countBelowTitle, 'count sits directly under the title');
+    assert.ok(archiveIntro.recentBelowCount, 'recent list sits under the count');
     assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
     assert.ok(archiveIntro.recentCount >= 1 && archiveIntro.recentCount <= 3, JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.recentOpacity > 0.8, 'recent posts are visible on the archive intro');
     assert.equal(archiveIntro.dockSnap, 'proximity', JSON.stringify(archiveIntro));
     assert.equal(archiveIntro.legendSnap, 'start');
     assert.equal(archiveIntro.legendSnapStop, 'always');
+    assert.deepEqual(archiveIntro.activeNav, ['归档']);
 
     await desktopPage.evaluate(async () => {
       const legend = document.querySelector('.archive-legend');

@@ -20,8 +20,10 @@
 %>
 <main class="site-main site-main--archive">
   <header class="archive-head">
-    <h1 class="archive-head__title"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
-    <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
+    <div class="archive-head__mast">
+      <h1 class="archive-head__title"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
+      <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
+    </div>
   </header>
   <div class="archive-intro">
     <% if (recent.length) { %>

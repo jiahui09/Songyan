@@ -12,9 +12,15 @@
       <!-- 导航 Links -->
       <nav aria-label="全局导航">
         <ul class="site-header__nav">
-          <% Object.keys(theme.menu).forEach(function (label) { %>
-          <% var active = url_for(theme.menu[label]) === url_for(page.path || '') || (theme.menu[label] === '/archives/' && is_archive()); %>
-          <li><a href="<%= url_for(theme.menu[label]) %>" class="site-header__nav-link<%= active ? ' site-header__nav-link--active' : '' %>"<% if (active) { %> aria-current="page"<% } %>><%= label %></a></li>
+          <% Object.keys(theme.menu).forEach(function (label) {
+            var href = url_for(theme.menu[label]);
+            var current = url_for('/' + String(page.path || '').replace(/index\.html$/, ''));
+            var active = href === current
+              || (theme.menu[label] === '/' && is_home() && !(page.current > 1))
+              || (theme.menu[label] === '/archives/' && (is_archive() || is_category() || is_tag()))
+              || (theme.menu[label] === '/about/' && (page.layout === 'about' || page.path === 'about/index.html'));
+          %>
+          <li><a href="<%= href %>" class="site-header__nav-link<%= active ? ' site-header__nav-link--active' : '' %>"<% if (active) { %> aria-current="page"<% } %>><%= label %></a></li>
           <% }); %>
         </ul>
       </nav>
