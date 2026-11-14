@@ -239,7 +239,7 @@ function initLuoMoAnimation() {
  *    朱点按滚动进度映射弧长（右端＝最新，左端＝最旧）
  * 4. 平滑缓动——滚轮以目标位 + rAF 阻尼插值推进，阻尼放缓求丝滑（reduced-motion 直接落位）
  * 5. 分卷图例筛选——点按只留该分卷篇目，年份组无可见篇目整组隐去
- * 6. 拱弧骑列——轴线弧与朱线上下镜像，日列/年号按视口横位以 --curve-y 骑弧
+ * 6. 拱弧骑列——轴线弧与朱线上下镜像，日列/年号按视口横位以 --curve-y 骑弧（平面，无透视）
  */
 function initChronoRail() {
   const rail = document.querySelector('[data-chrono-rail]');
@@ -314,30 +314,18 @@ function initChronoRail() {
   }
 
   // 骑弧：按视口横位取拱弧高（二次贝塞尔 y 偏移 ≤ 0），写入各列 --curve-y；
-  // 滚动时逐帧更新，日列、年号、节点墨点与弧线同步抬落
+  // 滚动时逐帧更新，日列、年号、节点墨点与弧线同步抬落（平面纸卷，不做圆柱透视）
   const shiftTargets = rail.querySelectorAll('.chrono__item, .chrono__year-mark');
   function updateShift() {
     const railRect = rail.getBoundingClientRect();
     if (!railRect.width) return;
     const sag = readSagPx();
-    const shifts = Array.from(shiftTargets).filter(el => el.getClientRects().length).map((el) => {
+    shiftTargets.forEach((el) => {
+      if (!el.getClientRects().length) return;
       const rect = el.getBoundingClientRect();
       const center = rect.left + rect.width / 2;
       const t = clamp((center - railRect.left) / railRect.width, 0, 1);
-      const position = t * 2 - 1;
-      // 平面中心最大、最清晰；越向边缘越沿圆柱后退并转向中心。
-      const depth = 1 - Math.cos(position * Math.PI / 2);
-      return { el, shift: (-4 * sag * t * (1 - t)).toFixed(2) + 'px',
-        position, depth, origin: railRect.left + railRect.width / 2 - rect.left };
-    });
-    shifts.forEach(({ el, shift, position, depth, origin }) => {
-      el.style.setProperty('--curve-y', shift);
-      if (!el.classList.contains('chrono__item')) return;
-      el.style.setProperty('--chrono-origin', origin.toFixed(2) + 'px');
-      el.style.setProperty('--chrono-angle', `calc(var(--chrono-tilt) * ${(-position).toFixed(4)})`);
-      el.style.setProperty('--chrono-z', `calc(var(--chrono-depth) * ${(-depth).toFixed(4)})`);
-      el.style.setProperty('--chrono-opacity', (1 - depth * 0.4).toFixed(4));
-      el.style.setProperty('--chrono-focus', `calc(var(--chrono-blur) * ${depth.toFixed(4)})`);
+      el.style.setProperty('--curve-y', (-4 * sag * t * (1 - t)).toFixed(2) + 'px');
     });
   }
 

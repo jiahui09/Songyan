@@ -675,12 +675,22 @@
    结构：.chrono（外框）> .chrono__rail（横向滚动）
         > .chrono__track（轴体）> .chrono__year（年份组）；双弧覆盖层 .chrono__axis（赭线 + 朱线朱点）
         > .archive-item（日列：轴上月日 + 轴下题头题目）
-   右端为新、向左渐旧；桌面题列构成透视圆柱，节点墨点仍锚定于双弧
+   右端为新、向左渐旧；平面纸卷横展，节点墨点锚定于双弧（无透视圆柱）
    ========================================================= */
 .chrono {
   position: relative;
   margin-top: var(--space-4);
   scroll-margin-top: var(--header-dock-height);
+}
+
+/* 极弱暗角：内容浮于笺纸之上，不抢轴线与文字 */
+.chrono::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--chrono-vignette);
 }
 
 .chrono__rail {
@@ -779,15 +789,15 @@
   font-size: var(--text-lg);
 }
 
-/* 组界：赭石点骑轴（原版归档表达，纸色描边骑线） */
+/* 组界：年号节点骑轴（纸色描边）；阶段 B 将改为空心印廓 */
 .chrono__year-mark::after {
   content: "";
   position: absolute;
   top: var(--chrono-top);
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 9px;
-  height: 9px;
+  width: var(--chrono-node-year);
+  height: var(--chrono-node-year);
   border-radius: 50%;
   background-color: var(--celadon);
   border: 2px solid var(--paper);
@@ -817,44 +827,14 @@
   top: var(--curve-y, 0px);
 }
 
-/* 每列共用同一条透视中轴；只将日期与题目送入纵深，保持导航节点可辨。 */
-@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-  .chrono__item {
-    perspective: var(--chrono-perspective);
-    perspective-origin: var(--chrono-origin, 50%) var(--chrono-top);
-  }
-
-  .chrono__head,
-  .chrono__entry {
-    transform-origin: 50% 0;
-    transform: translateZ(var(--chrono-z, 0px)) rotateY(var(--chrono-angle, 0deg));
-    opacity: var(--chrono-opacity, 1);
-    filter: blur(var(--chrono-focus, 0px));
-    backface-visibility: hidden;
-  }
-
-  .chrono__head {
-    transform-origin: 50% 100%;
-  }
-
-  .chrono__item:focus-within > .chrono__head,
-  .chrono__item:focus-within > .chrono__entry,
-  .chrono__item:hover > .chrono__head,
-  .chrono__item:hover > .chrono__entry {
-    transform: none;
-    opacity: 1;
-    filter: none;
-  }
-}
-
-/* 节点彩色墨点（原版归档表达）：分色系于轴上 */
+/* 节点彩色墨点：分色系于轴上（阶段 B 将换朱砂点/印廓形态） */
 .chrono__dot {
   position: absolute;
   top: var(--chrono-top);
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 5px;
-  height: 5px;
+  width: var(--chrono-node-size);
+  height: var(--chrono-node-size);
   border-radius: 50%;
 }
 
@@ -949,21 +929,23 @@
 
 .chrono__curve-line {
   fill: none;
-  stroke: var(--celadon);
+  stroke: var(--chrono-progress-ink);
   stroke-width: 1;
-  opacity: 0.6;
+  stroke-linecap: round;
 }
 
-/* 拱弧轴线：赭石 1px 实线（与原直轴同色同宽），仅描边不填充 */
+/* 拱弧轴线：极淡墨断点虚线，弱化工业实线感（枯笔感留给阶段 B 双描） */
 .chrono__axis-line {
   fill: none;
-  stroke: var(--line-wash);
+  stroke: var(--chrono-axis-ink);
   stroke-width: 1;
+  stroke-dasharray: var(--chrono-axis-dash);
+  stroke-linecap: round;
 }
 
 .chrono__curve-dot {
   r: 3.5px;
-  fill: var(--celadon-deep);
+  fill: var(--cinnabar);
 }
 
 /* 页头：默认普通流；桌面停靠态见下方 archive-dock 规则 */
