@@ -47,6 +47,12 @@ hexo.extend.filter.register('after_post_render', function (data) {
     return starts ? opening.replace(/>$/, ' data-stanza-start="true">') : opening;
   });
   data.content = data.content.replace(/<span\b([^>]*\bclass=["'][^"']*\brhyme-dot\b[^"']*["'][^>]*)>([\s\S]*?)<\/span>/gi, '$2');
+  // 只包装诗词段落的文本标点，保留原字符、链接属性及无脚本阅读内容。
+  data.content = data.content.replace(/(<p(?:\s[^>]*)?>)([\s\S]*?)(<\/p>)/g, function (_, opening, content, closing) {
+    return opening + content.replace(/(<[^>]+>)|([，。！？；：、])/g, function (match, tag, punctuation) {
+      return tag || '<span class="poem-punctuation"><span>' + punctuation + '</span></span>';
+    }) + closing;
+  });
   // 笺注：难词首次出现处落着重点并链至文末注条（只改文本节点，不触标签）
   const ciConfig = (hexo.theme && hexo.theme.config && hexo.theme.config.ci) || {};
   if (ciConfig.show_annotation && Array.isArray(data.annotations)) {

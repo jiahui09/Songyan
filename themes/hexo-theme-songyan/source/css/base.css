@@ -13,8 +13,8 @@
 }
 
 html {
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: 100%;
+  line-height: var(--leading-body);
   background-color: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -62,20 +62,21 @@ a:focus-visible {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
   color: var(--ink);
-  line-height: 1.35;
+  line-height: var(--leading-title);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-title);
   text-wrap: balance;
 }
 
-h1 { font-size: var(--text-3xl); }
+h1 { font-size: var(--text-page-title); }
 h2 { font-size: var(--text-2xl); }
 h3 { font-size: var(--text-xl); }
 h4 { font-size: var(--text-lg); }
+h5, h6 { font-size: var(--text-body); font-weight: 600; }
 
 p {
   margin-bottom: var(--space-4);
-  line-height: 1.8;
+  line-height: var(--leading-body);
 }
 
 /* 强调与引用 */
@@ -172,6 +173,13 @@ img {
 
 .seal--stamp {
   animation: gai-yin var(--dur-stamp) var(--ease-ink) 120ms both;
+}
+
+/* JS 接管封面行程后关闭原生吸附，避免浏览器在自动过渡中改写终点。 */
+html.cover-scroll-enabled:root {
+  overflow-anchor: none;
+  scroll-snap-type: none;
+  --dock-snap: none;
 }
 
 /* 尊重减弱动效偏好：动效时长全部经 tokens 归零，入场直接落定 */

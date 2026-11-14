@@ -1,6 +1,6 @@
 /* 仅由文章、诗词、独立页加载；不改变首页或归档的共享样式。 */
 .reading-page {
-  --reading-leading: 2;
+  --reading-leading: var(--leading-body);
   --reading-code-lines: 14;
   --reading-image-max: 40rem;
 }
@@ -14,23 +14,23 @@
 }
 .reading-body {
   font-family: var(--font-serif);
-  font-size: var(--text-base);
+  font-size: var(--text-body);
   line-height: var(--reading-leading);
-  letter-spacing: .02em;
+  letter-spacing: var(--tracking-body);
   overflow-wrap: anywhere;
 }
-.reading-body p { margin: 0 0 var(--space-6); line-height: inherit; text-indent: 0; }
+.reading-body p { margin: 0 0 var(--space-8); line-height: inherit; text-indent: 0; }
 .reading-body--literary > p:not(:has(img)) { text-indent: 2em; }
 .reading-body :is(h1,h2,h3,h4,h5,h6) {
   margin: var(--space-10) 0 var(--space-4);
-  line-height: 1.5;
+  line-height: var(--leading-title);
   scroll-margin-block-start: var(--space-6);
   overflow-wrap: anywhere;
 }
 .reading-body h2 { font-size: var(--text-2xl); }
 .reading-body h3 { font-size: var(--text-xl); }
 .reading-body h4 { font-size: var(--text-lg); }
-.reading-body :is(h5,h6) { font-size: var(--text-base); }
+.reading-body :is(h5,h6) { font-size: var(--text-body); }
 .reading-body > :first-child { margin-block-start: 0; }
 .reading-body a { text-decoration: underline; text-decoration-color: var(--celadon); text-decoration-thickness: 1px; text-underline-offset: .28em; }
 .reading-body a:hover { text-decoration-color: currentColor; }
@@ -60,7 +60,7 @@
   overflow: auto;
   padding: var(--space-4) var(--space-5);
   margin: var(--space-6) 0;
-  font: var(--text-sm)/1.8 var(--font-code);
+  font: var(--text-code)/var(--leading-body) var(--font-code);
   letter-spacing: normal;
   tab-size: 2;
   background: var(--code-bg);
@@ -105,7 +105,7 @@
 }
 .reading-body > table,
 .reading-table { display: block; overflow-x: auto; max-width: 100%; margin-block: var(--space-6); }
-.reading-table table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.reading-table table { width: 100%; border-collapse: collapse; font-size: var(--text-body); }
 .reading-table :is(th,td) { text-align: start; vertical-align: top; padding: var(--space-3); border-bottom: 1px solid var(--line); min-width: 8rem; }
 .reading-table th { background: var(--paper-deep); font-weight: 600; }
 .reading-table caption { text-align: start; color: var(--ink-secondary); margin-bottom: var(--space-2); }
@@ -191,6 +191,48 @@
   color: var(--ink-faint);
 }
 .reading-page .post-signature .seal--signature { flex: 0 0 auto; margin: 0; transform: translateY(var(--space-2)); }
+/* 文章落款：作者与日期组成两行，印章在旁，整体贴正文右缘。 */
+.reading-page .essay-article .post-ending .post-signature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline-start: auto;
+}
+.reading-page .essay-article .post-signature:not(:has(.seal--signature)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.reading-page .essay-article .post-signature__meta {
+  grid-column: 1;
+  grid-row: 1;
+}
+.reading-page .essay-article .post-signature__author {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-sm);
+  letter-spacing: var(--tracking-display);
+  overflow-wrap: anywhere;
+}
+.reading-page .essay-article .post-signature__mark {
+  display: contents;
+}
+.reading-page .essay-article .post-signature__mark time {
+  grid-column: 1;
+  grid-row: 2;
+  text-align: right;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  letter-spacing: var(--tracking-meta);
+  overflow-wrap: anywhere;
+}
+.reading-page .essay-article .post-signature .seal--signature {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  transform: none;
+}
 .post-signature-actions { display: flex; justify-content: flex-end; margin-top: var(--space-3); }
 .post-signature-actions .share-trigger { margin: 0; }
 .post-signature-actions button.share-trigger { border: 0; background: none; padding: 0; }
@@ -200,21 +242,44 @@
   margin-top: var(--space-10);
 }
 @media (min-width: 1024px) {
-  .reading-page .post-ci__body--vertical > p { margin: 0 0 0 var(--space-4); }
+  .reading-page .post-ci__body--vertical {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .reading-page .post-ci__body--vertical > p { margin: 0; }
   .reading-page .post-ci__body--vertical > p[data-stanza-start] { margin-top: 0; margin-right: var(--ci-stanza-gap); }
+  /* 悬挂句读：不推进字格，缩小后置于前一字右上侧；原文仍可复制。 */
+  .reading-page .post-ci__body--vertical .poem-punctuation {
+    position: relative;
+    display: inline-block;
+    inline-size: 0;
+    block-size: 0;
+    line-height: 1;
+    letter-spacing: 0;
+    vertical-align: baseline;
+  }
+  .reading-page .post-ci__body--vertical .poem-punctuation > span {
+    position: absolute;
+    top: -1.5em;
+    left: .35em;
+    font-size: .7em;
+    line-height: 1;
+  }
   /* 竖排落款：姓名+题笺一列，日期+印章另开一列 */
   .reading-page .post-ci__body--vertical > .post-signature--vertical {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
     gap: var(--space-3);
-    margin: 0 0 0 var(--ci-stanza-gap);
+    margin: 0;
     padding: 0;
     height: auto;
     max-height: 100%;
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
+    width: var(--text-verse);
     writing-mode: horizontal-tb;
     font-size: var(--text-sm);
     line-height: 2;
@@ -224,10 +289,14 @@
     margin: 0;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    font-size: var(--text-base);
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    line-height: 1;
     letter-spacing: var(--tracking-verse);
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__mark {
+    position: relative;
+    width: var(--leading-xs);
     writing-mode: horizontal-tb;
     align-items: center;
     gap: var(--space-3);
@@ -238,6 +307,10 @@
     letter-spacing: 0.12em;
   }
   .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
+    position: absolute;
+    top: calc(100% + var(--space-3));
+    left: calc(100% + var(--space-3) / 2);
+    translate: -50% 0;
     margin: 0;
     transform: none;
     transform-origin: center center;
@@ -248,11 +321,11 @@
 .reading-page .poem-slip__cols[data-overflow="true"] { overflow: auto; }
 .reading-page .poem-slip-action:disabled { opacity: .6; cursor: wait; }
 .reading-page [hidden] { display: none; }
-.reading-page .page-about__name { margin: 0; line-height: 1.35; }
+.reading-page .page-about__name { margin: 0; line-height: var(--leading-title); }
 @media (max-width: 640px) {
-  .reading-page .site-main { padding-inline: var(--space-5); }
-  .reading-page .post-title { font-size: var(--text-2xl); }
-  .reading-page .post-ci__body-horizontal { font-size: var(--text-lg); }
+  .reading-page .site-main { padding-inline: var(--space-4); }
+  .reading-page .post-title { font-size: var(--text-page-title); }
+  .reading-page .post-ci__body-horizontal { font-size: var(--text-verse); }
   .reading-page .post-ci__body-horizontal > p { letter-spacing: .04em; text-wrap: balance; }
   .reading-page .essay-meta-strip,
   .reading-page .reading-mast__meta { gap: var(--space-1) var(--space-2); }
@@ -283,7 +356,7 @@
   font-family: var(--font-title);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-meta);
   color: var(--ink-faint);
 }
 
@@ -292,11 +365,12 @@
 }
 
 .reading-mast__epigraph {
-  margin: var(--space-6) 0 0;
+  margin: var(--space-10) 0 0;
+  min-height: calc(var(--text-caption) * var(--leading-body));
   font-family: var(--font-serif);
-  font-size: var(--text-base);
-  line-height: 1.9;
-  letter-spacing: 0.08em;
+  font-size: var(--text-caption);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
   color: var(--ink-secondary);
 }
 
@@ -304,10 +378,10 @@
   display: none;
 }
 
-/* sticky 栏头 + 流式题簇；首屏整屏题签光学居中偏上，不露正文。 */
+/* sticky 栏头 + 流式题簇；首屏按视口与题簇实际高度居中，不露正文。 */
 @keyframes reading-mast-lift {
   from {
-    transform: translateY(calc(var(--reading-travel) * 0.36));
+    transform: translateY(calc(50svh - var(--header-dock-height) - var(--reading-dock-height) / 2));
   }
   to {
     transform: translateY(0);
@@ -316,25 +390,25 @@
 
 @keyframes reading-ci-title-dock {
   from {
-    font-size: var(--text-4xl);
-    letter-spacing: 0.36em;
-    text-indent: 0.36em;
+    font-size: var(--text-page-title);
+    letter-spacing: var(--tracking-poetry-title);
+    text-indent: var(--tracking-poetry-title);
   }
   to {
-    font-size: var(--text-xl);
-    letter-spacing: 0.12em;
-    text-indent: 0.12em;
+    font-size: var(--text-dock-title);
+    letter-spacing: var(--tracking-title);
+    text-indent: var(--tracking-title);
   }
 }
 
 @keyframes reading-essay-title-dock {
   from {
-    font-size: var(--text-4xl);
-    letter-spacing: 0.1em;
+    font-size: var(--text-page-title);
+    letter-spacing: var(--tracking-title);
   }
   to {
-    font-size: var(--text-xl);
-    letter-spacing: 0.06em;
+    font-size: var(--text-dock-title);
+    letter-spacing: var(--tracking-title);
   }
 }
 
@@ -368,6 +442,11 @@
     margin-top: 0;
     max-height: 0;
   }
+}
+
+@keyframes reading-caption-dock {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(var(--space-8) * -1)); }
 }
 
 @keyframes reading-epigraph-fold {
@@ -419,17 +498,22 @@
       --dock-snap: proximity;
     }
 
+    .reading-dock-page .site-main--reading {
+      /* sticky 在卷首也保持定点，避免最后一段退出吸附后再次下移。 */
+      padding-top: 0;
+    }
+
     .reading-dock-zone {
       position: relative;
     }
 
-    .reading-mast {
+    .reading-page .reading-mast {
       position: sticky;
       top: var(--header-dock-height);
       z-index: 2;
       height: var(--reading-dock-height);
       margin: 0;
-      padding: 0 var(--space-6);
+      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -447,6 +531,7 @@
     }
 
     .reading-mast__cluster {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -459,6 +544,30 @@
     .essay-header .reading-mast__cluster,
     .page-about__header .reading-mast__cluster {
       align-items: flex-start;
+    }
+
+    .reading-mast .page-about__brand {
+      margin-bottom: 0;
+    }
+
+    /* 用主标题本身定位，副题、作者、日期和题记均不参与居中高度。 */
+    .reading-mast__details,
+    .reading-mast__cluster > .page-about__tagline {
+      position: absolute;
+      top: 100%;
+      inset-inline: 0;
+    }
+
+    .reading-mast__cluster > .page-about__tagline {
+      margin-top: var(--space-2);
+    }
+
+    .reading-mast__cluster > :is(.post-ci__cipai-badge, .post-detail__eyebrow) {
+      position: absolute;
+      bottom: 100%;
+      inset-inline: 0;
+      margin-top: 0;
+      margin-bottom: var(--space-2);
     }
 
     .reading-mast .post-title,
@@ -495,7 +604,12 @@
       animation-range: 0px calc(var(--reading-travel) * 0.8);
     }
 
-    .reading-mast__epigraph,
+    .reading-mast__epigraph {
+      animation: reading-caption-dock linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--reading-travel) * 0.8);
+    }
+
     .page-about__header .page-about__tagline {
       overflow: hidden;
       animation: reading-epigraph-fold linear both;
@@ -511,8 +625,12 @@
     /* 盖住视口剩余高度，首屏只见题签封面 */
     .reading-head-space {
       display: block;
-      height: var(--reading-travel);
+      height: calc(var(--reading-travel) + var(--reading-dock-height));
       margin-top: calc(var(--reading-dock-height) * -1);
+    }
+
+    .reading-body :is(h1,h2,h3,h4,h5,h6) {
+      scroll-margin-block-start: calc(var(--header-dock-height) + var(--reading-dock-height) + var(--space-6));
     }
 
     .reading-body-anchor {
@@ -549,7 +667,8 @@
     transform: none;
   }
 
-  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta {
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__mark time {
     opacity: 0;
     transform: translateY(1.25rem);
     transition:
@@ -567,7 +686,8 @@
     transform: translateY(0);
   }
 
-  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .post-signature__meta {
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .post-signature__meta,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical.is-revealed .post-signature__mark time {
     opacity: 1;
     transform: translateY(0);
   }
@@ -611,6 +731,7 @@ html.ci-columns-locked {
   .reading-page .post-ci__body--vertical > p,
   .reading-page .post-ci__body--vertical > .post-signature--vertical,
   .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__meta,
+  .reading-page .post-ci__body--vertical > .post-signature--vertical .post-signature__mark time,
   .reading-page .post-ci__body--vertical > .post-signature--vertical .seal--signature {
     animation: none;
     transform: none;

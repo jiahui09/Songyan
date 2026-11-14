@@ -29,12 +29,19 @@
   flex-shrink: 0;
 }
 
+.site-header__brand > img {
+  display: block;
+  max-height: calc(var(--header-dock-height) - var(--space-4));
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .site-header__title {
   font-family: var(--font-title);
-  font-size: var(--text-lg);
-  letter-spacing: 0.3em;
+  font-size: var(--text-brand);
+  letter-spacing: var(--tracking-display);
   color: var(--ink);
-  line-height: 1.2;
+  line-height: var(--leading-title);
 }
 
 .site-header__nav {
@@ -53,8 +60,9 @@
 /* 导航：淡墨小字，悬停/当前页以一道天青雨丝线托底 */
 .site-header__nav-link {
   font-family: var(--font-title);
-  font-size: var(--text-sm);
-  letter-spacing: 0.2em;
+  font-size: var(--text-nav);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
   color: var(--ink-secondary);
   white-space: nowrap;
   padding-bottom: var(--space-1);
@@ -74,25 +82,10 @@
 }
 
 
-/* 首页封面：页眉随滚动收拢，并常驻钉在顶部（不随正文离开）。 */
+/* 页眉内容保持固定字号与尺寸，只沿纵向平移。 */
 @keyframes header-compact {
-  from {
-    padding-block: var(--space-8) var(--space-4);
-  }
-  to {
-    padding-block: var(--space-3) var(--space-2);
-  }
-}
-
-@keyframes header-title-compact {
-  from {
-    font-size: var(--text-lg);
-    letter-spacing: 0.3em;
-  }
-  to {
-    font-size: var(--text-sm);
-    letter-spacing: 0.2em;
-  }
+  from { transform: translateY(var(--space-4)); }
+  to { transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
@@ -103,6 +96,17 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      /* 页眉只占固定高度；内部收拢不再挤动题签、正文和滚动终点。 */
+      height: var(--header-dock-height);
+      flex-shrink: 0;
+      background-color: var(--paper);
+      background-image: var(--paper-texture);
+      background-repeat: repeat;
+    }
+
+    :is(.home-cover-page, .archive-dock-page, .reading-dock-page) .site-header__inner {
+      height: var(--header-dock-height);
+      padding-block: var(--space-2);
       background-color: var(--paper);
       background-image: var(--paper-texture);
       background-repeat: repeat;
@@ -116,22 +120,10 @@
       animation-range: 0px var(--cover-travel);
     }
 
-    .home-cover-page .site-header__title {
-      animation: header-title-compact linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0px var(--cover-travel);
-    }
-
     .archive-dock-page .site-header__inner {
       min-height: var(--header-dock-height);
       box-sizing: border-box;
       animation: header-compact linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0px var(--archive-travel);
-    }
-
-    .archive-dock-page .site-header__title {
-      animation: header-title-compact linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--archive-travel);
     }
@@ -144,11 +136,6 @@
       animation-range: 0px var(--reading-travel);
     }
 
-    .reading-dock-page .site-header__title {
-      animation: header-title-compact linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0px var(--reading-travel);
-    }
   }
 }
 
@@ -201,12 +188,12 @@
   font-family: var(--font-title);
   color: var(--ink-faint);
   font-size: var(--text-sm);
-  line-height: 1.6;
+  line-height: var(--leading-sm);
 }
 
 .post-signature__author {
   font-size: var(--text-base);
-  letter-spacing: 0.2em;
+  letter-spacing: var(--tracking-display);
   color: var(--ink-light);
 }
 
@@ -363,15 +350,13 @@ body.poem-slip-open {
   width: calc(var(--slip-w) * 0.05125);
 }
 
-/* 款印列：以朱砂方印代署名，沉底压角（text-align 于竖排沿行内轴沉末）；
-   定宽 + line-height:1 防行盒撑杆把列撑宽，预算方能满铺 */
+/* 款印与款识交换：印章独立落在左下角，不占词句列宽 */
 .poem-slip__sealcol {
-  flex: none;
-  width: calc(var(--slip-w) * 0.0944);
+  position: absolute;
+  left: calc(var(--slip-w) * 0.0778);
+  bottom: calc(var(--slip-w) * 0.12);
   margin: 0;
   line-height: 1;
-  text-align: end;
-  padding-bottom: calc(var(--slip-w) * 0.13);
 }
 
 /* 钤印：34px 见方，行内随列末流淌 */
@@ -385,17 +370,17 @@ body.poem-slip-open {
   height: calc(var(--slip-w) * 0.0944);
 }
 
-/* 左下角署名 + 日期（竖排款识） */
+/* 作者、日期两列接在词句之后，占用原款印列，底部对齐 */
 .poem-slip__sign {
-  position: absolute;
-  left: calc(var(--slip-w) * 0.0778);
-  bottom: calc(var(--slip-w) * 0.12);
+  flex: none;
+  width: calc(var(--slip-w) * 0.0944);
+  padding-bottom: calc(var(--slip-w) * 0.15);
   display: flex;
-  flex-direction: row;
+  flex-direction: row-reverse;
   align-items: flex-end;
-  gap: calc(var(--slip-w) * 0.018);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  justify-content: center;
+  gap: calc(var(--slip-w) * 0.012);
+  writing-mode: horizontal-tb;
   font-family: var(--font-title);
   font-size: calc(var(--slip-w) * 0.032);
   line-height: 1.35;
@@ -407,6 +392,8 @@ body.poem-slip-open {
 .poem-slip__sign-author,
 .poem-slip__sign-date {
   margin: 0;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
 }
 
 .poem-slip__sign-date {

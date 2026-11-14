@@ -4,11 +4,10 @@
   var ciCfg = theme.ci || {};
   var categories = page.categories && page.categories.length ? page.categories.toArray() : [];
   var eyebrow = page.header || page.cipai || (categories[0] && categories[0].name) || (isCi ? theme.archive.categories.ci : labels.post);
-  var tags = page.tags && page.tags.length ? page.tags.toArray() : [];
   var notes = isCi && ciCfg.show_annotation && Array.isArray(page.annotations) ? page.annotations : [];
   var author = page.signature || (theme.author && theme.author.name) || config.author;
   var written = page.date || page.updated;
-  var epigraph = !isCi && (page.epigraph || page.lead || page.subtitle || '');
+  var epigraph = page.epigraph || page.lead || page.subtitle || '';
   var verticalCi = isCi && ciCfg.vertical_desktop;
 %>
 <main class="site-main site-main--narrow site-main--reading" id="reading-main">
@@ -18,6 +17,7 @@
         <div class="reading-mast__cluster">
           <p class="<%= isCi ? 'post-ci__cipai-badge' : 'post-detail__eyebrow' %>"><%= eyebrow %></p>
           <h1 class="post-title"><%= page.title || config.title %></h1>
+          <div class="reading-mast__details">
           <div class="reading-mast__meta">
             <% if (author) { %><span class="reading-mast__author"><%= author %></span><% } %>
             <% if (written) { %><time datetime="<%= date(written, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: written}) %></time><% } %>
@@ -25,7 +25,8 @@
             <% if (!isCi) { ['location', 'weather', 'mood'].forEach(function (key) { if (page[key]) { %><span class="essay-meta-item"><span class="essay-meta-label"><%= labels[key] %>：</span><%= page[key] %></span><% } }); } %>
             <% if (isCi && page.rhyme) { %><span class="post-ci__rhyme"><%= page.rhyme %></span><% } %>
           </div>
-          <% if (epigraph) { %><p class="reading-mast__epigraph"><%= epigraph %></p><% } %>
+          <p class="reading-mast__epigraph"<% if (!epigraph) { %> aria-hidden="true"<% } %>><%= epigraph %></p>
+          </div>
         </div>
       </header>
       <div class="reading-head-space" aria-hidden="true"></div>
@@ -46,9 +47,6 @@
       <% } %>
     </div>
     <footer class="post-ending">
-    <% if (!isCi && tags.length) { %>
-    <p class="post-tags"><span class="post-tags__label"><%= labels.tags %></span><% tags.forEach(function (tag, index) { %><% if (index) { %><span class="meta-separator" aria-hidden="true">·</span><% } %><a href="<%= url_for(tag.path) %>"><%= tag.name %></a><% }); %></p>
-    <% } %>
     <% if (!(verticalCi)) { %><%- partial('_partial/signature', {slip: isCi && !!ciCfg.share}) %><% } %>
     </footer>
     <%- partial('_partial/comments') %>

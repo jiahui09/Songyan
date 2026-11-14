@@ -16,9 +16,177 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. 归档页「岁时笺纸」横轴：滚轮横移（仅轴区内）+ 指针拖曳 + 进度朱点
   initChronoRail();
 
-  // 3. 诗词竖排：定点后锁页，滚轮驱动整列自下而上升入，直至落款可见
-  initCiColumnLock();
+  // 3. 封面滚动：越过滚轮阈值后自动完成停靠或回到卷首
+  const returnToCover = initCoverScroll();
+
+  // 4. 诗词竖排：定点后锁页，滚轮驱动整列自下而上升入，直至落款可见
+  initCiColumnLock(returnToCover);
 });
+
+/**
+ * 封面只在卷首与正文定点间自动过渡；正文区仍由浏览器原生滚动。
+ * 保留 CSS 滚动时间轴，滚轮累计过阈值才启动整段行程，余势不带入正文。
+ */
+function initCoverScroll() {
+  const root = document.documentElement;
+  const mast = document.querySelector('.home-cover, .archive-head, .reading-mast');
+  const anchor = document.querySelector('.home-dock-zone + .home-sheet, .archive-legend, .reading-body-anchor');
+  if (!mast || !anchor || !CSS.supports('animation-timeline: scroll(root block)') ||
+      !CSS.supports('animation-range: 0px 1px')) return;
+
+  const media = window.matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)');
+  const THRESHOLD = 80;
+  const GESTURE_GAP = 180;
+  let enabled = false;
+  let frame = 0;
+  let settleTimer = 0;
+  let pending = 0;
+  let lastWheel = -Infinity;
+  let lastY = window.scrollY;
+  let direction = 1;
+  let destination = 0;
+  let dockPosition = 0;
+  let draining = false;
+  let dragging = false;
+
+  function dockY() {
+    // 页眉占位固定，正文锚点无需再补偿页眉收拢造成的文档高度变化。
+    return Math.max(0, anchor.getBoundingClientRect().top + window.scrollY -
+      parseFloat(getComputedStyle(anchor).scrollMarginTop));
+  }
+
+  function cancel() {
+    cancelAnimationFrame(frame);
+    clearTimeout(settleTimer);
+    frame = 0;
+    pending = 0;
+    root.classList.remove('cover-scroll-returning');
+  }
+
+  function animateTo(end) {
+    if (!enabled) return;
+    cancel();
+    destination = end;
+    root.classList.toggle('cover-scroll-returning', !end);
+    const from = window.scrollY;
+    const started = performance.now();
+    const duration = parseFloat(getComputedStyle(root).getPropertyValue('--dur-dock'));
+    function tick(now) {
+      const progress = Math.min((now - started) / duration, 1);
+      const target = destination ? dockY() : 0;
+      window.scrollTo({ top: from + (target - from) * (1 - Math.pow(1 - progress, 4)), behavior: 'instant' });
+      if (progress < 1) frame = requestAnimationFrame(tick);
+      else {
+        frame = 0;
+        lastY = window.scrollY;
+        dockPosition = dockY();
+        root.classList.remove('cover-scroll-returning');
+      }
+    }
+    frame = requestAnimationFrame(tick);
+  }
+
+  function settle() {
+    clearTimeout(settleTimer);
+    if (!enabled || frame || dragging || root.classList.contains('ci-columns-locked')) return;
+    const y = window.scrollY;
+    const end = dockY();
+    if (y > 2 && y < end - 2) animateTo(direction > 0 ? end : 0);
+  }
+
+  function nestedScroll(target, delta) {
+    for (let el = target instanceof Element ? target : null; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollHeight <= el.clientHeight + 1 || !/(auto|scroll)/.test(getComputedStyle(el).overflowY)) continue;
+      if (delta > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0) return true;
+    }
+    return false;
+  }
+
+  window.addEventListener('wheel', (event) => {
+    if (!enabled || event.defaultPrevented || event.ctrlKey || !event.cancelable ||
+        Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    const now = performance.now();
+    if (frame || (draining && now - lastWheel < GESTURE_GAP)) {
+      event.preventDefault();
+      lastWheel = now;
+      return;
+    }
+    draining = false;
+    if (root.classList.contains('ci-columns-locked') || nestedScroll(event.target, event.deltaY)) return;
+    const end = dockY();
+    const y = window.scrollY;
+    if (y > end + 2 || (y >= end - 2 && event.deltaY > 0) || (y <= 2 && event.deltaY < 0)) return;
+    event.preventDefault();
+    clearTimeout(settleTimer);
+    const delta = event.deltaY * (event.deltaMode === 1 ? parseFloat(getComputedStyle(root).fontSize) :
+      event.deltaMode === 2 ? window.innerHeight : 1);
+    if (now - lastWheel > GESTURE_GAP || Math.sign(delta) !== Math.sign(pending)) pending = 0;
+    pending += delta;
+    lastWheel = now;
+    if (Math.abs(pending) >= THRESHOLD) {
+      direction = Math.sign(pending);
+      draining = true;
+      animateTo(direction > 0 ? end : 0);
+    }
+  }, { passive: false, capture: true });
+
+  window.addEventListener('keydown', (event) => {
+    if (!enabled || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey ||
+        event.target.closest('input, textarea, select, button, a, [contenteditable]') ||
+        root.classList.contains('ci-columns-locked')) return;
+    const down = ['ArrowDown', 'PageDown', ' '].includes(event.key) && !event.shiftKey;
+    const up = ['ArrowUp', 'PageUp'].includes(event.key) || (event.key === ' ' && event.shiftKey);
+    if (!down && !up) return;
+    const end = dockY();
+    if (window.scrollY > end + 2 || (down && window.scrollY >= end - 2) || (up && window.scrollY <= 2)) return;
+    event.preventDefault();
+    if (!frame) animateTo(down ? end : 0);
+  });
+
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (y !== lastY) direction = Math.sign(y - lastY);
+    lastY = y;
+    clearTimeout(settleTimer);
+    if (enabled && !frame && !dragging) settleTimer = setTimeout(settle, GESTURE_GAP);
+  }, { passive: true });
+  window.addEventListener('pointerdown', () => {
+    if (!enabled) return;
+    dragging = true;
+    draining = false;
+    cancel();
+  }, { passive: true });
+  function releasePointer() {
+    dragging = false;
+    if (enabled) settleTimer = setTimeout(settle, GESTURE_GAP);
+  }
+  window.addEventListener('pointerup', releasePointer, { passive: true });
+  window.addEventListener('pointercancel', releasePointer, { passive: true });
+  window.addEventListener('resize', () => {
+    if (!enabled || frame) return;
+    clearTimeout(settleTimer);
+    const wasDocked = Math.abs(lastY - dockPosition) <= 2 && dockPosition > 0;
+    dockPosition = dockY();
+    if (wasDocked) {
+      // 视口改变不等于上滑手势：停靠中的页面继续贴合新定点。
+      window.scrollTo({ top: dockPosition, behavior: 'instant' });
+      lastY = window.scrollY;
+    } else settleTimer = setTimeout(settle, GESTURE_GAP);
+  });
+  function syncMode() {
+    cancel();
+    enabled = media.matches;
+    draining = false;
+    root.classList.toggle('cover-scroll-enabled', enabled);
+    if (enabled) {
+      dockPosition = dockY();
+      settleTimer = setTimeout(settle, GESTURE_GAP);
+    }
+  }
+  media.addEventListener('change', syncMode);
+  syncMode();
+  return () => animateTo(0);
+}
 
 /**
  * 初始化「落墨」动效（IntersectionObserver 视口触发展开）
@@ -66,7 +234,7 @@ function initLuoMoAnimation() {
  * 归档页「岁时笺纸」横轴交互：
  * 1. 滚轮横移——监听只挂在轴体（.chrono__rail）上，指针在轴区内才接管；
  *    轴体可滚时横移，到端点将纵向滚动交还页面
- * 2. 指针拖曳（原生滚动条已隐藏，桌面必需）
+ * 2. 指针拖曳（跨出轨道仍持续，松手后恢复原生链接点击）
  * 3. 进度朱点——弧路径按像素宽重建，端点内缩 ≥ 朱点半径防视口裁切；
  *    朱点按滚动进度映射弧长（右端＝最新，左端＝最旧）
  * 4. 平滑缓动——滚轮以目标位 + rAF 阻尼插值推进，阻尼放缓求丝滑（reduced-motion 直接落位）
@@ -112,8 +280,8 @@ function initChronoRail() {
     const width = curveLine.ownerSVGElement.getBoundingClientRect().width;
     if (!width) return;
     const pad = DOT_R;
-    const y0 =
-      readTokenPx('--chrono-top', 200) + readTokenPx('--chrono-bottom', 512);
+    const entry = rail.querySelector('.chrono__year:not([hidden]) .chrono__entry');
+    const y0 = readSagPx() + readTokenPx('--chrono-top', 200) + (entry ? entry.offsetHeight : 0);
     const sag = readSagPx();
     curveLine.setAttribute(
       'd',
@@ -127,7 +295,7 @@ function initChronoRail() {
     if (!axisLine) return;
     const width = axisLine.ownerSVGElement.getBoundingClientRect().width;
     if (!width) return;
-    const y0 = readTokenPx('--chrono-top', 200);
+    const y0 = readSagPx() + readTokenPx('--chrono-top', 200);
     const sag = readSagPx();
     axisLine.setAttribute(
       'd',
@@ -152,10 +320,24 @@ function initChronoRail() {
     const railRect = rail.getBoundingClientRect();
     if (!railRect.width) return;
     const sag = readSagPx();
-    shiftTargets.forEach((el) => {
+    const shifts = Array.from(shiftTargets).filter(el => el.getClientRects().length).map((el) => {
       const rect = el.getBoundingClientRect();
-      const t = clamp((rect.left + rect.width / 2 - railRect.left) / railRect.width, 0, 1);
-      el.style.setProperty('--curve-y', (-4 * sag * t * (1 - t)).toFixed(2) + 'px');
+      const center = rect.left + rect.width / 2;
+      const t = clamp((center - railRect.left) / railRect.width, 0, 1);
+      const position = t * 2 - 1;
+      // 平面中心最大、最清晰；越向边缘越沿圆柱后退并转向中心。
+      const depth = 1 - Math.cos(position * Math.PI / 2);
+      return { el, shift: (-4 * sag * t * (1 - t)).toFixed(2) + 'px',
+        position, depth, origin: railRect.left + railRect.width / 2 - rect.left };
+    });
+    shifts.forEach(({ el, shift, position, depth, origin }) => {
+      el.style.setProperty('--curve-y', shift);
+      if (!el.classList.contains('chrono__item')) return;
+      el.style.setProperty('--chrono-origin', origin.toFixed(2) + 'px');
+      el.style.setProperty('--chrono-angle', `calc(var(--chrono-tilt) * ${(-position).toFixed(4)})`);
+      el.style.setProperty('--chrono-z', `calc(var(--chrono-depth) * ${(-depth).toFixed(4)})`);
+      el.style.setProperty('--chrono-opacity', (1 - depth * 0.4).toFixed(4));
+      el.style.setProperty('--chrono-focus', `calc(var(--chrono-blur) * ${depth.toFixed(4)})`);
     });
   }
 
@@ -171,31 +353,50 @@ function initChronoRail() {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let scrollTarget = 0;
   let glideRaf = 0;
+  let lastFrame = 0;
+  let glidePosition = 0;
+  let knownMax = 0;
+  let readingProgress = 1;
+
+  function stopGlide() {
+    cancelAnimationFrame(glideRaf);
+    glideRaf = 0;
+    lastFrame = 0;
+    scrollTarget = rail.scrollLeft;
+  }
 
   function maxScroll() {
     return Math.max(rail.scrollWidth - rail.clientWidth, 0);
   }
 
-  function glide() {
-    const diff = scrollTarget - rail.scrollLeft;
+  function glide(now) {
+    const elapsed = Math.min(now - lastFrame, 64);
+    lastFrame = now;
+    const diff = scrollTarget - glidePosition;
     if (Math.abs(diff) < 0.5) {
       rail.scrollLeft = scrollTarget;
       glideRaf = 0;
       return;
     }
-    rail.scrollLeft = rail.scrollLeft + diff * 0.085;
+    // 按经过时间衰减，60Hz / 120Hz 显示器保持相同阻尼。
+    glidePosition += diff * (1 - Math.exp(-elapsed / 180));
+    rail.scrollLeft = glidePosition;
     glideRaf = requestAnimationFrame(glide);
   }
 
   function glideTo(next) {
     scrollTarget = clamp(next, 0, maxScroll());
     if (reduceMotion.matches) {
-      rail.scrollLeft = scrollTarget;
+      const target = scrollTarget;
+      stopGlide();
+      rail.scrollLeft = scrollTarget = target;
       return;
     }
-    // 先落一阶步进（即时反馈），余程由 rAF 阻尼缓动收敛
-    rail.scrollLeft += (scrollTarget - rail.scrollLeft) * 0.25;
-    if (!glideRaf) glideRaf = requestAnimationFrame(glide);
+    if (!glideRaf) {
+      lastFrame = performance.now();
+      glidePosition = rail.scrollLeft;
+      glideRaf = requestAnimationFrame(glide);
+    }
   }
 
   // 滚轮横移：ltr 坐标（scrollLeft 0 在左＝最旧端，max 在右＝最新端）；
@@ -205,7 +406,10 @@ function initChronoRail() {
     const settling = glideRaf || Math.abs(scrollTarget - rail.scrollLeft) > 1;
     const current = settling ? scrollTarget : rail.scrollLeft;
     const next = clamp(current - deltaY, 0, maxScroll());
-    if (Math.abs(next - current) < 0.5) return false;
+    if (Math.abs(next - current) < 0.5) {
+      // 目标先到边缘时，先收完余程再把纵向滚动交还页面。
+      return !!glideRaf;
+    }
     glideTo(next);
     return true;
   }
@@ -213,9 +417,14 @@ function initChronoRail() {
   rail.addEventListener(
     'wheel',
     (e) => {
-      if (e.ctrlKey) return; // 浏览器缩放手势放行
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 原生横向手势不拦截
-      if (wheelScroll(e.deltaY)) e.preventDefault();
+      if (e.defaultPrevented || e.ctrlKey) return; // 封面过渡与浏览器缩放手势放行
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) {
+        stopGlide(); // 原生横向手势接管时取消纵向滚轮缓动
+        return;
+      }
+      const unit = e.deltaMode === 1 ? parseFloat(getComputedStyle(rail).lineHeight) :
+        e.deltaMode === 2 ? rail.clientWidth : 1;
+      if (wheelScroll(e.deltaY * unit)) e.preventDefault();
     },
     { passive: false }
   );
@@ -224,17 +433,21 @@ function initChronoRail() {
   let dragFrom = null;
   let dragged = false;
   rail.addEventListener('pointerdown', (e) => {
+    stopGlide();
     if (e.pointerType !== 'mouse') return; // 触屏保留浏览器原生惯性与纵向手势
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    cancelAnimationFrame(glideRaf);
-    glideRaf = 0;
+    if (e.button !== 0) return;
     dragged = false;
-    dragFrom = { x: e.clientX, scroll: rail.scrollLeft };
+    dragFrom = { x: e.clientX, scroll: rail.scrollLeft, id: e.pointerId };
   });
   rail.addEventListener('pointermove', (e) => {
-    if (!dragFrom) return;
-    if (Math.abs(e.clientX - dragFrom.x) > 5) dragged = true;
+    if (!dragFrom || e.pointerId !== dragFrom.id) return;
+    if (!dragged && Math.abs(e.clientX - dragFrom.x) > 5 && maxScroll() > 1) {
+      dragged = true;
+      rail.classList.add('is-dragging');
+      rail.setPointerCapture(e.pointerId);
+    }
     if (!dragged) return;
+    e.preventDefault();
     scrollTarget = clamp(dragFrom.scroll - (e.clientX - dragFrom.x), 0, maxScroll());
     rail.scrollLeft = scrollTarget;
   });
@@ -243,11 +456,38 @@ function initChronoRail() {
     e.preventDefault();
     dragged = false;
   }, true);
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach((evt) =>
-    rail.addEventListener(evt, () => {
-      dragFrom = null;
-    })
-  );
+  function endDrag() {
+    const id = dragFrom?.id;
+    dragFrom = null;
+    rail.classList.remove('is-dragging');
+    if (id !== undefined && rail.hasPointerCapture(id)) rail.releasePointerCapture(id);
+  }
+  ['pointerup', 'pointercancel', 'blur'].forEach(evt => window.addEventListener(evt, endDrag));
+  rail.addEventListener('lostpointercapture', endDrag);
+  rail.addEventListener('dragstart', event => event.preventDefault());
+
+  rail.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+    let next;
+    if (event.key === 'ArrowLeft') next = rail.scrollLeft - rail.clientWidth / 4;
+    else if (event.key === 'ArrowRight') next = rail.scrollLeft + rail.clientWidth / 4;
+    else if (event.key === 'Home') next = maxScroll();
+    else if (event.key === 'End') next = 0;
+    else return;
+    event.preventDefault();
+    glideTo(next);
+  });
+  rail.addEventListener('focusin', (event) => {
+    const entry = event.target.closest('.chrono__entry');
+    if (!entry) return;
+    stopGlide();
+    const bounds = rail.getBoundingClientRect();
+    const rect = entry.getBoundingClientRect();
+    const inset = bounds.width * 0.03 + readTokenPx('--space-4', 16);
+    if (rect.left < bounds.left + inset) rail.scrollLeft += rect.left - bounds.left - inset;
+    else if (rect.right > bounds.right - inset) rail.scrollLeft += rect.right - bounds.right + inset;
+    scrollTarget = rail.scrollLeft;
+  });
 
   // 滚动事件本身已按帧节流，直接同步朱点；
   // 非缓动、非拖曳期的外部滚动（触屏惯性）同步目标位，防后续滚轮跳位
@@ -255,6 +495,7 @@ function initChronoRail() {
     'scroll',
     () => {
       if (!glideRaf && !dragFrom) scrollTarget = rail.scrollLeft;
+      if (knownMax === maxScroll()) readingProgress = knownMax > 1 ? rail.scrollLeft / knownMax : 1;
       updateDot();
       updateShift();
     },
@@ -267,8 +508,8 @@ function initChronoRail() {
     const items = rail.querySelectorAll('.chrono__item');
     const years = rail.querySelectorAll('.chrono__year');
     const applyFilter = (cat) => {
-      cancelAnimationFrame(glideRaf);
-      glideRaf = 0;
+      stopGlide();
+      endDrag();
       legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
         btn.setAttribute('aria-pressed', String(btn.dataset.catFilter === cat));
       });
@@ -287,6 +528,8 @@ function initChronoRail() {
       // 版面变了：弧线按新宽重建，回停最新端
       rail.scrollLeft = rail.scrollWidth;
       scrollTarget = rail.scrollLeft;
+      knownMax = maxScroll();
+      readingProgress = 1;
       refresh();
     };
     legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
@@ -296,15 +539,30 @@ function initChronoRail() {
     });
   }
 
-  window.addEventListener('resize', () => {
+  function refreshLayout() {
+    stopGlide();
+    endDrag();
+    knownMax = maxScroll();
+    rail.scrollLeft = scrollTarget = clamp(readingProgress, 0, 1) * knownMax;
+    refresh();
+  }
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(refreshLayout);
+    observer.observe(rail);
+    observer.observe(track);
+  } else window.addEventListener('resize', refreshLayout);
+  reduceMotion.addEventListener('change', () => {
+    const target = scrollTarget;
+    stopGlide();
+    if (reduceMotion.matches) rail.scrollLeft = scrollTarget = target;
     refresh();
   });
 
-  // 初始停驻最新端（物理右）；无 JS 时静态降级停在最旧端
-  rail.scrollLeft = rail.scrollWidth;
-  scrollTarget = rail.scrollLeft;
+  // 初始停驻最新端；字体与视口变化后保留阅读进度。
+  knownMax = maxScroll();
+  rail.scrollLeft = scrollTarget = knownMax;
   refresh();
-  document.fonts.ready.then(refresh);
+  document.fonts.ready.then(refreshLayout);
 }
 
 /**
@@ -314,7 +572,7 @@ function initChronoRail() {
  * 3. 全部列与竖排落款入场后解锁，继续下滑到页脚
  * 4. prefers-reduced-motion / 窄屏 / 无竖排舞台时直接全显
  */
-function initCiColumnLock() {
+function initCiColumnLock(returnToCover) {
   const stage = document.querySelector('[data-ci-columns]');
   if (!stage) return;
 
@@ -377,6 +635,7 @@ function initCiColumnLock() {
   }
 
   function syncLock() {
+    if (document.documentElement.classList.contains('cover-scroll-returning')) return;
     if (reduceMotion.matches || !desktop.matches) {
       revealAll();
       return;
@@ -397,7 +656,7 @@ function initCiColumnLock() {
   }
 
   function onWheel(event) {
-    if (!locked || reduceMotion.matches || !desktop.matches) return;
+    if (!locked || event.defaultPrevented || reduceMotion.matches || !desktop.matches) return;
     if (event.ctrlKey) return;
     if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
 
@@ -416,7 +675,10 @@ function initCiColumnLock() {
     }
 
     if (revealed >= steps) unlock();
-    else if (revealed === 0 && pending < -STEP) unlock();
+    else if (revealed === 0 && pending <= -STEP) {
+      unlock();
+      if (returnToCover) returnToCover();
+    }
   }
 
   function onScroll() {

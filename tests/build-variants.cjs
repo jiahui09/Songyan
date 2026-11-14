@@ -71,5 +71,62 @@ async function build(name, overrides, source) {
   assert.ok(!directIndex.includes('class="home-cover"'), 'home.cover:false disables the cover');
   assert.ok(directIndex.includes('id="home-stream"') && directIndex.includes('class="post-item"'), 'content remains present with the cover disabled');
   console.log('PASS isolated home.cover:false: direct reading without a cover or broken content target');
+  if (process.env.PLAYWRIGHT_PACKAGE) {
+    const { createServer } = require('node:http');
+    const { chromium } = createRequire(process.env.PLAYWRIGHT_PACKAGE)('playwright');
+    const evidence = '/tmp/songyan-other-pages-qa';
+    await fs.mkdir(evidence, { recursive: true });
+    const server = createServer(async (req, res) => {
+      try {
+        let name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+        if (name.endsWith('/')) name += 'index.html';
+        const file = path.resolve(paginated, '.' + name);
+        assert.ok(file.startsWith(paginated + path.sep));
+        const data = await fs.readFile(file);
+        res.writeHead(200, { 'Content-Type': ({ '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png' })[path.extname(file)] || 'application/octet-stream' });
+        res.end(data);
+      } catch { res.writeHead(404); res.end(); }
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage();
+      for (const viewport of [{ width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+        await page.setViewportSize(viewport);
+        for (const route of ['/notes/', '/about/', '/2026/10/01/entry-0/']) {
+          await page.goto(`http://127.0.0.1:${server.address().port}${route}`);
+          await page.evaluate(() => document.fonts.ready);
+          const center = () => page.locator('.reading-mast .post-title, .reading-mast .page-about__name').evaluate(el => {
+            const rect = el.getBoundingClientRect();
+            return (rect.top + rect.bottom) / 2;
+          });
+          assert.ok(Math.abs(await center() - viewport.height / 2) < 1, `${route}: initial cover centers`);
+          await page.mouse.move(20, 200);
+          await page.mouse.wheel(0, 120);
+          await page.waitForTimeout(800);
+          assert.ok(await page.evaluate(() => {
+            const mast = document.querySelector('.reading-mast').getBoundingClientRect();
+            const anchor = document.querySelector('.reading-body-anchor').getBoundingClientRect();
+            return Math.abs(mast.bottom - anchor.top) < 2;
+          }), `${route}: body docks beneath title`);
+          await page.mouse.wheel(0, -120);
+          await page.waitForTimeout(800);
+          const returned = await center();
+          await page.waitForTimeout(200);
+          assert.ok(Math.abs(returned - viewport.height / 2) < 1 && Math.abs(await center() - returned) < 0.1, `${route}: return centers without a late jump`);
+          await page.screenshot({ path: path.join(evidence, `${route.split('/').filter(Boolean).pop()}-${viewport.width}.png`) });
+        }
+      }
+      for (const route of ['/page/2/', '/404.html']) {
+        await page.goto(`http://127.0.0.1:${server.address().port}${route}`);
+        assert.equal(await page.locator('html.cover-scroll-enabled').count(), 0, `${route}: no cover controller without a cover`);
+        assert.equal(await page.locator('.site-header').evaluate(el => getComputedStyle(el).position), 'relative', `${route}: normal header layout retained`);
+      }
+      console.log(`PASS isolated page animations: independent page, custom about, fallback post, pagination and 404. Evidence: ${evidence}`);
+    } finally {
+      await browser.close();
+      await new Promise(resolve => server.close(resolve));
+    }
+  }
   console.log(`RESULT: 4 isolated build variants passed. Subpath output: ${subpath}`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

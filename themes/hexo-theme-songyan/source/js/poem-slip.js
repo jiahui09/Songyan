@@ -6,8 +6,8 @@
  * 3. 只取词页既有内容（词牌、题注、词句、印面、水印），不复制硬编码文本
  * 4. 句读不落任何黑点：词句间以留白相隔（自然断句）；阕间空出一列留白；
  *    全笺无「过片」与现代标点，四周无框，仅以乌丝栏淡线分列
- * 5. 360×540 竖排走势（1:1.5）：词牌题注居右竖写，词句列居中留天地，
- *    款印沉底压角（以印代署名），笺底以「松烟」二字为识
+ * 5. 360×540 竖排走势（1:1.5）：词牌题注居右竖写，词句顶对齐，
+ *    作者日期两列收尾，款印落左下角，笺底保留主题水印
  * 6. 导出为原生 Canvas 2× 高清 PNG，与 .poem-slip 同一套比例系数与颜色令牌
  */
 
@@ -158,7 +158,7 @@ function cleanCiLine(lineEl) {
 
 /**
  * 竖排成笺：右起 词牌 → 题注（低一格）→ 词句顶对齐（阕间空一列）
- * → 款印（沉底压角）；左下另落署名与日期
+ * → 署名与日期两列；款印另落左下角
  */
 function renderPoemSlip(cols) {
   const data = collectPoemSlipData();
@@ -167,6 +167,8 @@ function renderPoemSlip(cols) {
   const signAuthor = slip ? slip.querySelector('[data-poem-slip-author]') : null;
   const signDate = slip ? slip.querySelector('[data-poem-slip-date]') : null;
 
+  if (sign) sign.remove();
+  if (slip) slip.querySelectorAll('.poem-slip__sealcol').forEach(node => node.remove());
   while (cols.firstChild) cols.removeChild(cols.firstChild);
 
   if (data.cipai) cols.appendChild(slipClauseColumn('poem-slip__cipai', [data.cipai]));
@@ -183,13 +185,14 @@ function renderPoemSlip(cols) {
     const sigCol = document.createElement('p');
     sigCol.className = 'poem-slip__sealcol';
     sigCol.appendChild(seal);
-    cols.appendChild(sigCol);
+    slip.appendChild(sigCol);
   }
 
   if (sign && signAuthor && signDate) {
     signAuthor.textContent = data.author || '';
     signDate.textContent = data.date || '';
     sign.hidden = !(data.author || data.date);
+    cols.appendChild(sign);
   }
 }
 
@@ -333,14 +336,14 @@ async function drawPoemSlip(data) {
   ctx.fillStyle = token('--slip-paper');
   ctx.fillRect(0, 0, W, H);
 
-  // 2. 列位：天地同 inset，词句顶对齐；左下另落署名日期
+  // 2. 列位：天地同 inset，词句顶对齐；款识与左下款印交换
   const inset = W * 0.0778;
   const areaH = H - inset * 2;
   const metric = {
     cipai:   { size: W * 0.062, ls: 0.2,  lh: 1.25, weight: '400', font: fontTitle, color: token('--ink') },
     tizhu:   { size: W * 0.036, ls: 0.12, lh: 1.4,  weight: '400', font: fontTitle, color: token('--ink-light'), top: 0.05 },
     line:    { size: W * 0.041, ls: 0.15, lh: 1.25, weight: '400', font: fontSerif, color: token('--ink') },
-    sealcol: { size: W * 0.0944, align: 'end', padBottom: 0.13 },
+    sealcol: { size: W * 0.0944 },
     sign:    { size: W * 0.032, ls: 0.14, lh: 1.35, weight: '400', font: fontTitle, color: token('--ink-light') },
     date:    { size: W * 0.028, ls: 0.12, lh: 1.35, weight: '400', font: fontTitle, color: token('--ink-faint') },
     mark:    { size: W * 0.028, ls: 0.14, lh: 1.4,  weight: '400', font: fontTitle, color: token('--slip-watermark') }
@@ -384,15 +387,31 @@ async function drawPoemSlip(data) {
     place(clauses, metric.line);
   });
 
-  // 款印：以印代署名，沉底压角（.poem-slip__sealcol 之 text-align:end + padding-bottom 0.13W）
+  // 作者、日期占用原款印列；两列竖写，底部对齐
+  if (data.author || data.date) {
+    const signWidth = metric.sign.size * metric.sign.lh;
+    const dateWidth = metric.date.size * metric.date.lh;
+    const signGap = W * 0.012;
+    const bottom = H - inset - W * 0.15;
+    placeBox(metric.sealcol.size, inset, (cx) => {
+      const right = cx + (signWidth + dateWidth + signGap) / 2;
+      const drawSign = (text, m, x) => {
+        if (!text) return;
+        const height = ciTextHeight([text], m);
+        if (height > bottom - inset) throw new RangeError('poem slip signature exceeds paper height');
+        drawVerticalClauses(ctx, [text], x, bottom - height, m);
+      };
+      drawSign(data.author, metric.sign, right - signWidth / 2);
+      drawSign(data.date, metric.date, right - signWidth - signGap - dateWidth / 2);
+      return bottom;
+    });
+  }
+
+  // 款印落在原款识左下位置，不再占用正文列
   const sealImage = await loadSlipSealImage();
   if (sealImage) {
     const m = metric.sealcol;
-    const top = inset + areaH - m.size - m.padBottom * W;
-    placeBox(m.size, top, (cx, y) => {
-      drawSlipSeal(ctx, sealImage, cx, y, m.size);
-      return y + m.size;
-    });
+    drawSlipSeal(ctx, sealImage, inset + m.size / 2, H - W * 0.12 - m.size, m.size);
   }
 
   // 4. 乌丝栏：自天头至地脚的极淡竖栏线；首列右缘外无栏隙，与 DOM 一致自第二列起落线
@@ -405,31 +424,7 @@ async function drawPoemSlip(data) {
   });
   ctx.stroke();
 
-  // 5. 左下角署名 + 日期（竖排款识，自下而上写）
-  if (data.author || data.date) {
-    const signMetric = metric.sign;
-    const dateMetric = metric.date;
-    const gapY = W * 0.018;
-    let y = H - inset - W * 0.02;
-    const drawUp = (text, m) => {
-      if (!text) return;
-      const chars = Array.from(text);
-      const advance = m.size * (1 + m.ls);
-      ctx.font = m.weight + ' ' + m.size + 'px ' + m.font;
-      ctx.fillStyle = m.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      for (let i = chars.length - 1; i >= 0; i--) {
-        ctx.fillText(chars[i], inset + m.size / 2, y - m.size / 2);
-        y -= advance;
-      }
-      y -= gapY;
-    };
-    drawUp(data.date, dateMetric);
-    drawUp(data.author, signMetric);
-  }
-
-  // 6. 笺底水印：左下角极小浅灰小字；基线按 DOM 行盒下沉量回算，与 .poem-slip__watermark 同位
+  // 5. 笺底水印：左下角极小浅灰小字；基线按 DOM 行盒下沉量回算，与 .poem-slip__watermark 同位
   if (data.watermark) {
     const m = metric.mark;
     ctx.font = m.weight + ' ' + m.size + 'px ' + m.font;

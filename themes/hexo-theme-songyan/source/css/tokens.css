@@ -68,30 +68,50 @@
 
   /* 字体族定义：题字用自托管霞鹜文楷 Lite（fonts.css 分片按需加载），正文系统宋体 */
   --font-title: "Songyan Latin", "LXGW WenKai Lite", "LXGW WenKai", "霞鹜文楷", "Kaiti SC", "STKaiti", "KaiTi", "楷体", "AR PL UKai CN", serif;
+  --font-list-title: "LXGW WenKai Lite", "LXGW WenKai", "霞鹜文楷", "Kaiti SC", "STKaiti", "KaiTi", serif;
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Noto Serif CJK SC", "思源宋体", "Songti SC", "STSong", "SimSun", "宋体", "FangSong", serif;
   --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-code:  "JetBrains Mono", "Fira Code", Monaco, Consolas, "Courier New", monospace;
 
-  /* 字号阶梯 */
-  --text-xs:    0.75rem;    /* 12px */
+  /* 阅读层级：正文 17/18，列表 24/26，页面标题 32/40，卷首诗句独立放大。 */
+  --text-xs:    0.8125rem;  /* 13px */
   --text-sm:    0.875rem;   /* 14px */
   --text-base:  1rem;       /* 16px */
   --text-lg:    1.125rem;   /* 18px */
   --text-xl:    1.25rem;    /* 20px */
   --text-2xl:   1.5rem;     /* 24px */
-  --text-3xl:   1.875rem;   /* 30px */
+  --text-3xl:   2rem;       /* 32px */
   --text-4xl:   2.25rem;    /* 36px */
-  --text-epigraph: clamp(var(--text-xl), 1rem + 2.5vw, var(--text-4xl)); /* 卷首题句：随视口流动，20→36px */
+  --text-body:  1.0625rem;
+  --text-summary: 1.0625rem;
+  --text-page-title: 2rem;
+  --text-list-title: 1.5rem;
+  --text-nav: 1rem;
+  --text-brand: 1.375rem;
+  --text-dock-title: 1.75rem;
+  --text-verse: var(--text-lg);
+  --text-code: var(--text-sm);
+  --text-caption: var(--text-base);
+  --text-epigraph: clamp(1.875rem, 4vw, 3.25rem);
 
-  /* 小字行盒（4px 网格：12px 字 → 20px，14px 字 → 24px） */
-  --leading-xs: 20px;
-  --leading-sm: 24px;
+  /* 行高与字距：阅读段落舒展，标题紧凑；诗词竖排行距单独保留。 */
+  --leading-xs: 1.25rem;
+  --leading-sm: 1.5rem;
+  --leading-body: 1.8;
+  --leading-title: 1.3;
+  --leading-verse: 2;
+  --leading-verse-columns: 2.25;
+  --tracking-body: 0;
+  --tracking-title: 0.04em;
+  --tracking-display: 0.08em;
+  --tracking-poetry-title: 0.12em;
+  --tracking-meta: 0.06em;
 
   /* 文人排版规范（分类题头等固定排印参数） */
-  --text-tag:     0.75rem;   /* 朱红题头字号（12px） */
-  --tracking-tag: 0.25em;    /* 朱红题头字距（tracking-widest） */
+  --text-tag:     var(--text-xs);
+  --tracking-tag: var(--tracking-poetry-title);
   --font-date:    var(--font-title);  /* 日期统一汉字书写，随题字体 */
-  --tracking-verse: 0.18em;  /* 诗句字距 */
+  --tracking-verse: 0.08em;  /* 诗句微疏，不影响连续阅读 */
 
   /* 间距尺寸 */
   --space-1:    0.25rem;    /* 4px */
@@ -113,9 +133,9 @@
   --radius-pill: 999px;
 
   /* 容器版心 */
-  --container-max: 1120px;
-  --prose-max:     640px;    /* 阅读版心：留白先于文字 */
-  --stream-max:    640px;    /* 首页归流版心 */
+  --container-max: 80rem;
+  --prose-max:     58rem;    /* 桌面阅读版心，含左右内边距 */
+  --stream-max:    60rem;    /* 首页列表与页头版心 */
   --ci-column-height: 30rem; /* 词作竖排列高（桌面）：容二十字长句不折列 */
 
   /* 动效铁律（全站唯一一套物理时长与缓动） */
@@ -123,27 +143,31 @@
   --dur-enter:     320ms;  /* 落墨入场 */
   --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
   --dur-unfold:    200ms;  /* 折角纸笺展开 */
+  --dur-dock:      640ms;  /* 封面越过阻尼阈值后自动完成整段行程 */
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
   /* 卷首题签停靠：行程后释放；页眉收拢并常驻顶部。 */
   --cover-height: 62svh;
   --cover-dock-height: 5.5rem; /* 栏头：缩小后的题句；出处渐隐不占位 */
   --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
-  --cover-title-scale: 0.5;
   --cover-travel: calc(var(--cover-height) - var(--cover-dock-height) - var(--header-dock-height));
 
   /* 岁时笺纸：字形不作透视缩放，长题可折列；两弧与月日共用轴位。 */
   --chrono-top:    8rem;   /* 轴上区：竖排年份与月日 */
   --chrono-bottom: 28rem;  /* 轴下区：题头与题目，保留词尾留白 */
   --chrono-gap:    1.75rem;/* 日列左右列距 */
+  --chrono-perspective: 56rem;
+  --chrono-depth: 9rem;
+  --chrono-tilt: 48deg;
+  --chrono-blur: 0.6px;
   --chrono-sag:    0.875rem;/* 进度朱线弧垂（中沉量） */
   --chrono-breath: clamp(var(--space-16), 12vw, var(--space-24)); /* 两端呼吸距，窄屏不过量留空 */
   /* 归档题头停靠：首屏行程须盖住视口，定点后时间轴塞进页眉+题头下的一屏。 */
-  --archive-dock-height: 3rem;
+  --archive-dock-height: 4.5rem;
   --archive-legend-height: 2.75rem;
   --archive-travel: calc(100svh - var(--header-dock-height));
   --dock-snap: none; /* 引力锚点模式：proximity | none */
   /* 阅读页题头停靠：整屏题签封面，首屏不露正文 */
-  --reading-dock-height: 4.75rem;
+  --reading-dock-height: 10rem;
   --reading-travel: calc(100svh - var(--header-dock-height));
 
   /* 打印专用：素白纸、纯黑墨 */
@@ -158,5 +182,9 @@
 @media (min-width: 900px) {
   :root {
     --cover-height: 100svh;
+    --text-body: 1.125rem;
+    --text-page-title: 2.5rem;
+    --text-list-title: 1.625rem;
+    --text-verse: var(--text-xl);
   }
 }

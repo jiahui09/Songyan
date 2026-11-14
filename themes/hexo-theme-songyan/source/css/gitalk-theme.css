@@ -72,8 +72,8 @@
   color: var(--ink);
   border: 0;
   font-family: var(--font-serif);
-  font-size: var(--text-sm);
-  line-height: 1.8;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .gt-container .gt-header-textarea:hover,
@@ -128,8 +128,8 @@
 
 .gt-container .gt-comment-body {
   color: var(--ink);
-  font-size: var(--text-sm);
-  line-height: 1.9;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .gt-container .gt-comment-username {
