@@ -1460,18 +1460,203 @@
   }
 }
 
-/* 窄屏：仅收字号与列距，滚动与手势不变 */
-@media (max-width: 640px) {
+/* 移动端：降级为左轴右题的垂直时间线（横排易读，保留纸卷节点语言） */
+@media (max-width: 899px) {
+  .chrono {
+    margin-top: var(--space-6);
+  }
+
+  .chrono::after {
+    background: radial-gradient(ellipse at center, transparent 70%, color-mix(in srgb, var(--ink) 3%, transparent) 100%);
+  }
+
+  .chrono__rail {
+    overflow: visible;
+    cursor: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+    scrollbar-width: auto;
+  }
+
+  .chrono__rail.is-dragging {
+    cursor: auto;
+    user-select: auto;
+  }
+
+  /* 双弧改由 CSS 竖虚线承担 */
+  .chrono__axis {
+    display: none;
+  }
+
+  .chrono__track {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .chrono__year {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--space-8);
+  }
+
+  .chrono__year:last-child {
+    margin-bottom: 0;
+  }
+
   .chrono__year-mark {
-    margin-left: var(--space-3);
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-4);
+    padding-left: calc(var(--space-8) + var(--space-2));
+  }
+
+  .chrono__year-mark span {
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
   }
 
   .chrono__year-greg {
-    font-size: var(--text-lg);
+    height: auto;
+    padding: 0;
+    font-size: var(--text-2xl);
+    text-align: start;
+  }
+
+  .chrono__year-gz {
+    flex: none;
+    padding: 0;
+    font-size: var(--text-sm);
+    color: var(--ink-faint);
+  }
+
+  .chrono__year-mark::after {
+    display: none;
+  }
+
+  .chrono__items {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    width: 100%;
+    padding-left: var(--space-8);
+  }
+
+  /* 左侧断点虚线轴 */
+  .chrono__items::before {
+    content: "";
+    position: absolute;
+    top: var(--space-2);
+    bottom: var(--space-2);
+    left: calc(var(--space-8) / 2);
+    border-left: 1px dashed var(--chrono-axis-ink);
+  }
+
+  .chrono__item,
+  .chrono__year-mark {
+    top: auto;
   }
 
   .chrono__item {
-    padding-inline: var(--space-4);
+    display: grid;
+    grid-template-columns: var(--chrono-node-size) minmax(0, 1fr);
+    column-gap: var(--space-4);
+    align-items: start;
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .chrono__node,
+  .chrono__dot {
+    position: relative;
+    top: auto;
+    left: auto;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    margin-top: 0.55em;
+    transform: none;
+  }
+
+  .chrono__node--project,
+  .chrono__dot--project {
+    transform: rotate(45deg);
+  }
+
+  .chrono__head {
+    grid-column: 2;
+    height: auto;
+    display: block;
+    padding: 0;
+    margin-bottom: var(--space-1);
+  }
+
+  .chrono__eyebrow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .chrono__rubric {
+    writing-mode: horizontal-tb;
+    letter-spacing: var(--tracking-meta);
+  }
+
+  .chrono__date {
+    flex-direction: row;
+    gap: 0;
+    font-size: var(--text-xs);
+    transform: none;
+  }
+
+  .chrono__entry {
+    grid-column: 2;
+    height: auto;
+    padding-top: 0;
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+  }
+
+  .chrono__title {
+    font-size: var(--text-lg);
+    letter-spacing: var(--tracking-title);
+  }
+
+  /* 纵轴悬停：晕染落在节点旁，染朱短线改为竖向 */
+  .chrono__item::before {
+    top: calc(0.55em + var(--chrono-node-size) / 2);
+    left: calc(var(--chrono-node-size) / 2);
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .chrono__item::after {
+    top: calc(0.55em + var(--chrono-node-size) / 2);
+    left: calc(var(--chrono-node-size) / 2);
+    width: 2px;
+    height: 1.25rem;
+  }
+
+  .chrono__item:hover .chrono__node,
+  .chrono__item:focus-within .chrono__node,
+  .chrono__item:hover .chrono__dot,
+  .chrono__item:focus-within .chrono__dot {
+    transform: scale(1.15);
+  }
+
+  .chrono__item:hover .chrono__node--project,
+  .chrono__item:focus-within .chrono__node--project,
+  .chrono__item:hover .chrono__dot--project,
+  .chrono__item:focus-within .chrono__dot--project {
+    transform: rotate(45deg) scale(1.15);
   }
 }
 

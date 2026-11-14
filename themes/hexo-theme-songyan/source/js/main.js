@@ -252,6 +252,9 @@ function initChronoRail() {
   const axisLine = document.querySelector('.chrono__axis-line');
   if (!track || !curveLine || !curveDot) return;
 
+  // 与 CSS 移动纵轴断点一致：窄屏只做分卷筛选，不做横滑/双弧
+  const desktopRail = window.matchMedia('(min-width: 900px)');
+
   const DOT_R = 3.5; // 朱点半径，与 .chrono__curve-dot 的 r 一致
   let pathLen = 0;
 
@@ -329,8 +332,18 @@ function initChronoRail() {
     });
   }
 
-  // 版面重建：两弧路径 + 朱点 + 骑弧高度一并求值
+  function clearCurveMetrics() {
+    shiftTargets.forEach((el) => el.style.removeProperty('--curve-y'));
+    if (curveLine) curveLine.removeAttribute('d');
+    if (axisLine) axisLine.removeAttribute('d');
+  }
+
+  // 版面重建：桌面重建双弧/骑弧；窄屏清空横轴度量
   function refresh() {
+    if (!desktopRail.matches) {
+      clearCurveMetrics();
+      return;
+    }
     buildCurve();
     buildAxis();
     updateDot();
@@ -405,6 +418,7 @@ function initChronoRail() {
   rail.addEventListener(
     'wheel',
     (e) => {
+      if (!desktopRail.matches) return; // 窄屏纵轴：滚轮交还页面
       if (e.defaultPrevented || e.ctrlKey) return; // 封面过渡与浏览器缩放手势放行
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) {
         stopGlide(); // 原生横向手势接管时取消纵向滚轮缓动
@@ -421,6 +435,7 @@ function initChronoRail() {
   let dragFrom = null;
   let dragged = false;
   rail.addEventListener('pointerdown', (e) => {
+    if (!desktopRail.matches) return;
     stopGlide();
     if (e.pointerType !== 'mouse') return; // 触屏保留浏览器原生惯性与纵向手势
     if (e.button !== 0) return;
@@ -455,6 +470,7 @@ function initChronoRail() {
   rail.addEventListener('dragstart', event => event.preventDefault());
 
   rail.addEventListener('keydown', (event) => {
+    if (!desktopRail.matches) return;
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
     let next;
     if (event.key === 'ArrowLeft') next = rail.scrollLeft - rail.clientWidth / 4;
@@ -466,6 +482,7 @@ function initChronoRail() {
     glideTo(next);
   });
   rail.addEventListener('focusin', (event) => {
+    if (!desktopRail.matches) return;
     const entry = event.target.closest('.chrono__entry');
     if (!entry) return;
     stopGlide();
@@ -482,6 +499,7 @@ function initChronoRail() {
   rail.addEventListener(
     'scroll',
     () => {
+      if (!desktopRail.matches) return;
       if (!glideRaf && !dragFrom) scrollTarget = rail.scrollLeft;
       if (knownMax === maxScroll()) readingProgress = knownMax > 1 ? rail.scrollLeft / knownMax : 1;
       updateDot();
@@ -513,11 +531,13 @@ function initChronoRail() {
       if (count) count.textContent = String(visibleCount);
       chrono.hidden = visibleCount === 0;
       if (empty) empty.hidden = visibleCount !== 0;
-      // 版面变了：弧线按新宽重建，回停最新端
-      rail.scrollLeft = rail.scrollWidth;
-      scrollTarget = rail.scrollLeft;
-      knownMax = maxScroll();
-      readingProgress = 1;
+      // 版面变了：桌面回停最新端并重建弧线；窄屏仅刷新筛选态
+      if (desktopRail.matches) {
+        rail.scrollLeft = rail.scrollWidth;
+        scrollTarget = rail.scrollLeft;
+        knownMax = maxScroll();
+        readingProgress = 1;
+      }
       refresh();
     };
     legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
@@ -530,6 +550,13 @@ function initChronoRail() {
   function refreshLayout() {
     stopGlide();
     endDrag();
+    if (!desktopRail.matches) {
+      rail.scrollLeft = 0;
+      scrollTarget = 0;
+      knownMax = 0;
+      refresh();
+      return;
+    }
     knownMax = maxScroll();
     rail.scrollLeft = scrollTarget = clamp(readingProgress, 0, 1) * knownMax;
     refresh();
@@ -545,10 +572,15 @@ function initChronoRail() {
     if (reduceMotion.matches) rail.scrollLeft = scrollTarget = target;
     refresh();
   });
+  desktopRail.addEventListener('change', refreshLayout);
 
-  // 初始停驻最新端；字体与视口变化后保留阅读进度。
-  knownMax = maxScroll();
-  rail.scrollLeft = scrollTarget = knownMax;
+  // 初始：桌面停驻最新端；窄屏纵轴不横滚。字体与视口变化后保留阅读进度。
+  if (desktopRail.matches) {
+    knownMax = maxScroll();
+    rail.scrollLeft = scrollTarget = knownMax;
+  } else {
+    rail.scrollLeft = scrollTarget = 0;
+  }
   refresh();
   document.fonts.ready.then(refreshLayout);
 }
