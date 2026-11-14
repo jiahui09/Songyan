@@ -224,3 +224,16 @@ html.cover-scroll-enabled:root {
     text-decoration: underline;
   }
 }
+
+
+/* 微湿宣纸远光晕：低饱和天青/赭石，不抢正文 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 45% at 12% 18%, var(--paper-glow-celadon), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 88% 78%, var(--paper-glow-ochre), transparent 72%);
+}

@@ -151,15 +151,19 @@
   --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
   --cover-travel: calc(var(--cover-height) - var(--cover-dock-height) - var(--header-dock-height));
 
-  /* 岁时笺纸：纸卷隐喻，无透视圆柱；两弧与月日共用轴位，长题可折列。 */
-  --chrono-top:    8rem;   /* 轴上区：竖排年份与月日 */
-  --chrono-bottom: 28rem;  /* 轴下区：题头与题目，保留词尾留白 */
-  --chrono-gap:    1.75rem;/* 日列左右列距 */
-  --chrono-sag:    0.875rem;/* 进度朱线弧垂（中沉量） */
-  --chrono-breath: clamp(var(--space-16), 12vw, var(--space-24)); /* 两端呼吸距，窄屏不过量留空 */
-  /* 纸卷墨迹：轴线/节点/晕染/褪墨（阶段 A 令牌就位，B 起换画法） */
-  --chrono-axis-ink: color-mix(in srgb, var(--ink) 18%, transparent);
-  --chrono-axis-dash: 2 7;
+  /* 岁时笺纸 · 三远法：平远山影 / 深远脉络 / 高远引首；无对称双弧、无机械等距。 */
+  --chrono-top:    8.5rem;  /* 轴上区：分类 + 汉字月日 + 节气 */
+  --chrono-bottom: 28rem;   /* 轴下区：题目，保留词尾留白 */
+  --chrono-gap:    1.75rem; /* 默认列距（无日差数据时回退） */
+  --chrono-span-close: 2.375rem; /* ≤3 日：林峦聚 */
+  --chrono-span-near:  5.125rem; /* ≤月：云烟开 */
+  --chrono-span-mid:   7.125rem; /* ≤季：渐疏 */
+  --chrono-span-far:   9.125rem; /* 跨季年：停顿呼吸 */
+  --chrono-ridge:  0.875rem; /* 脉络起伏半幅（约 ±14px） */
+  --chrono-breath: clamp(var(--space-16), 12vw, var(--space-24));
+  --chrono-axis-mist: color-mix(in srgb, var(--celadon) 42%, transparent);
+  --chrono-axis-ink: color-mix(in srgb, var(--ink) 20%, transparent);
+  --chrono-axis-dash: 3 7;
   --chrono-progress-ink: color-mix(in srgb, var(--cinnabar) 55%, transparent);
   --chrono-node-size: 6px;
   --chrono-node-year: 9px;
@@ -167,8 +171,20 @@
   --chrono-wash: color-mix(in srgb, var(--cinnabar) 8%, transparent);
   --chrono-dim-opacity: 0.22;
   --chrono-vignette: radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--ink) 4%, transparent) 100%);
+  --chrono-vista-opacity: 0.34;
+  --chrono-parallax: 0.18;
+  --chrono-date: var(--ink-secondary);
+  --chrono-solar: #646D70;
+  --chrono-scrubber: color-mix(in srgb, var(--celadon) 55%, transparent);
   --letter-rule: color-mix(in srgb, var(--cinnabar) 12%, var(--line-light));
   --letter-hover-bg: var(--paper-deep);
+  --paper-glow-celadon: color-mix(in srgb, var(--celadon) 4%, transparent);
+  --paper-glow-ochre: color-mix(in srgb, var(--ochre) 3.5%, transparent);
+  /* 阅读沉浸：乌丝栏 / 着重点 / 旁批 */
+  --silk-rail: rgba(140, 130, 117, 0.16);
+  --rouge-dot: #C98F8C;
+  --margin-note-line: color-mix(in srgb, var(--celadon) 45%, transparent);
+
   /* 归档题头停靠：首屏行程须盖住视口，定点后时间轴塞进页眉+题头下的一屏。 */
   --archive-dock-height: 4.5rem;
   --archive-legend-height: 2.75rem;

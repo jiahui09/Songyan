@@ -69,6 +69,8 @@ labels:
   poem_close: 阖卷
   poem_overflow: 此词超出单张诗笺容量，请在预览中滚动阅读；为避免截字，暂不导出。
   annotations: 笺注
+  margin_notes: 旁批
+  quiet_reading: 静读
   tags: 系
   weather: 天候
   mood: 心境
@@ -119,6 +121,9 @@ archive:
   view_axis: 轴
   view_list: 目
   list_label: 目录
+  frontispiece: 引首 · 岁时集
+  scrubber_label: 卷轴缩略
+  excerpt_label: 题引
   recent: 3                         # 首屏近期篇目数；下滑后隐去，进入完整时间轴
   recent_label: 近期篇什
   categories:

@@ -47,7 +47,7 @@ async function build(name, overrides, source) {
   assert.ok(!page2.includes('class="home-cover"'), 'pagination never repeats the cover');
   assert.ok(index.includes('class="pagination"') && index.includes('/page/2/'));
   const archive = await fs.readFile(path.join(paginated, 'archives/index.html'), 'utf8');
-  assert.equal((archive.match(/class="archive-item chrono__item"/g) || []).length, 13, 'full archive includes every published post even when generator pagination is enabled');
+  assert.equal((archive.match(/class="archive-item chrono__item(?:\s[^"]*)?"/g) || []).length, 13, 'full archive includes every published post even when generator pagination is enabled');
   const unknown = await fs.readFile(path.join(paginated, '2026/10/01/entry-0/index.html'), 'utf8');
   assert.ok(unknown.includes('essay-body reading-body'), 'unknown type falls back to prose');
   const noSeal = await fs.readFile(path.join(paginated, '2026/10/02/entry-1/index.html'), 'utf8');

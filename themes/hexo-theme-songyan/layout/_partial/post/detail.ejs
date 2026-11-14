@@ -42,8 +42,25 @@
         <dl><% notes.forEach(function (note, index) { %><div class="poem-annotations__item" id="poem-note-<%= index + 1 %>"><dt><%= note.word %></dt><dd><%= note.meaning %></dd></div><% }); %></dl>
       </aside>
       <% } %>
-      <% } else { %>
-      <div class="essay-body reading-body<%= page.literary === true ? ' reading-body--literary' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+      <% } else {
+        var marginNotes = Array.isArray(page.margin_notes) ? page.margin_notes : [];
+      %>
+      <div class="essay-layout">
+        <div class="essay-body reading-body<%= page.literary === true ? ' reading-body--literary' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+        <% if (marginNotes.length) { %>
+        <aside class="essay-margin" aria-label="<%= labels.margin_notes || '旁批' %>">
+          <span class="essay-margin__ornament" aria-hidden="true"></span>
+          <% marginNotes.forEach(function (note, index) {
+            var anchor = note.anchor || ('essay-note-' + (index + 1));
+            var body = note.text || note;
+          %>
+          <p class="essay-margin__note" id="margin-<%= index + 1 %>">
+            <a href="#<%= anchor %>"><%= body %></a>
+          </p>
+          <% }); %>
+        </aside>
+        <% } %>
+      </div>
       <% } %>
     </div>
     <footer class="post-ending">

@@ -21,7 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4. 诗词竖排：定点后锁页，滚轮驱动整列自下而上升入，直至落款可见
   initCiColumnLock(returnToCover);
+
+  // 5. 静读模式：阅读页按 Q 收敛页眉页脚与工具
+  initQuietReading();
 });
+
+function initQuietReading() {
+  if (!document.querySelector('.site-main--reading')) return;
+  window.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+    if (event.key !== 'q' && event.key !== 'Q') return;
+    document.documentElement.classList.toggle('is-quiet-reading');
+  });
+}
 
 /**
  * 封面只在卷首与正文定点间自动过渡；正文区仍由浏览器原生滚动。
@@ -231,15 +245,11 @@ function initLuoMoAnimation() {
 }
 
 /**
- * 归档页「岁时笺纸」横轴交互：
- * 1. 滚轮横移——监听只挂在轴体（.chrono__rail）上，指针在轴区内才接管；
- *    轴体可滚时横移，到端点将纵向滚动交还页面
- * 2. 指针拖曳（跨出轨道仍持续，松手后恢复原生链接点击）
- * 3. 进度朱点——弧路径按像素宽重建，端点内缩 ≥ 朱点半径防视口裁切；
- *    朱点按滚动进度映射弧长（右端＝最新，左端＝最旧）
- * 4. 平滑缓动——滚轮以目标位 + rAF 阻尼插值推进，阻尼放缓求丝滑（reduced-motion 直接落位）
- * 5. 分卷图例筛选——点按只留该分卷篇目，年份组无可见篇目整组隐去
- * 6. 拱弧骑列——轴线弧与朱线上下镜像，日列/年号按视口横位以 --curve-y 骑弧（平面，无透视）
+ * 归档页「岁时笺纸」三远法横轴：
+ * 1. 平远——远山剪影随横滚 0.18× 视差
+ * 2. 深远——有机溪山脉络（天青实线 + 淡墨虚线），列沿山势微幅错落
+ * 3. 高远——右端引首；隐藏原生滚动条，底部卷轴缩略游标（密度刻痕 / 年印 / 朱砂点）
+ * 4. 滚轮阻尼、拖曳、键盘；分卷褪墨与轴/目切换沿用既有行为
  */
 function initChronoRail() {
   const rail = document.querySelector('[data-chrono-rail]');
@@ -247,24 +257,23 @@ function initChronoRail() {
 
   const track = rail.querySelector('.chrono__track');
   const chrono = rail.closest('.chrono');
-  const curveLine = document.querySelector('.chrono__curve-line');
-  const curveDot = document.querySelector('.chrono__curve-dot');
+  const mistLine = document.querySelector('.chrono__axis-mist');
   const axisLine = document.querySelector('.chrono__axis-line');
-  if (!track || !curveLine || !curveDot) return;
+  const vista = chrono && chrono.querySelector('.chrono__vista-svg');
+  const scrubber = chrono && chrono.querySelector('[data-chrono-scrubber]');
+  const scrubTrack = scrubber && scrubber.querySelector('[data-chrono-scrubber-track]');
+  const scrubThumb = scrubber && scrubber.querySelector('[data-chrono-scrubber-thumb]');
+  const densityLayer = scrubber && scrubber.querySelector('[data-chrono-density]');
+  const excerptBox = chrono && chrono.querySelector('[data-chrono-excerpt]');
+  const excerptText = chrono && chrono.querySelector('[data-chrono-excerpt-text]');
+  if (!track || !mistLine || !axisLine) return;
 
-  // 与 CSS 移动纵轴断点一致：窄屏只做分卷筛选，不做横滑/双弧
   const desktopRail = window.matchMedia('(min-width: 900px)');
-
-  const DOT_R = 3.5; // 朱点半径，与 .chrono__curve-dot 的 r 一致
-  let pathLen = 0;
-
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
-  // 读取指定长度 token 并换算为 px，保持 token 为唯一来源（曲率与轴位同源）
   function readTokenPx(name, fallback) {
-    const raw = getComputedStyle(chrono)
-      .getPropertyValue(name)
-      .trim();
+    const raw = getComputedStyle(chrono).getPropertyValue(name).trim();
     const num = parseFloat(raw);
     if (Number.isNaN(num)) return fallback;
     return raw.includes('rem')
@@ -272,86 +281,129 @@ function initChronoRail() {
       : num;
   }
 
-  function readSagPx() {
-    return readTokenPx('--chrono-sag', DOT_R * 4);
+  function maxScroll() {
+    return Math.max(rail.scrollWidth - rail.clientWidth, 0);
   }
 
-  // 按实际像素宽重建弧路径；两端内缩一个朱点半径，圆点停在端点时圆缘恰与视口边界相切。
-  // 朱线与赭线同在 .chrono__axis 覆盖层的一个 SVG 坐标系：端点 y = --chrono-top + --chrono-bottom，
-  // 中点下沉一个 sag——与赭线弧（端点 --chrono-top、中点拱起同 sag）关于内容区中线精确镜像
-  function buildCurve() {
-    const width = curveLine.ownerSVGElement.getBoundingClientRect().width;
-    if (!width) return;
-    const pad = DOT_R;
-    const entry = rail.querySelector('.chrono__year:not([hidden]) .chrono__entry');
-    const y0 = readSagPx() + readTokenPx('--chrono-top', 200) + (entry ? entry.offsetHeight : 0);
-    const sag = readSagPx();
-    curveLine.setAttribute(
-      'd',
-      'M ' + pad + ',' + y0 + ' Q ' + width / 2 + ',' + (y0 + 2 * sag) + ' ' + (width - pad) + ',' + y0
-    );
-    pathLen = curveLine.getTotalLength();
+  function progressOf() {
+    const max = maxScroll();
+    return max > 1 ? clamp(rail.scrollLeft / max, 0, 1) : 1;
   }
 
-  // 拱弧轴线：端点对齐 --chrono-top，中点拱起一个 sag（同坐标系，见 buildCurve）
+  // 有机脉络：多段平滑起伏，避免对称抛物线
+  function ridgeY(t, base, amp) {
+    const wave =
+      Math.sin(t * Math.PI * 1.35 + 0.15) * 0.62 +
+      Math.sin(t * Math.PI * 2.7 + 1.1) * 0.28 +
+      Math.sin(t * Math.PI * 4.1 + 0.4) * 0.1;
+    return base - amp * wave;
+  }
+
+  function buildOrganicPath(baseY, amp, samples) {
+    const width = mistLine.ownerSVGElement.getBoundingClientRect().width;
+    if (!width) return '';
+    let d = '';
+    for (let i = 0; i <= samples; i += 1) {
+      const t = i / samples;
+      const x = t * width;
+      const y = ridgeY(t, baseY, amp);
+      d += (i === 0 ? 'M ' : ' L ') + x.toFixed(2) + ',' + y.toFixed(2);
+    }
+    return d;
+  }
+
   function buildAxis() {
-    if (!axisLine) return;
-    const width = axisLine.ownerSVGElement.getBoundingClientRect().width;
-    if (!width) return;
-    const y0 = readSagPx() + readTokenPx('--chrono-top', 200);
-    const sag = readSagPx();
-    axisLine.setAttribute(
-      'd',
-      'M 0,' + y0 + ' Q ' + width / 2 + ',' + (y0 - 2 * sag) + ' ' + width + ',' + y0
-    );
+    const base = readTokenPx('--chrono-ridge', 14) + readTokenPx('--chrono-top', 136);
+    const amp = readTokenPx('--chrono-ridge', 14);
+    const mist = buildOrganicPath(base - amp * 0.18, amp * 0.92, 28);
+    const ink = buildOrganicPath(base + amp * 0.12, amp * 0.78, 28);
+    if (mist) mistLine.setAttribute('d', mist);
+    if (ink) axisLine.setAttribute('d', ink);
   }
 
-  // 朱点定位：按滚动进度映射弧长（右端＝最新，左端＝最旧；朱点右＝最新）
-  function updateDot() {
-    if (!pathLen) return;
-    const max = rail.scrollWidth - rail.clientWidth;
-    const q = max > 0 ? clamp(rail.scrollLeft / max, 0, 1) : 1;
-    const pt = curveLine.getPointAtLength(q * pathLen);
-    curveDot.setAttribute('cx', pt.x);
-    curveDot.setAttribute('cy', pt.y);
-  }
+  const shiftTargets = () => rail.querySelectorAll('.chrono__item:not(.is-dimmed), .chrono__year-mark');
 
-  // 骑弧：按视口横位取拱弧高（二次贝塞尔 y 偏移 ≤ 0），写入各列 --curve-y；
-  // 滚动时逐帧更新，日列、年号、节点墨点与弧线同步抬落（平面纸卷，不做圆柱透视）
-  const shiftTargets = rail.querySelectorAll('.chrono__item, .chrono__year-mark');
   function updateShift() {
     const railRect = rail.getBoundingClientRect();
     if (!railRect.width) return;
-    const sag = readSagPx();
-    shiftTargets.forEach((el) => {
+    const amp = readTokenPx('--chrono-ridge', 14);
+    shiftTargets().forEach((el) => {
       if (!el.getClientRects().length) return;
       const rect = el.getBoundingClientRect();
       const center = rect.left + rect.width / 2;
       const t = clamp((center - railRect.left) / railRect.width, 0, 1);
-      el.style.setProperty('--curve-y', (-4 * sag * t * (1 - t)).toFixed(2) + 'px');
+      // 与脉络同相的微幅错落（约 ±ridge）
+      const wave =
+        Math.sin(t * Math.PI * 1.35 + 0.15) * 0.62 +
+        Math.sin(t * Math.PI * 2.7 + 1.1) * 0.28;
+      el.style.setProperty('--curve-y', (-amp * wave).toFixed(2) + 'px');
+    });
+  }
+
+  function updateVista() {
+    if (!vista) return;
+    const q = progressOf();
+    // 右新左旧：向旧端滚动时山影更慢地左移
+    const shift = -(1 - q) * (Number.parseFloat(getComputedStyle(chrono).getPropertyValue('--chrono-parallax')) || 0.18) * 100;
+    chrono.style.setProperty('--chrono-vista-x', shift.toFixed(2) + '%');
+  }
+
+  function updateScrubber() {
+    if (!scrubThumb || !scrubTrack) return;
+    const q = progressOf();
+    scrubThumb.style.left = (q * 100).toFixed(3) + '%';
+    scrubTrack.setAttribute('aria-valuenow', String(Math.round(q * 100)));
+  }
+
+  function layoutScrubberMarks() {
+    if (!densityLayer || !scrubber) return;
+    const max = maxScroll();
+    const items = Array.from(rail.querySelectorAll('.chrono__item'));
+    densityLayer.innerHTML = '';
+    items.forEach((item) => {
+      if (item.classList.contains('is-dimmed')) return;
+      const mark = document.createElement('span');
+      mark.className = 'chrono__scrubber-mark';
+      const center = item.offsetLeft + item.offsetWidth / 2;
+      const q = max > 1 ? clamp(center / (rail.scrollWidth - rail.clientWidth + item.offsetWidth), 0, 1) : 0.5;
+      // 以内容坐标映射到 scrubber：offset 相对 track 内容
+      const contentX = item.offsetLeft + item.offsetWidth / 2;
+      const ratio = rail.scrollWidth > 0 ? contentX / rail.scrollWidth : 0;
+      mark.style.left = (ratio * 100).toFixed(3) + '%';
+      densityLayer.appendChild(mark);
+    });
+    scrubber.querySelectorAll('[data-year-jump]').forEach((btn) => {
+      const year = btn.getAttribute('data-year-jump');
+      const section = rail.querySelector('.chrono__year[data-year="' + year + '"]');
+      if (!section) return;
+      const ratio = rail.scrollWidth > 0 ? (section.offsetLeft + section.offsetWidth / 2) / rail.scrollWidth : 0;
+      btn.style.left = (ratio * 100).toFixed(3) + '%';
     });
   }
 
   function clearCurveMetrics() {
-    shiftTargets.forEach((el) => el.style.removeProperty('--curve-y'));
-    if (curveLine) curveLine.removeAttribute('d');
-    if (axisLine) axisLine.removeAttribute('d');
+    rail.querySelectorAll('.chrono__item, .chrono__year-mark').forEach((el) => {
+      el.style.removeProperty('--curve-y');
+    });
+    mistLine.removeAttribute('d');
+    axisLine.removeAttribute('d');
+    if (vista) chrono.style.removeProperty('--chrono-vista-x');
   }
 
-  // 版面重建：桌面重建双弧/骑弧；窄屏清空横轴度量
   function refresh() {
     if (!desktopRail.matches) {
       clearCurveMetrics();
+      if (scrubber) scrubber.hidden = true;
       return;
     }
-    buildCurve();
+    if (scrubber) scrubber.hidden = false;
     buildAxis();
-    updateDot();
     updateShift();
+    updateVista();
+    layoutScrubberMarks();
+    updateScrubber();
   }
 
-  // —— 平滑缓动：目标位 + rAF 阻尼插值；reduced-motion 直接落位 ——
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let scrollTarget = 0;
   let glideRaf = 0;
   let lastFrame = 0;
@@ -366,10 +418,6 @@ function initChronoRail() {
     scrollTarget = rail.scrollLeft;
   }
 
-  function maxScroll() {
-    return Math.max(rail.scrollWidth - rail.clientWidth, 0);
-  }
-
   function glide(now) {
     const elapsed = Math.min(now - lastFrame, 64);
     lastFrame = now;
@@ -379,7 +427,6 @@ function initChronoRail() {
       glideRaf = 0;
       return;
     }
-    // 按经过时间衰减，60Hz / 120Hz 显示器保持相同阻尼。
     glidePosition += diff * (1 - Math.exp(-elapsed / 180));
     rail.scrollLeft = glidePosition;
     glideRaf = requestAnimationFrame(glide);
@@ -400,17 +447,12 @@ function initChronoRail() {
     }
   }
 
-  // 滚轮横移：ltr 坐标（scrollLeft 0 在左＝最旧端，max 在右＝最新端）；
-  // 向下滚＝向旧端（左移）；端点放行，避免横轴困住页面滚动。
   function wheelScroll(deltaY) {
     if (maxScroll() <= 1) return false;
     const settling = glideRaf || Math.abs(scrollTarget - rail.scrollLeft) > 1;
     const current = settling ? scrollTarget : rail.scrollLeft;
     const next = clamp(current - deltaY, 0, maxScroll());
-    if (Math.abs(next - current) < 0.5) {
-      // 目标先到边缘时，先收完余程再把纵向滚动交还页面。
-      return !!glideRaf;
-    }
+    if (Math.abs(next - current) < 0.5) return !!glideRaf;
     glideTo(next);
     return true;
   }
@@ -418,10 +460,10 @@ function initChronoRail() {
   rail.addEventListener(
     'wheel',
     (e) => {
-      if (!desktopRail.matches) return; // 窄屏纵轴：滚轮交还页面
-      if (e.defaultPrevented || e.ctrlKey) return; // 封面过渡与浏览器缩放手势放行
+      if (!desktopRail.matches) return;
+      if (e.defaultPrevented || e.ctrlKey) return;
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) {
-        stopGlide(); // 原生横向手势接管时取消纵向滚轮缓动
+        stopGlide();
         return;
       }
       const unit = e.deltaMode === 1 ? parseFloat(getComputedStyle(rail).lineHeight) :
@@ -431,13 +473,12 @@ function initChronoRail() {
     { passive: false }
   );
 
-  // 指针拖曳：内容随手势而动（拖曳跟手，接管时先打断缓动）
   let dragFrom = null;
   let dragged = false;
   rail.addEventListener('pointerdown', (e) => {
     if (!desktopRail.matches) return;
     stopGlide();
-    if (e.pointerType !== 'mouse') return; // 触屏保留浏览器原生惯性与纵向手势
+    if (e.pointerType !== 'mouse') return;
     if (e.button !== 0) return;
     dragged = false;
     dragFrom = { x: e.clientX, scroll: rail.scrollLeft, id: e.pointerId };
@@ -465,9 +506,9 @@ function initChronoRail() {
     rail.classList.remove('is-dragging');
     if (id !== undefined && rail.hasPointerCapture(id)) rail.releasePointerCapture(id);
   }
-  ['pointerup', 'pointercancel', 'blur'].forEach(evt => window.addEventListener(evt, endDrag));
+  ['pointerup', 'pointercancel', 'blur'].forEach((evt) => window.addEventListener(evt, endDrag));
   rail.addEventListener('lostpointercapture', endDrag);
-  rail.addEventListener('dragstart', event => event.preventDefault());
+  rail.addEventListener('dragstart', (event) => event.preventDefault());
 
   rail.addEventListener('keydown', (event) => {
     if (!desktopRail.matches) return;
@@ -494,21 +535,80 @@ function initChronoRail() {
     scrollTarget = rail.scrollLeft;
   });
 
-  // 滚动事件本身已按帧节流，直接同步朱点；
-  // 非缓动、非拖曳期的外部滚动（触屏惯性）同步目标位，防后续滚轮跳位
   rail.addEventListener(
     'scroll',
     () => {
       if (!desktopRail.matches) return;
       if (!glideRaf && !dragFrom) scrollTarget = rail.scrollLeft;
       if (knownMax === maxScroll()) readingProgress = knownMax > 1 ? rail.scrollLeft / knownMax : 1;
-      updateDot();
       updateShift();
+      updateVista();
+      updateScrubber();
     },
     { passive: true }
   );
 
-  // —— 分卷图例：褪墨筛选（再点还原）；轴/列表同步；零匹配显空态 ——
+  // scrubber 交互：点击定位 / 拖曳游标 / 键盘
+  function scrubToRatio(ratio) {
+    glideTo(clamp(ratio, 0, 1) * maxScroll());
+  }
+  if (scrubTrack) {
+    scrubTrack.addEventListener('pointerdown', (e) => {
+      if (!desktopRail.matches || e.button !== 0) return;
+      const rect = scrubTrack.getBoundingClientRect();
+      scrubToRatio((e.clientX - rect.left) / rect.width);
+      scrubTrack.setPointerCapture(e.pointerId);
+    });
+    scrubTrack.addEventListener('pointermove', (e) => {
+      if (!scrubTrack.hasPointerCapture(e.pointerId)) return;
+      const rect = scrubTrack.getBoundingClientRect();
+      scrubToRatio((e.clientX - rect.left) / rect.width);
+    });
+    scrubTrack.addEventListener('keydown', (e) => {
+      const step = 0.08;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); scrubToRatio(progressOf() - step); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); scrubToRatio(progressOf() + step); }
+      else if (e.key === 'Home') { e.preventDefault(); scrubToRatio(1); }
+      else if (e.key === 'End') { e.preventDefault(); scrubToRatio(0); }
+    });
+  }
+  if (scrubber) {
+    scrubber.querySelectorAll('[data-year-jump]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const year = btn.getAttribute('data-year-jump');
+        const section = rail.querySelector('.chrono__year[data-year="' + year + '"]');
+        if (!section) return;
+        const target = section.offsetLeft + section.offsetWidth / 2 - rail.clientWidth / 2;
+        glideTo(target);
+      });
+    });
+  }
+
+  // 悬停题引：底部独立栏浮现开篇摘句，不遮竖排正文
+  function bindExcerpt() {
+    if (!excerptBox || !excerptText) return;
+    rail.querySelectorAll('.chrono__item').forEach((item) => {
+      const show = () => {
+        const textValue = item.getAttribute('data-excerpt') || '';
+        if (!textValue) {
+          excerptBox.hidden = true;
+          return;
+        }
+        excerptText.textContent = textValue;
+        excerptBox.hidden = false;
+      };
+      const hide = () => { excerptBox.hidden = true; };
+      item.addEventListener('mouseenter', show);
+      item.addEventListener('focusin', show);
+      item.addEventListener('mouseleave', hide);
+      item.addEventListener('focusout', (e) => {
+        if (!item.contains(e.relatedTarget)) hide();
+      });
+    });
+  }
+  bindExcerpt();
+
+  // —— 分卷褪墨 + 轴/目切换 ——
   const legend = document.querySelector('.archive-legend');
   const listPanel = document.querySelector('[data-archive-list]');
   const viewToggle = document.querySelector('.archive-view');
@@ -555,10 +655,8 @@ function initChronoRail() {
       scrollTarget = rail.scrollLeft;
       knownMax = maxScroll();
       readingProgress = 1;
-      refresh();
-    } else {
-      refresh();
     }
+    refresh();
   }
 
   function applyView(view) {
@@ -574,9 +672,7 @@ function initChronoRail() {
     chrono.hidden = !(activeView === 'axis' && hasVisible);
     if (listPanel) listPanel.hidden = !(activeView === 'list' && hasVisible);
     if (empty) empty.hidden = hasVisible;
-    if (mainArchive) {
-      mainArchive.classList.toggle('is-list-view', activeView === 'list');
-    }
+    if (mainArchive) mainArchive.classList.toggle('is-list-view', activeView === 'list');
   }
 
   if (legend) {
@@ -620,7 +716,6 @@ function initChronoRail() {
   });
   desktopRail.addEventListener('change', refreshLayout);
 
-  // 初始：桌面停驻最新端；窄屏纵轴不横滚。字体与视口变化后保留阅读进度。
   if (desktopRail.matches) {
     knownMax = maxScroll();
     rail.scrollLeft = scrollTarget = knownMax;
@@ -630,6 +725,7 @@ function initChronoRail() {
   refresh();
   document.fonts.ready.then(refreshLayout);
 }
+
 
 /**
  * 诗词竖排列锁页：

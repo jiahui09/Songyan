@@ -266,12 +266,17 @@ const pages = [
     assert.equal(await page.locator('.chrono__item').count(), 4);
     for (const time of await page.locator('.chrono__date').all()) {
       const iso = await time.getAttribute('datetime');
-      assert.equal(await time.locator('.chrono__mo').textContent(), iso.slice(5, 7));
-      assert.equal(await time.locator('.chrono__slash').textContent(), '/');
-      assert.equal(await time.locator('.chrono__day').textContent(), iso.slice(8, 10));
-      assert.equal(await time.evaluate(el => getComputedStyle(el).flexDirection), 'column');
-      assert.ok(await time.evaluate(el => Math.abs(new DOMMatrix(getComputedStyle(el).transform).b + 0.5) < 0.001));
+      const month = Number(iso.slice(5, 7));
+      const day = Number(iso.slice(8, 10));
+      assert.ok((await time.locator('.chrono__mo').textContent()).includes('月'));
+      assert.ok((await time.locator('.chrono__day').textContent()).includes('日'));
+      assert.equal(await time.evaluate(el => getComputedStyle(el).transform), 'none');
+      assert.ok(await time.evaluate(el => getComputedStyle(el).writingMode).includes('vertical'));
+      assert.ok(month >= 1 && day >= 1);
     }
+    assert.ok(await page.locator('.chrono__scrubber').count());
+    assert.ok(await page.locator('.chrono__frontispiece').count());
+    assert.ok(await page.locator('.chrono__vista').count());
     await page.locator('[data-cat-filter="ci"]').click();
     assert.equal(await page.locator('.chrono__item:not(.is-dimmed)').count(), 1);
     assert.equal(await page.locator('[data-archive-count]').textContent(), '1');
@@ -1177,17 +1182,19 @@ const pages = [
       const geometry = await timelinePage.locator('.chrono').evaluate(el => {
         const outer = el.getBoundingClientRect();
         const rail = el.querySelector('.chrono__rail').getBoundingClientRect();
-        const curve = el.querySelector('.chrono__curve-line').getBoundingClientRect();
+        const ridge = el.querySelector('.chrono__axis-line').getBoundingClientRect();
+        const scrubber = el.querySelector('.chrono__scrubber');
         const year = document.createRange();
         year.selectNodeContents(el.querySelector('.chrono__year-greg'));
-        return { outerBottom: outer.bottom, railBottom: rail.bottom, curveBottom: curve.bottom,
+        return { outerBottom: outer.bottom, railBottom: rail.bottom, ridgeBottom: ridge.bottom,
           yearTop: year.getBoundingClientRect().top, railTop: rail.top,
+          scrubberBottom: scrubber ? scrubber.getBoundingClientRect().bottom : outer.bottom,
           mainBottom: document.querySelector('main').getBoundingClientRect().bottom,
           viewport: innerHeight, widthFits: document.documentElement.scrollWidth <= innerWidth + 1 };
       });
       assert.ok(geometry.railBottom <= geometry.outerBottom + 1, `rail fits short viewport: ${JSON.stringify(geometry)}`);
-      assert.ok(geometry.yearTop >= geometry.railTop - 1, 'year first glyph is not clipped by curved lift');
-      assert.ok(geometry.curveBottom <= geometry.outerBottom - 1, `bottom arc is not clipped: ${JSON.stringify(geometry)}`);
+      assert.ok(geometry.yearTop >= geometry.railTop - 1, 'year first glyph is not clipped by ridge lift');
+      assert.ok(geometry.ridgeBottom <= geometry.outerBottom + 1, `ridge line stays in frame: ${JSON.stringify(geometry)}`);
       assert.ok(geometry.mainBottom >= geometry.railBottom - 1, 'rail remains contained in archive main');
       assert.ok(geometry.widthFits, 'archive keeps horizontal overflow inside rail');
       if (viewport.height >= 480) assert.ok(geometry.outerBottom <= viewport.height + 2, 'dock fits usable viewport');

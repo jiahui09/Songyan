@@ -568,8 +568,8 @@
 /* 难词：字旁一点淡胭脂着重号，点按跳至注条 */
 .poem-gloss {
   color: inherit;
-  text-emphasis: dot var(--rouge);
-  -webkit-text-emphasis: dot var(--rouge);
+  text-emphasis: filled circle var(--rouge-dot);
+  -webkit-text-emphasis: filled circle var(--rouge-dot);
   text-emphasis-position: under right;
   -webkit-text-emphasis-position: under right;
 }
@@ -585,6 +585,10 @@
 .essay-article {
   max-width: var(--prose-max);
   margin: 0 auto;
+}
+
+.essay-article:has(.essay-margin) {
+  max-width: calc(var(--prose-max) + 14rem + var(--space-10));
 }
 
 /* 文章题头：居左，题目为主，汉字日期淡墨一行；无分割线，以留白分层 */
@@ -670,12 +674,9 @@
 }
 
 /* =========================================================
-   5. 归档页 (archive.html)「岁时笺纸」横向历日轴
+   5. 归档页 (archive.html)「岁时笺纸」三远法横轴
    ---------------------------------------------------------
-   结构：.chrono（外框）> .chrono__rail（横向滚动）
-        > .chrono__track（轴体）> .chrono__year（年份组）；双弧覆盖层 .chrono__axis（赭线 + 朱线朱点）
-        > .archive-item（日列：轴上月日 + 轴下题头题目）
-   右端为新、向左渐旧；平面纸卷横展，节点墨点锚定于双弧（无透视圆柱）
+   平远山影 · 深远脉络 · 高远引首；右新左旧；无对称双弧
    ========================================================= */
 .chrono {
   position: relative;
@@ -683,14 +684,43 @@
   scroll-margin-top: var(--header-dock-height);
 }
 
-/* 极弱暗角：内容浮于笺纸之上，不抢轴线与文字 */
+/* 极弱暗角：内容浮于笺纸之上 */
 .chrono::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
   background: var(--chrono-vignette);
+}
+
+/* 平远：远山剪影，正片叠底融入纸底 */
+.chrono__vista {
+  position: absolute;
+  inset: auto 0 16% 0;
+  z-index: 0;
+  height: min(42%, 14rem);
+  pointer-events: none;
+  opacity: var(--chrono-vista-opacity);
+  mix-blend-mode: multiply;
+  filter: brightness(1.085) contrast(1.12);
+  overflow: hidden;
+}
+
+.chrono__vista-svg {
+  display: block;
+  width: 140%;
+  height: 100%;
+  transform: translateX(var(--chrono-vista-x, 0%));
+  will-change: transform;
+}
+
+.chrono__vista-far {
+  fill: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.chrono__vista-near {
+  fill: color-mix(in srgb, var(--ink) 34%, transparent);
 }
 
 .chrono__rail {
@@ -699,13 +729,14 @@
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
-  /* 保留细滚动条作为横向阅读提示，鼠标、触屏、键盘均可原生操作。 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-wash) transparent;
+  scrollbar-width: none;
   cursor: grab;
-  /* 两端轻淡出，中央文字保持完整对比。 */
   -webkit-mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
   mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
+}
+
+.chrono__rail::-webkit-scrollbar {
+  display: none;
 }
 
 .chrono__rail:focus-visible {
@@ -726,10 +757,7 @@
   outline-offset: var(--space-1);
 }
 
-/* 双弧覆盖层：一条轴线、一个 SVG 坐标系承载两弧——
-   赭石弧端点在 --chrono-top（拱起），朱线弧端点在 --chrono-top + --chrono-bottom（下沉），
-   两弧同 sag 反向、关于内容区中线精确镜像；--chrono-sag 为唯一曲率来源，
-   路径由 main.js 按像素宽构建，不随内容横移；z-index 低于墨点 */
+/* 深远：有机溪山脉络线覆盖层 */
 .chrono__axis {
   position: absolute;
   inset: 0;
@@ -740,16 +768,12 @@
 .chrono__track {
   position: relative;
   display: flex;
-  justify-content: center; /* 少量篇目时居中，不把留白全部堆在左侧。 */
-  /* 视觉序右起：首子（最新年组）居右。用 row-reverse 而非 rtl——
-     rtl 会把竖排的行内轴翻成自下而上，并颠倒 view() 的进入边 */
+  justify-content: flex-start; /* 右起铺展，不机械均分左右留白 */
   flex-direction: row-reverse;
   width: max-content;
   min-width: 100%;
-  /* 两端留白：停驻位不落入渐隐区，滚动亦有呼吸程 */
   padding-inline: var(--chrono-breath);
-  /* 骑弧会抬高列首，预留同等空间，避免年份首字被轨道裁切。 */
-  padding-top: var(--chrono-sag);
+  padding-top: var(--chrono-ridge);
   padding-bottom: var(--space-8);
 }
 
@@ -820,11 +844,16 @@
   flex-direction: column;
   align-items: center;
   min-width: var(--chrono-col-min);
-  padding-inline: var(--chrono-gap);
+  padding-inline: calc(var(--chrono-span, var(--chrono-gap)) / 2);
 }
 
-/* 骑弧：日列与年号随拱弧抬落（--curve-y 由 main.js 按视口横位求值，
-   默认 0px：无 JS 时各列停在水平基准） */
+/* 日差留白：疏可走马，密不透风 */
+.chrono__item--span-close { --chrono-span: var(--chrono-span-close); }
+.chrono__item--span-near  { --chrono-span: var(--chrono-span-near); }
+.chrono__item--span-mid   { --chrono-span: var(--chrono-span-mid); }
+.chrono__item--span-far   { --chrono-span: var(--chrono-span-far); }
+
+/* 深远错落：列随脉络微幅起伏（--curve-y 由 main.js 写入） */
 .chrono__item,
 .chrono__year-mark {
   top: var(--curve-y, 0px);
@@ -906,29 +935,33 @@
   color: var(--cinnabar);
 }
 
-/* 月日：月、斜杠、日分层，整组斜置 −30°，墨分浓淡。 */
+/* 月日：竖排汉字；节气淡烟缀于其下，墨分五色 */
 .chrono__date {
   display: flex;
   flex-direction: column;
   align-items: center;
+  writing-mode: vertical-rl;
   font-family: var(--font-title);
   font-size: var(--text-sm);
-  line-height: 1.1;
-  color: var(--ink-secondary);
-  transform: rotate(-30deg);
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  color: var(--chrono-date);
 }
 
-.chrono__mo {
-  color: var(--ink-secondary);
-}
-
-.chrono__slash {
-  font-size: 0.85em;
-  color: var(--ink-faint);
-}
-
+.chrono__mo,
 .chrono__day {
-  color: var(--ink-faint);
+  display: inline;
+  color: inherit;
+}
+
+.chrono__solar {
+  writing-mode: vertical-rl;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  color: var(--chrono-solar);
+  opacity: 0.82;
 }
 
 /* 轴下区：题目一列直下；西文按词侧排，超长可折列。 */
@@ -1030,25 +1063,153 @@
   height: 100%;
 }
 
-.chrono__curve-line {
+/* 天青水雾实线：溪山远脉 */
+.chrono__axis-mist {
   fill: none;
-  stroke: var(--chrono-progress-ink);
-  stroke-width: 1;
+  stroke: var(--chrono-axis-mist);
+  stroke-width: 1.25;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-/* 拱弧轴线：极淡墨断点虚线，弱化工业实线感（枯笔感留给阶段 B 双描） */
+/* 淡墨虚线：近脉飞白 */
 .chrono__axis-line {
   fill: none;
   stroke: var(--chrono-axis-ink);
   stroke-width: 1;
   stroke-dasharray: var(--chrono-axis-dash);
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.chrono__curve-dot {
-  r: 3.5px;
-  fill: var(--cinnabar);
+/* 高远引首：右端开卷题识 */
+.chrono__frontispiece {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  height: calc(var(--chrono-top) + var(--chrono-bottom));
+  padding-inline: var(--space-4);
+  writing-mode: vertical-rl;
+}
+
+.chrono__frontispiece-label {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-lg);
+  letter-spacing: 0.28em;
+  color: var(--ink-secondary);
+}
+
+/* 卷轴缩略游标 */
+.chrono__scrubber {
+  position: relative;
+  z-index: 2;
+  margin: var(--space-4) var(--chrono-breath) 0;
+}
+
+.chrono__scrubber-track {
+  position: relative;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  outline: none;
+}
+
+.chrono__scrubber-track:focus-visible {
+  outline: 1px solid var(--celadon-deep);
+  outline-offset: 2px;
+}
+
+.chrono__scrubber-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(to right, transparent, var(--chrono-scrubber) 8%, var(--chrono-scrubber) 92%, transparent);
+}
+
+.chrono__scrubber-density {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.chrono__scrubber-mark {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 0.55rem;
+  transform: translate(-50%, -50%);
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.chrono__scrubber-years {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.chrono__scrubber-year {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.chrono__scrubber-year:hover,
+.chrono__scrubber-year:focus-visible {
+  color: var(--cinnabar);
+}
+
+.chrono__scrubber-thumb {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cinnabar);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.chrono__excerpt {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-height: 1.5rem;
+  margin: var(--space-3) var(--chrono-breath) 0;
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.chrono__excerpt[hidden] {
+  display: none;
+}
+
+.chrono__excerpt-label {
+  color: var(--ink-faint);
+  letter-spacing: var(--tracking-meta);
+}
+
+.chrono__excerpt-text {
+  color: var(--ink-secondary);
 }
 
 /* 页头：默认普通流；桌面停靠态见下方 archive-dock 规则 */
@@ -1457,9 +1618,9 @@
       /* 定点一屏：压缩轴上下高度，整条时间轴落在页眉+题头下 */
       --chrono-top: 5.5rem;
       --chrono-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
-      --chrono-bottom: clamp(var(--space-24), calc(var(--chrono-height) - var(--chrono-top) - var(--chrono-sag) * 2 - var(--space-8)), 18rem);
+      --chrono-bottom: clamp(var(--space-24), calc(var(--chrono-height) - var(--chrono-top) - var(--chrono-ridge) * 2 - var(--space-8)), 18rem);
       --chrono-gap: 1.35rem;
-      --chrono-sag: 0.625rem;
+      --chrono-ridge: 0.625rem;
       --chrono-breath: clamp(var(--space-10), 8vw, var(--space-16));
     }
 
@@ -1567,14 +1728,14 @@
       z-index: 1;
       margin-top: 0;
       /* 矮窗口压缩题目区；极矮窗口允许页面纵滚，始终容纳轨道与下弧。 */
-      min-height: calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-sag) * 2 + var(--space-8));
+      min-height: calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-ridge) * 2 + var(--space-8));
       height: var(--chrono-height);
     }
 
     .archive-empty[data-archive-empty] {
       margin-block: 0;
       padding-top: var(--space-12);
-      min-height: max(var(--chrono-height), calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-sag) * 2 + var(--space-8)));
+      min-height: max(var(--chrono-height), calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-ridge) * 2 + var(--space-8)));
     }
 
     /* 去掉整屏离场跑道：时间轴上移后直接接页脚，素笺栏头遮住残留 */
@@ -1631,6 +1792,13 @@
 
 /* 移动端：降级为左轴右题的垂直时间线（横排易读，保留纸卷节点语言） */
 @media (max-width: 899px) {
+  .chrono__vista,
+  .chrono__scrubber,
+  .chrono__frontispiece,
+  .chrono__excerpt {
+    display: none;
+  }
+
   .chrono {
     margin-top: var(--space-6);
   }
@@ -1781,9 +1949,15 @@
 
   .chrono__date {
     flex-direction: row;
+    writing-mode: horizontal-tb;
     gap: 0;
     font-size: var(--text-xs);
     transform: none;
+  }
+
+  .chrono__solar {
+    writing-mode: horizontal-tb;
+    letter-spacing: var(--tracking-meta);
   }
 
   .chrono__entry {
