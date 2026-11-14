@@ -789,18 +789,20 @@
   font-size: var(--text-lg);
 }
 
-/* 组界：年号节点骑轴（纸色描边）；阶段 B 将改为空心印廓 */
+/* 组界：空心年号印廓骑轴，纸色描边 */
 .chrono__year-mark::after {
   content: "";
   position: absolute;
   top: var(--chrono-top);
   left: 50%;
+  z-index: 1;
+  box-sizing: border-box;
   transform: translate(-50%, -50%);
   width: var(--chrono-node-year);
   height: var(--chrono-node-year);
   border-radius: 50%;
-  background-color: var(--celadon);
-  border: 2px solid var(--paper);
+  background-color: var(--paper);
+  border: 1.5px solid var(--ochre);
 }
 
 .chrono__items {
@@ -811,12 +813,13 @@
   padding: 0;
 }
 
-/* 日列 */
+/* 日列：最小列宽保证竖读呼吸；整列可聚焦 */
 .chrono__item {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: var(--chrono-col-min);
   padding-inline: var(--chrono-gap);
 }
 
@@ -827,70 +830,112 @@
   top: var(--curve-y, 0px);
 }
 
-/* 节点彩色墨点：分色系于轴上（阶段 B 将换朱砂点/印廓形态） */
+/* 节点：朱砂点 / 印廓 / 盘扣，叠于轴线之上 */
+.chrono__node,
 .chrono__dot {
   position: absolute;
   top: var(--chrono-top);
   left: 50%;
-  transform: translate(-50%, -50%);
+  z-index: 1;
+  box-sizing: border-box;
   width: var(--chrono-node-size);
   height: var(--chrono-node-size);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-color: var(--cinnabar);
+  transition: transform var(--dur-feedback) var(--ease-ink),
+              box-shadow var(--dur-feedback) var(--ease-ink);
+}
+
+.chrono__node--ci,
+.chrono__dot--ci {
+  background-color: var(--cinnabar);
   border-radius: 50%;
 }
 
-.chrono__dot--ci {
-  background-color: var(--cinnabar);
-}
-
+/* 随笔：空心方印廓 */
+.chrono__node--essay,
 .chrono__dot--essay {
-  background-color: var(--bamboo);
+  background-color: transparent;
+  border: 1px solid var(--bamboo);
+  border-radius: var(--radius-xs);
 }
 
+/* 技术：空心淡墨圆 */
+.chrono__node--tech,
 .chrono__dot--tech {
-  background-color: var(--ink-light);
+  background-color: transparent;
+  border: 1px solid var(--ink-light);
+  border-radius: 50%;
 }
 
+/* 项目：赭石盘扣（微旋方） */
+.chrono__node--project,
 .chrono__dot--project {
   background-color: var(--ochre);
+  border-radius: var(--radius-xs);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
-/* 轴上区：月日贴轴 */
+/* 轴上区：分类 + 月日合并为抬头，贴轴沉底 */
 .chrono__head {
   height: var(--chrono-top);
   display: flex;
   align-items: flex-end;
-  padding-bottom: var(--space-2);
+  justify-content: center;
+  padding-bottom: var(--space-3);
 }
 
-/* 月日恢复数字版式：月、斜杠、日分层，整组斜置 −30°，墨分浓淡。 */
+.chrono__eyebrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chrono__rubric {
+  writing-mode: vertical-rl;
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: 1;
+  letter-spacing: var(--tracking-tag);
+  color: var(--ink-faint);
+}
+
+.chrono__item[data-cat="ci"] .chrono__rubric {
+  color: var(--cinnabar);
+}
+
+/* 月日：月、斜杠、日分层，整组斜置 −30°，墨分浓淡。 */
 .chrono__date {
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: var(--font-title);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   line-height: 1.1;
-  color: var(--ink);
+  color: var(--ink-secondary);
   transform: rotate(-30deg);
 }
 
 .chrono__mo {
-  color: var(--ink);
+  color: var(--ink-secondary);
 }
 
 .chrono__slash {
   font-size: 0.85em;
-  color: var(--ink-light);
+  color: var(--ink-faint);
 }
 
 .chrono__day {
   color: var(--ink-faint);
 }
 
-/* 轴下区：中文直排，西文按词侧排，不逐字母拉成长串；超长题目可折列。 */
+/* 轴下区：题目一列直下；西文按词侧排，超长可折列。 */
 .chrono__entry {
+  position: relative;
   height: var(--chrono-bottom);
-  padding-top: var(--space-3);
+  padding-top: var(--space-5);
   writing-mode: vertical-rl;
   text-orientation: mixed;
   overflow-wrap: anywhere;
@@ -900,23 +945,81 @@
   text-decoration: none;
 }
 
-.chrono__entry:hover {
-  color: var(--celadon-deep);
-}
-
 .chrono__title {
   letter-spacing: var(--tracking-verse);
 }
 
-.chrono__rubric {
-  color: var(--ink-faint);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  letter-spacing: 0.1em;
+/* 悬停/聚焦：节点放大、局部染朱、宣纸晕染；不只改字色 */
+.chrono__item::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--chrono-top) - 1.25rem);
+  left: 50%;
+  z-index: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--chrono-wash);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.72);
+  transition: opacity var(--dur-feedback) var(--ease-ink),
+              transform var(--dur-feedback) var(--ease-ink);
+  pointer-events: none;
 }
 
-.chrono__sep {
-  color: var(--ink-faint);
+.chrono__item::after {
+  content: "";
+  position: absolute;
+  top: var(--chrono-top);
+  left: 50%;
+  z-index: 0;
+  width: 1.75rem;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--cinnabar);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--dur-feedback) var(--ease-ink);
+  pointer-events: none;
+}
+
+.chrono__item:hover::before,
+.chrono__item:focus-within::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.chrono__item:hover::after,
+.chrono__item:focus-within::after {
+  opacity: 0.72;
+}
+
+.chrono__item:hover .chrono__node,
+.chrono__item:focus-within .chrono__node,
+.chrono__item:hover .chrono__dot,
+.chrono__item:focus-within .chrono__dot {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.chrono__item:hover .chrono__node--project,
+.chrono__item:focus-within .chrono__node--project,
+.chrono__item:hover .chrono__dot--project,
+.chrono__item:focus-within .chrono__dot--project {
+  transform: translate(-50%, -50%) rotate(45deg) scale(1.15);
+}
+
+.chrono__item:hover .chrono__entry,
+.chrono__item:focus-within .chrono__entry {
+  color: var(--cinnabar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chrono__node,
+  .chrono__dot,
+  .chrono__item::before,
+  .chrono__item::after {
+    transition: none;
+  }
 }
 
 /* 进度朱线（画在 .chrono__axis 同一 SVG 坐标系内）：与赭石弧同曲率反向、
@@ -1049,15 +1152,15 @@
   transition: color var(--dur-feedback) var(--ease-ink);
 }
 
-.archive-legend__item:hover,
-.archive-legend__item[aria-pressed="true"] {
+.archive-legend__item:hover {
   color: var(--ink);
 }
 
 .archive-legend__item[aria-pressed="true"] {
+  color: var(--cinnabar);
   text-decoration: underline;
   text-underline-offset: var(--space-2);
-  text-decoration-color: var(--celadon-deep);
+  text-decoration-color: var(--cinnabar);
 }
 
 .archive-empty {
@@ -1072,11 +1175,13 @@
 }
 
 .archive-legend__dot {
-  width: 5px;
-  height: 5px;
+  box-sizing: border-box;
+  width: var(--chrono-node-size);
+  height: var(--chrono-node-size);
   border-radius: 50%;
   opacity: 0.45;
-  transition: opacity var(--dur-feedback) var(--ease-ink);
+  transition: opacity var(--dur-feedback) var(--ease-ink),
+              color var(--dur-feedback) var(--ease-ink);
 }
 
 .archive-legend__item:hover .archive-legend__dot,
@@ -1089,15 +1194,20 @@
 }
 
 .archive-legend__dot--essay {
-  background-color: var(--bamboo);
+  background-color: transparent;
+  border: 1px solid var(--bamboo);
+  border-radius: var(--radius-xs);
 }
 
 .archive-legend__dot--tech {
-  background-color: var(--ink-light);
+  background-color: transparent;
+  border: 1px solid var(--ink-light);
 }
 
 .archive-legend__dot--project {
   background-color: var(--ochre);
+  border-radius: var(--radius-xs);
+  transform: rotate(45deg);
 }
 
 /* 筛选隐藏：hidden 属性须胜过下方布局的类选择器声明 */

@@ -1238,25 +1238,27 @@ const pages = [
         return Math.abs(rect.top + rect.height / 2 - bounds.top - point.y) < 1;
       });
     }), 'visible date nodes stay on the arc within one pixel');
-    // 检查真实 3D 矩阵：从中心向边缘逐渐旋转、后退、变暗和失焦。
-    const depthSamples = await rail.evaluate(el => {
+    // 纸卷平面：题列不再做圆柱透视；边缘与中心同为可读墨色。
+    const planarSamples = await rail.evaluate(el => {
       const bounds = el.getBoundingClientRect();
       return [...el.querySelectorAll('.chrono__item')].map(item => {
         const rect = item.getBoundingClientRect();
         const css = getComputedStyle(item.querySelector('.chrono__entry'));
         const matrix = new DOMMatrix(css.transform);
-        return { distance: Math.abs(rect.left + rect.width / 2 - bounds.left - bounds.width / 2),
+        return {
+          distance: Math.abs(rect.left + rect.width / 2 - bounds.left - bounds.width / 2),
           visible: rect.right > bounds.left && rect.left < bounds.right,
-          z: matrix.m43, rotation: Math.abs(matrix.m13), opacity: Number(css.opacity),
-          blur: parseFloat(css.filter.replace(/[^0-9.]/g, '')) || 0 };
+          z: matrix.m43,
+          rotation: Math.abs(matrix.m13),
+          opacity: Number(css.opacity),
+          blur: parseFloat(String(css.filter).replace(/blur\(([^)]+)\).*/, '$1')) || 0
+        };
       }).filter(item => item.visible).sort((a, b) => a.distance - b.distance);
     });
-    const centerDepth = depthSamples[0];
-    const edgeDepth = depthSamples.at(-1);
-    assert.ok(edgeDepth.z < centerDepth.z - 10 && edgeDepth.rotation > centerDepth.rotation &&
-      edgeDepth.opacity < centerDepth.opacity && edgeDepth.blur > centerDepth.blur,
-      `cylindrical perspective increases toward edges: ${JSON.stringify({ centerDepth, edgeDepth })}`);
-    await timelinePage.screenshot({ path: path.join(output, 'timeline-3d-perspective.png') });
+    assert.ok(planarSamples.length >= 2, 'planar archive still exposes multiple visible columns');
+    assert.ok(planarSamples.every(sample => Math.abs(sample.z) < 1 && sample.rotation < 0.01 && sample.blur < 0.05),
+      `planar paper scroll keeps columns unrotated and unblurred: ${JSON.stringify(planarSamples.slice(0, 3))}`);
+    await timelinePage.screenshot({ path: path.join(output, 'timeline-paper-scroll.png') });
     const railBox = await rail.boundingBox();
     await timelinePage.mouse.move(railBox.x + railBox.width / 2, railBox.y + 150);
     const beforeWheel = await rail.evaluate(el => el.scrollLeft);
