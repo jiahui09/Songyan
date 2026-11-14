@@ -508,44 +508,90 @@ function initChronoRail() {
     { passive: true }
   );
 
-  // —— 分卷图例筛选：点按只留该分卷（再点还原）；年份组无可见篇目整组隐去 ——
+  // —— 分卷图例：褪墨筛选（再点还原）；轴/列表同步；零匹配显空态 ——
   const legend = document.querySelector('.archive-legend');
-  if (legend) {
-    const items = rail.querySelectorAll('.chrono__item');
-    const years = rail.querySelectorAll('.chrono__year');
-    const applyFilter = (cat) => {
-      stopGlide();
-      endDrag();
+  const listPanel = document.querySelector('[data-archive-list]');
+  const viewToggle = document.querySelector('.archive-view');
+  const mainArchive = document.querySelector('.site-main--archive');
+  let activeCat = '';
+  let activeView = 'axis';
+
+  function visibleAxisCount() {
+    return rail.querySelectorAll('.chrono__item:not(.is-dimmed)').length;
+  }
+
+  function applyFilter(cat) {
+    stopGlide();
+    endDrag();
+    activeCat = cat || '';
+    if (legend) {
       legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
-        btn.setAttribute('aria-pressed', String(btn.dataset.catFilter === cat));
+        btn.setAttribute('aria-pressed', String(btn.dataset.catFilter === activeCat));
       });
-      items.forEach((li) => {
-        li.hidden = !!cat && li.dataset.cat !== cat;
+    }
+    rail.querySelectorAll('.chrono__item').forEach((li) => {
+      li.classList.toggle('is-dimmed', !!activeCat && li.dataset.cat !== activeCat);
+      li.hidden = false;
+    });
+    rail.querySelectorAll('.chrono__year').forEach((group) => {
+      const hasBright = !!group.querySelector('.chrono__item:not(.is-dimmed)');
+      group.classList.toggle('is-dimmed', !!activeCat && !hasBright);
+      group.hidden = false;
+    });
+    if (listPanel) {
+      listPanel.querySelectorAll('.archive-list__item').forEach((li) => {
+        li.classList.toggle('is-dimmed', !!activeCat && li.dataset.cat !== activeCat);
+        li.hidden = false;
       });
-      years.forEach((group) => {
-        group.hidden = !group.querySelector('.chrono__item:not([hidden])');
-      });
-      const visibleCount = rail.querySelectorAll('.chrono__item:not([hidden])').length;
-      const count = document.querySelector('[data-archive-count]');
-      const empty = document.querySelector('[data-archive-empty]');
-      if (count) count.textContent = String(visibleCount);
-      chrono.hidden = visibleCount === 0;
-      if (empty) empty.hidden = visibleCount !== 0;
-      // 版面变了：桌面回停最新端并重建弧线；窄屏仅刷新筛选态
-      if (desktopRail.matches) {
-        rail.scrollLeft = rail.scrollWidth;
-        scrollTarget = rail.scrollLeft;
-        knownMax = maxScroll();
-        readingProgress = 1;
-      }
+    }
+    const visibleCount = visibleAxisCount();
+    const count = document.querySelector('[data-archive-count]');
+    const empty = document.querySelector('[data-archive-empty]');
+    if (count) count.textContent = String(visibleCount);
+    if (empty) empty.hidden = visibleCount !== 0;
+    applyView(activeView);
+    if (desktopRail.matches && activeView === 'axis') {
+      rail.scrollLeft = rail.scrollWidth;
+      scrollTarget = rail.scrollLeft;
+      knownMax = maxScroll();
+      readingProgress = 1;
       refresh();
-    };
+    } else {
+      refresh();
+    }
+  }
+
+  function applyView(view) {
+    activeView = view === 'list' ? 'list' : 'axis';
+    if (mainArchive) mainArchive.dataset.archiveView = activeView;
+    if (viewToggle) {
+      viewToggle.querySelectorAll('[data-archive-view]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(btn.dataset.archiveView === activeView));
+      });
+    }
+    const empty = document.querySelector('[data-archive-empty]');
+    const hasVisible = visibleAxisCount() > 0;
+    chrono.hidden = !(activeView === 'axis' && hasVisible);
+    if (listPanel) listPanel.hidden = !(activeView === 'list' && hasVisible);
+    if (empty) empty.hidden = hasVisible;
+    if (mainArchive) {
+      mainArchive.classList.toggle('is-list-view', activeView === 'list');
+    }
+  }
+
+  if (legend) {
     legend.querySelectorAll('[data-cat-filter]').forEach((btn) => {
       btn.addEventListener('click', () => {
         applyFilter(btn.getAttribute('aria-pressed') === 'true' ? '' : btn.dataset.catFilter);
       });
     });
   }
+  if (viewToggle) {
+    viewToggle.querySelectorAll('[data-archive-view]').forEach((btn) => {
+      btn.addEventListener('click', () => applyView(btn.dataset.archiveView));
+    });
+  }
+  applyView(activeView);
 
   function refreshLayout() {
     stopGlide();

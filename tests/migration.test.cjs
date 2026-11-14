@@ -273,10 +273,10 @@ const pages = [
       assert.ok(await time.evaluate(el => Math.abs(new DOMMatrix(getComputedStyle(el).transform).b + 0.5) < 0.001));
     }
     await page.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await page.locator('.chrono__item:not([hidden])').count(), 1);
+    assert.equal(await page.locator('.chrono__item:not(.is-dimmed)').count(), 1);
     assert.equal(await page.locator('[data-archive-count]').textContent(), '1');
     await page.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await page.locator('.chrono__item:not([hidden])').count(), 4);
+    assert.equal(await page.locator('.chrono__item:not(.is-dimmed)').count(), 4);
     await page.locator('[data-cat-filter="project"]').click();
     assert.equal(await page.locator('[data-archive-count]').textContent(), '0');
     assert.ok(await page.locator('[data-archive-empty]').isVisible());
@@ -285,7 +285,13 @@ const pages = [
     assert.equal(await page.locator('[data-archive-count]').textContent(), '4');
     assert.ok(await page.locator('.chrono').isVisible());
     assert.ok(await page.locator('[data-archive-empty]').isHidden());
-    console.log('PASS archive data binding and category filtering'); checks++;
+    await page.locator('[data-archive-view="list"]').click();
+    assert.equal(await page.locator('[data-archive-list]').getAttribute('hidden'), null);
+    assert.ok(await page.locator('.chrono').isHidden());
+    await page.locator('[data-archive-view="axis"]').click();
+    assert.ok(await page.locator('.chrono').isVisible());
+    assert.ok(await page.locator('[data-archive-list]').isHidden());
+    console.log('PASS archive data binding, fade filter and list view'); checks++;
     const wheelProbe = await page.locator('[data-chrono-rail]').evaluate(rail => {
       rail.scrollLeft = 0;
       rail.dispatchEvent(new Event('scroll'));
@@ -1302,14 +1308,14 @@ const pages = [
     assert.equal(await rail.evaluate(el => el.classList.contains('is-dragging')), false, 'drag state clears on release');
     assert.ok(timelinePage.url().includes('/archives/'), 'drag never navigates an article link');
     await timelinePage.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await timelinePage.locator('.chrono__item:not([hidden])').count(), 12, 'filter preserves matching entries across years');
+    assert.equal(await timelinePage.locator('.chrono__item:not(.is-dimmed)').count(), 12, 'filter preserves matching entries across years');
     await timelinePage.locator('[data-cat-filter="project"]').click();
     assert.ok(await timelinePage.locator('.chrono').isHidden(), 'empty category hides entire axis');
     assert.ok(await timelinePage.locator('[data-archive-empty]').isVisible(), 'empty result remains readable');
     assert.ok(await timelinePage.locator('.archive-legend').evaluate(el => Math.abs(el.getBoundingClientRect().top - document.querySelector('.archive-head').getBoundingClientRect().bottom) < 2), 'empty filter preserves dock instead of collapsing back to cover');
     await timelinePage.locator('[data-cat-filter="project"]').click();
     await timelinePage.waitForTimeout(100);
-    assert.equal(await timelinePage.locator('.chrono__item:not([hidden])').count(), 30, 'restore shows all years and columns');
+    assert.equal(await timelinePage.locator('.chrono__item:not(.is-dimmed)').count(), 30, 'restore shows all years and columns');
     assert.ok(await rail.evaluate(el => Math.abs(el.scrollLeft - (el.scrollWidth - el.clientWidth)) < 2), 'filter restore aligns newest end after reflow');
     await timelinePage.screenshot({ path: path.join(output, 'timeline-dense-restored.png') });
     const modes = await rail.evaluate(el => {

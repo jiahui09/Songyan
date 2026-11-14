@@ -1125,6 +1125,47 @@
   color: var(--ink-faint);
 }
 
+/* 工具栏：视图切换 + 分卷图例 */
+.archive-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+}
+
+.archive-view {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.archive-view__item {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-family: var(--font-title);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-meta);
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color var(--dur-feedback) var(--ease-ink);
+}
+
+.archive-view__item:hover {
+  color: var(--ink);
+}
+
+.archive-view__item[aria-pressed="true"] {
+  color: var(--cinnabar);
+  text-decoration: underline;
+  text-underline-offset: var(--space-2);
+  text-decoration-color: var(--cinnabar);
+}
+
 /* 分卷图例：与时间轴同屏；默认灰墨点，悬停/选中还原彩墨；点按筛选轴体篇目 */
 .archive-legend {
   position: relative;
@@ -1133,7 +1174,7 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-5);
-  margin: 0 0 var(--space-5);
+  margin: 0;
 }
 
 .archive-legend__item {
@@ -1170,8 +1211,97 @@
 }
 
 .chrono[hidden],
+.archive-list[hidden],
 .archive-empty[hidden] {
   display: none;
+}
+
+/* 信笺目录：收束行宽、汉字日期、极淡行底线 */
+.archive-list {
+  list-style: none;
+  margin: 0 auto var(--space-8);
+  padding: 0 var(--space-6);
+  max-width: var(--prose-max);
+}
+
+.archive-list__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--space-3);
+  padding: var(--space-4) var(--space-2);
+  transition: background-color var(--dur-feedback) var(--ease-ink);
+}
+
+.archive-list__item::after {
+  content: "";
+  position: absolute;
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--letter-rule) 18%,
+    var(--letter-rule) 82%,
+    transparent
+  );
+}
+
+.archive-list__item:last-child::after {
+  display: none;
+}
+
+.archive-list__item:hover,
+.archive-list__item:focus-within {
+  background-color: var(--letter-hover-bg);
+}
+
+.archive-list__date {
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.archive-list__rubric {
+  font-family: var(--font-title);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-tag);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.archive-list__rubric--ci {
+  color: var(--cinnabar);
+}
+
+.archive-list__link {
+  min-width: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-list-title);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.archive-list__link:hover,
+.archive-list__link:focus-visible {
+  color: var(--cinnabar);
+}
+
+.archive-list__title {
+  display: inline;
+}
+
+@media (max-width: 640px) {
+  .archive-list__item {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-1);
+  }
 }
 
 .archive-legend__dot {
@@ -1210,10 +1340,35 @@
   transform: rotate(45deg);
 }
 
-/* 筛选隐藏：hidden 属性须胜过下方布局的类选择器声明 */
+/* 筛选褪墨：非当前分卷淡出为残墨，节点保留可扫读 */
+.chrono__item.is-dimmed,
+.chrono__year.is-dimmed,
+.archive-list__item.is-dimmed {
+  opacity: var(--chrono-dim-opacity);
+  filter: grayscale(0.85);
+  transition: opacity var(--dur-feedback) var(--ease-ink), filter var(--dur-feedback) var(--ease-ink);
+}
+
+.chrono__item.is-dimmed {
+  pointer-events: none;
+}
+
+.archive-list__item.is-dimmed {
+  pointer-events: none;
+}
+
 .chrono__item[hidden],
-.chrono__year[hidden] {
+.chrono__year[hidden],
+.archive-list__item[hidden] {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chrono__item.is-dimmed,
+  .chrono__year.is-dimmed,
+  .archive-list__item.is-dimmed {
+    transition: none;
+  }
 }
 
 .archive-head__mast {
@@ -1381,16 +1536,30 @@
       height: 100%;
     }
 
-    .archive-legend {
-      position: relative;
-      z-index: 1;
+    .archive-toolbar {
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
-      /* 上边距作定点缓冲，不占时间轴一屏高度 */
       margin: var(--space-8) 0 var(--space-3);
+    }
+
+    .archive-legend {
+      position: relative;
+      z-index: 1;
       min-height: var(--archive-legend-height);
       align-items: center;
+    }
+
+    .archive-dock-page .site-main--archive.is-list-view .archive-intro {
+      height: auto;
+      margin-top: 0;
+      padding-top: 0;
+      overflow: visible;
+    }
+
+    .archive-dock-page .site-main--archive.is-list-view .archive-recent,
+    .archive-dock-page .site-main--archive.is-list-view .archive-head-space {
+      display: none;
     }
 
     .archive-dock-page .chrono {

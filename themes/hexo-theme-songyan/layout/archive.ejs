@@ -44,11 +44,17 @@
     <% } %>
     <div class="archive-head-space" aria-hidden="true"></div>
   </div>
-  <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">
-    <% Object.keys(cfg.categories).forEach(function (key) { %><button type="button" class="archive-legend__item" data-cat-filter="<%= key %>" aria-pressed="false"><span class="archive-legend__dot archive-legend__dot--<%= key %>"></span><%= cfg.categories[key] %></button><% }); %>
-  </nav>
+  <div class="archive-toolbar">
+    <nav class="archive-view" aria-label="<%= cfg.view_label %>">
+      <button type="button" class="archive-view__item" data-archive-view="axis" aria-pressed="true"><%= cfg.view_axis %></button>
+      <button type="button" class="archive-view__item" data-archive-view="list" aria-pressed="false"><%= cfg.view_list %></button>
+    </nav>
+    <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">
+      <% Object.keys(cfg.categories).forEach(function (key) { %><button type="button" class="archive-legend__item" data-cat-filter="<%= key %>" aria-pressed="false"><span class="archive-legend__dot archive-legend__dot--<%= key %>"></span><%= cfg.categories[key] %></button><% }); %>
+    </nav>
+  </div>
   <% if (ordered.length) { %>
-  <div class="chrono" id="archive-chrono" tabindex="-1">
+  <div class="chrono" id="archive-chrono" data-archive-panel="axis" tabindex="-1">
     <div class="chrono__rail" data-chrono-rail tabindex="0" role="region" aria-label="<%= cfg.title %>">
       <div class="chrono__track">
         <% Object.keys(groups).sort().reverse().forEach(function (year) { var n = Number(year) - 4; %>
@@ -74,6 +80,15 @@
     </div>
     <div class="chrono__axis" aria-hidden="true"><svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg"><path class="chrono__axis-line"/><path class="chrono__curve-line"/><circle class="chrono__curve-dot"/></svg></div>
   </div>
+  <ol class="archive-list" data-archive-panel="list" data-archive-list aria-label="<%= cfg.list_label %>" hidden>
+    <% ordered.forEach(function (post) { var key = sectionOf(post); %>
+    <li class="archive-list__item" data-cat="<%= key %>">
+      <time class="archive-list__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date, compact: true}) %></time>
+      <span class="archive-list__rubric archive-list__rubric--<%= key %>"><%= cfg.categories[key] %></span>
+      <a href="<%= url_for(post.path) %>" class="archive-list__link"><span class="archive-list__title"><%= post.title || config.title %></span></a>
+    </li>
+    <% }); %>
+  </ol>
   <div class="archive-exit-space" aria-hidden="true"></div>
   <p class="archive-empty" data-archive-empty role="status" hidden><%= theme.labels.empty %></p>
   <% } else { %><p class="archive-empty" id="archive-chrono" tabindex="-1"><%= theme.labels.empty %></p><% } %>
