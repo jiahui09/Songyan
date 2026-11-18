@@ -4,11 +4,10 @@
   var ciCfg = theme.ci || {};
   var categories = page.categories && page.categories.length ? page.categories.toArray() : [];
   var eyebrow = page.header || page.cipai || (categories[0] && categories[0].name) || (isCi ? theme.archive.categories.ci : labels.post);
-  var notes = isCi && ciCfg.show_annotation && Array.isArray(page.annotations) ? page.annotations : [];
   var author = page.signature || (theme.author && theme.author.name) || config.author;
   var written = page.date || page.updated;
   var epigraph = page.epigraph || page.lead || page.subtitle || '';
-  var verticalCi = isCi && ciCfg.vertical_desktop;
+  var verticalCi = isCi && (page.poetry_layout === 'vertical' || (page.poetry_layout !== 'horizontal' && ciCfg.vertical_desktop !== false));
 %>
 <main class="site-main site-main--narrow site-main--reading" id="reading-main">
   <article class="<%= isCi ? 'post-ci' : 'essay-article' %>">
@@ -31,17 +30,15 @@
       </header>
       <div class="reading-head-space" aria-hidden="true"></div>
     </div>
+    <div class="reading-scene">
     <div class="reading-body-anchor" id="reading-body" tabindex="-1">
       <% if (isCi) { %>
       <div class="post-ci__stage<%= verticalCi ? ' post-ci__stage--columns' : '' %>"<%= verticalCi ? ' data-ci-columns' : '' %>>
-        <div class="post-ci__body-horizontal<%= verticalCi ? ' post-ci__body--vertical' : '' %>"><%- partial('_partial/content', {content: page.content || ''}) %><% if (verticalCi) { %><%- partial('_partial/signature', {variant: 'vertical', slip: !!ciCfg.share}) %><% } %></div>
+        <div class="post-ci__body-horizontal<%= verticalCi ? ' post-ci__body--vertical' : '' %>" data-ci-body>
+          <div class="post-ci__verses"><%- partial('_partial/content', {content: page.content || ''}) %></div>
+          <%- partial('_partial/signature', {variant: 'vertical', slip: !!ciCfg.share}) %>
+        </div>
       </div>
-      <% if (notes.length) { %>
-      <aside class="poem-annotations" aria-label="<%= labels.annotations %>">
-        <h2 class="poem-annotations__title"><%= labels.annotations %></h2>
-        <dl><% notes.forEach(function (note, index) { %><div class="poem-annotations__item" id="poem-note-<%= index + 1 %>"><dt><%= note.word %></dt><dd><%= note.meaning %></dd></div><% }); %></dl>
-      </aside>
-      <% } %>
       <% } else {
         var marginNotes = Array.isArray(page.margin_notes) ? page.margin_notes : [];
       %>
@@ -64,8 +61,9 @@
       <% } %>
     </div>
     <footer class="post-ending">
-    <% if (!(verticalCi)) { %><%- partial('_partial/signature', {slip: isCi && !!ciCfg.share}) %><% } %>
+    <% if (!isCi) { %><%- partial('_partial/signature') %><% } %>
     </footer>
     <%- partial('_partial/comments') %>
+    </div>
   </article>
 </main>

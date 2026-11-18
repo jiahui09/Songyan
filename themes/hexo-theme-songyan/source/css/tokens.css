@@ -22,6 +22,10 @@
   --cinnabar:              #A8392E;  /* 朱砂：每屏至多一点 */
   --cinnabar-hover:        #842A21;  /* 朱砂深色悬停态 */
   --cinnabar-eyebrow:      var(--cinnabar);  /* 词牌题头（仅词作条目） */
+  --archive-ink-ci: var(--cinnabar);
+  --archive-ink-essay: var(--bamboo);
+  --archive-ink-tech: var(--ink-light);
+  --archive-ink-project: var(--ochre);
   --celadon:               #8FA8A8;  /* 天青：雨丝线、悬停细线、选中态 */
   --celadon-deep:          #4D6A6C;  /* 烟青：悬停文字（对比度 ≥ 5:1） */
   --rouge:                 #C98F8C;  /* 淡胭脂：全篇只此一瓣落花与着重点 */
@@ -108,10 +112,13 @@
   --tracking-meta: 0.06em;
 
   /* 文人排版规范（分类题头等固定排印参数） */
+  --text-ci-slip: 0.75rem; /* 12px：诗词页桌面落款的题笺入口 */
+  --ci-seal-size: 3.75rem; /* 诗词落款印章占位，与印章原尺寸一致 */
   --text-tag:     var(--text-xs);
   --tracking-tag: var(--tracking-poetry-title);
   --font-date:    var(--font-title);  /* 日期统一汉字书写，随题字体 */
   --tracking-verse: 0.08em;  /* 诗句微疏，不影响连续阅读 */
+  --tracking-verse-vertical: 0.04em; /* 正文竖排收紧字距，保持行气 */
 
   /* 间距尺寸 */
   --space-1:    0.25rem;    /* 4px */
@@ -126,7 +133,9 @@
   --space-16:   4rem;       /* 64px */
   --space-20:   5rem;       /* 80px */
   --space-24:   6rem;       /* 96px */
-  --ci-stanza-gap: 2.75rem; /* 44px：词作上下阕之间的过片留白 */
+  --ci-stanza-gap: 2.75rem; /* 44px：横排上下阕之间的过片留白 */
+  --ci-column-pitch: calc((var(--text-verse) * var(--leading-verse-columns) + var(--space-4)) * 1.12); /* 竖排列距增加 12%，字列居中，片内以留白分隔 */
+  --ci-stanza-column-gap: calc(var(--ci-column-pitch) / 2); /* 上下片之间留半列空白 */
 
   /* 边框圆角（克制微圆角，体现纸质方正感） */
   --radius-xs:   2px;
@@ -143,53 +152,65 @@
   --dur-enter:     320ms;  /* 落墨入场 */
   --dur-feedback:  160ms;  /* 交互反馈点击/悬停 */
   --dur-unfold:    200ms;  /* 折角纸笺展开 */
-  --dur-dock:      640ms;  /* 封面越过阻尼阈值后自动完成整段行程 */
+  --dur-dock:      1000ms; /* 封面从容起落：轻启、舒展、缓收，进入与返回同速 */
   --dur-stamp:     400ms;  /* 卷首印章盖下（全站唯一一次） */
   /* 卷首题签停靠：行程后释放；页眉收拢并常驻顶部。 */
   --cover-height: 62svh;
-  --cover-dock-height: 5.5rem; /* 栏头：缩小后的题句；出处渐隐不占位 */
+  --cover-dock-height: 5.5rem; /* 栏头：缩至 --text-dock-title 的双行题句；出处渐隐不占位 */
   --header-dock-height: 3.75rem; /* 收拢后的页眉高度 */
   --cover-travel: calc(var(--cover-height) - var(--cover-dock-height) - var(--header-dock-height));
 
-  /* 岁时笺纸 · 三远法：平远山影 / 深远脉络 / 高远引首；无对称双弧、无机械等距。 */
-  --chrono-top:    8.5rem;  /* 轴上区：分类 + 汉字月日 + 节气 */
-  --chrono-bottom: 28rem;   /* 轴下区：题目，保留词尾留白 */
-  --chrono-gap:    1.75rem; /* 默认列距（无日差数据时回退） */
-  --chrono-span-close: 2.375rem; /* ≤3 日：林峦聚 */
-  --chrono-span-near:  5.125rem; /* ≤月：云烟开 */
-  --chrono-span-mid:   7.125rem; /* ≤季：渐疏 */
-  --chrono-span-far:   9.125rem; /* 跨季年：停顿呼吸 */
-  --chrono-ridge:  0.875rem; /* 脉络起伏半幅（约 ±14px） */
-  --chrono-breath: clamp(var(--space-16), 12vw, var(--space-24));
-  --chrono-axis-mist: color-mix(in srgb, var(--celadon) 42%, transparent);
-  --chrono-axis-ink: color-mix(in srgb, var(--ink) 20%, transparent);
-  --chrono-axis-dash: 3 7;
-  --chrono-progress-ink: color-mix(in srgb, var(--cinnabar) 55%, transparent);
+  /* 岁时笺纸 · 同向圆柱双轨：下轨弧幅略小，墨点按下轨实际弧长定位。 */
+  --ink-rail: color-mix(in srgb, var(--ink) 24%, transparent);
+  --ink-rail-echo: color-mix(in srgb, var(--ink) 9%, transparent);
+  --seal-red-soft: color-mix(in srgb, var(--cinnabar) 16%, transparent);
+  --chrono-top:    8rem;
+  --chrono-bottom: 22rem;
+  --chrono-gap:    var(--space-8);
+  --chrono-sag:    var(--space-12);
+  --chrono-breath: var(--space-16);
+  --chrono-title-gap: var(--space-5);
+  --chrono-day-gap: var(--space-4);
+  --chrono-depth: 0.22;
+  --chrono-spread: 0.14;
+  --chrono-perspective-floor: 0.74;
+  --chrono-progress-depth: 0.72;
+  --chrono-progress-ink: color-mix(in srgb, var(--line-wash) 76%, var(--paper));
+  --chrono-ink-floor: 0.7;
+  --chrono-ink-power: 1.5;
+  --chrono-font-base: var(--text-xl);
+  --chrono-weight-year: 1.4;
+  --chrono-weight-title: 1;
+  --chrono-weight-month: 1.05;
+  --chrono-weight-date: 0.62;
+  --chrono-weight-note: 0.72;
+  --chrono-tracking: var(--tracking-title);
+  --chrono-year-size: calc(var(--chrono-font-base) * var(--chrono-weight-year));
+  --chrono-title-ink: color-mix(in srgb, var(--ink) 94%, var(--paper));
+  --chrono-soft-ink: color-mix(in srgb, var(--celadon-deep) 88%, var(--paper));
+  --chrono-note-ink: color-mix(in srgb, var(--ink-secondary) 82%, var(--paper));
+  --chrono-title-size: calc(var(--chrono-font-base) * var(--chrono-weight-title));
   --chrono-node-size: 6px;
-  --chrono-node-year: 9px;
-  --chrono-col-min: 3.5rem;
-  --chrono-wash: color-mix(in srgb, var(--cinnabar) 8%, transparent);
+  --chrono-node-month: 7px;
+  --chrono-node-year: 10px;
+  --chrono-dot-r: 5px;
+  --chrono-dot-ring: 2px;
+  --chrono-curve-width: 1;
   --chrono-dim-opacity: 0.22;
-  --chrono-vignette: radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--ink) 4%, transparent) 100%);
-  --chrono-vista-opacity: 0.34;
-  --chrono-parallax: 0.18;
-  --chrono-date: var(--ink-secondary);
-  --chrono-solar: #646D70;
-  --chrono-scrubber: color-mix(in srgb, var(--celadon) 55%, transparent);
   --letter-rule: color-mix(in srgb, var(--cinnabar) 12%, var(--line-light));
   --letter-hover-bg: var(--paper-deep);
   --paper-glow-celadon: color-mix(in srgb, var(--celadon) 4%, transparent);
   --paper-glow-ochre: color-mix(in srgb, var(--ochre) 3.5%, transparent);
-  /* 阅读沉浸：乌丝栏 / 着重点 / 旁批 */
-  --silk-rail: rgba(140, 130, 117, 0.16);
-  --rouge-dot: #C98F8C;
+  /* 阅读沉浸：乌丝栏 / 旁批 */
+  --silk-rail: rgba(140, 130, 117, 0.12);
   --margin-note-line: color-mix(in srgb, var(--celadon) 45%, transparent);
 
   /* 归档题头停靠：首屏行程须盖住视口，定点后时间轴塞进页眉+题头下的一屏。 */
-  --archive-dock-height: 4.5rem;
+  --archive-dock-height: 7rem; /* 停靠占位；题头在行程末段收缩至 --text-dock-title */
+  --archive-cover-lift: var(--space-8);
+  --archive-recent-gap: var(--space-16);
   --archive-legend-height: 2.75rem;
   --archive-travel: calc(100svh - var(--header-dock-height));
-  --dock-snap: none; /* 引力锚点模式：proximity | none */
   /* 阅读页题头停靠：整屏题签封面，首屏不露正文 */
   --reading-dock-height: 10rem;
   --reading-travel: calc(100svh - var(--header-dock-height));
@@ -200,6 +221,19 @@
 
   /* 遮罩专用实色（仅用于 mask 渐变的不透明端，不作视觉色） */
   --mask-solid:    #000;
+}
+
+/* 大弧卷面：短窗收敛弧垂，保证定点一屏与短窗矩阵不裁切 */
+@media (max-height: 700px) {
+  :root {
+    --chrono-sag: 2rem;
+  }
+}
+
+@media (max-height: 520px) {
+  :root {
+    --chrono-sag: 1.25rem;
+  }
 }
 
 /* 留白封面：桌面一屏，窄屏短封面（不挤占阅读） */

@@ -38,7 +38,7 @@ async function build(name, overrides, source) {
   for (let i = 0; i < 13; i++) {
     await fs.writeFile(path.join(fixture, `_posts/entry-${i}.html`), `---\ntitle: Entry ${i}\ndate: 2026-10-${String(i + 1).padStart(2, '0')}\ntype: ${i === 0 ? 'invalid' : 'post'}\n${i === 1 ? 'seal: false\n' : ''}categories: [技术]\ntags: [验收]\n---\n<p>Post ${i}, minimal optional metadata.</p>`);
   }
-  const paginated = await build('paginated', { index_generator: { path: '', per_page: 3, order_by: '-date' }, per_page: 3 }, fixture);
+  const paginated = await build('paginated', { index_generator: { path: '', per_page: 3, order_by: '-date' }, per_page: 3, archive_generator: { per_page: 0 } }, fixture);
   const index = await fs.readFile(path.join(paginated, 'index.html'), 'utf8');
   const page2 = await fs.readFile(path.join(paginated, 'page/2/index.html'), 'utf8');
   assert.equal((index.match(/class="post-item"/g) || []).length, 3);
@@ -47,7 +47,9 @@ async function build(name, overrides, source) {
   assert.ok(!page2.includes('class="home-cover"'), 'pagination never repeats the cover');
   assert.ok(index.includes('class="pagination"') && index.includes('/page/2/'));
   const archive = await fs.readFile(path.join(paginated, 'archives/index.html'), 'utf8');
-  assert.equal((archive.match(/class="archive-item chrono__item(?:\s[^"]*)?"/g) || []).length, 13, 'full archive includes every published post even when generator pagination is enabled');
+  assert.equal((archive.match(/class="archive-list__item"/g) || []).length, 13, 'full archive includes every published post');
+  assert.ok(!(await fs.readdir(path.join(paginated, 'archives'))).includes('page'), 'main archive never paginates duplicate content');
+  assert.ok(!archive.includes('class="pagination"'), 'main archive omits the pagination partial');
   const unknown = await fs.readFile(path.join(paginated, '2026/10/01/entry-0/index.html'), 'utf8');
   assert.ok(unknown.includes('essay-body reading-body'), 'unknown type falls back to prose');
   const noSeal = await fs.readFile(path.join(paginated, '2026/10/02/entry-1/index.html'), 'utf8');

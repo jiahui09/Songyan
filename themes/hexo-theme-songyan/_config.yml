@@ -1,5 +1,5 @@
 # =========================================================
-# 松烟 (Songyan) 主题核心配置 v0.1
+# 松烟 (Songyan) 主题核心配置 v1.0
 # 设计哲学：外古内今，分卷而治
 # 词重仪式，技术重效率
 # =========================================================
@@ -18,8 +18,8 @@ seal:
   enable: true               # 是否开启印章模块
   text: "春唇语冬"           # 默认印章文字（2~4 字；4 字按古法直读：右上→右下→左上→左下）
   style: "yang"              # 默认刻法：yang（朱文/阳刻，细线红字）| yin（白文/阴刻，红底白字）| mixed（朱白相间，逐格相间）
-  size: 44                   # 页头印章尺寸 (px)，保留印文辨识度；文末落款独立设置
-  navbar_image: "/images/stamp-1794585749485.png" # 仅替换站名旁印章；留空则使用矢量生成器
+  size: 36                   # 页头印章尺寸 (px)，保留印文辨识度；文末落款独立设置
+  navbar_image: "/images/stamp-1794661989454.png" # 仅替换站名旁印章；留空则使用矢量生成器
   rotate: -1.2               # 微倾斜角度 (deg)，模拟手盖印泥的自然微偏
   density: 1.0               # 刀痕崩刃、金石飞白与砂眼颗粒密度 (0.5 ~ 1.5)
   seed: 42                   # 随机种子（固定种子确保重建时刀痕完全一致）
@@ -41,8 +41,7 @@ type_mapping:
 
 # 词卷配置 (type: ci)
 ci:
-  vertical_desktop: true   # 桌面端 (≥1024px) 词作右起竖排，窄屏自动降级横排
-  show_annotation: false   # 难词旁落淡胭脂着重点，点按跳至文末笺注；默认关闭解释笺
+  vertical_desktop: true   # 桌面默认竖排；作者在 Front Matter 用 poetry_layout: horizontal | vertical 覆盖；窄屏横排
   share: true
 
 # 卷首首页配置
@@ -68,7 +67,6 @@ labels:
   poem_save: 存为诗笺
   poem_close: 阖卷
   poem_overflow: 此词超出单张诗笺容量，请在预览中滚动阅读；为避免截字，暂不导出。
-  annotations: 笺注
   margin_notes: 旁批
   quiet_reading: 静读
   tags: 系
@@ -96,13 +94,11 @@ comments:
     language: zh-CN
     perPage: 10
     pagerDirection: last
+    legacy_path_ids: {}       # 迁移站点可填「URL 路径: 原评论 ID」，保留已有 Gitalk 关联
     createIssueManually: false
 
 # 页脚
 footer:
-  links:
-    归档: /archives/
-    关于: /about/
   copyright: "© 二〇二六 春唇语冬"
   note: "落花人独立，微雨燕双飞 · Hexo 主题「松烟」"
 
@@ -117,13 +113,7 @@ archive:
   count_prefix: 当前篇什
   count_suffix: 篇
   filter_label: 按分卷筛选
-  view_label: 归档视图
-  view_axis: 轴
-  view_list: 目
   list_label: 目录
-  frontispiece: 引首 · 岁时集
-  scrubber_label: 卷轴缩略
-  excerpt_label: 题引
   recent: 3                         # 首屏近期篇目数；下滑后隐去，进入完整时间轴
   recent_label: 近期篇什
   categories:
@@ -136,6 +126,20 @@ archive:
     essay: [随笔, 杂记]
     tech: [技术, 前端工程]
     project: [项目, 开源项目]
+  fallback_category: essay          # 未命中分类映射时的兜底分卷键
+  solar_terms:                      # 月签节气：按公历月归属（每月的两个节气）
+    1: [小寒, 大寒]
+    2: [立春, 雨水]
+    3: [惊蛰, 春分]
+    4: [清明, 谷雨]
+    5: [立夏, 小满]
+    6: [芒种, 夏至]
+    7: [小暑, 大暑]
+    8: [立秋, 处暑]
+    9: [白露, 秋分]
+    10: [寒露, 霜降]
+    11: [立冬, 小雪]
+    12: [大雪, 冬至]
 
 about:
   title: 关于

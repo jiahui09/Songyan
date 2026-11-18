@@ -141,13 +141,14 @@
 @keyframes epigraph-dock {
   from {
     /* 按实际题簇高度居中，避免比例估算随字号和视口产生偏移。 */
-    transform: translateY(calc(50svh - var(--header-dock-height) - 50%));
+    top: calc(50svh - var(--header-dock-height) - (var(--text-epigraph) * var(--leading-title) * 2 + var(--space-4) + var(--home-source-height)) / 2);
   }
   to {
-    transform: translateY(var(--space-3));
+    top: var(--space-3);
   }
 }
 
+/* 首页封面例外：题签随行程缩为栏头；只改字号，字形逐帧按真实字号重绘，不用 transform 缩放。 */
 @keyframes title-shrink {
   from {
     font-size: var(--text-epigraph);
@@ -216,6 +217,7 @@
     }
 
     .home-cover .home-epigraph {
+      --home-source-height: 0rem;
       position: absolute;
       left: 0;
       right: 0;
@@ -225,6 +227,10 @@
       animation: epigraph-dock linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px var(--cover-travel);
+    }
+
+    .home-cover .home-epigraph:has(.home-epigraph__source) {
+      --home-source-height: calc(var(--space-8) + var(--leading-xs));
     }
 
     .home-cover .home-epigraph__text {
@@ -259,7 +265,6 @@
      */
     html:has(body.home-cover-page) {
       scroll-snap-type: y proximity;
-      --dock-snap: proximity;
     }
 
     .home-dock-zone + .home-sheet {
@@ -518,67 +523,6 @@
   opacity: 0.85;
 }
 
-/* 文末笺注：小字两栏，不用展开框 */
-.poem-annotations {
-  max-width: 28rem;
-  margin: var(--space-12) auto 0;
-  padding-top: var(--space-6);
-  border-top: 1px solid transparent;
-  border-image: var(--rain-thread) 1;
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  color: var(--ink-secondary);
-}
-
-.poem-annotations__title {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-xs);
-  letter-spacing: 0.4em;
-  color: var(--ink-faint);
-  text-align: left;
-}
-
-.poem-annotations dl {
-  margin: 0;
-}
-
-.poem-annotations__item {
-  display: grid;
-  grid-template-columns: fit-content(6em) minmax(0, 1fr);
-  overflow-wrap: anywhere;
-  gap: var(--space-4);
-  padding: var(--space-1) 0;
-  scroll-margin-block-start: var(--space-16);
-}
-
-.poem-annotations__item:target {
-  color: var(--ink);
-}
-
-.poem-annotations dt {
-  flex: none;
-  font-family: var(--font-title);
-  color: var(--ink);
-}
-
-.poem-annotations dd {
-  margin: 0;
-}
-
-/* 难词：字旁一点淡胭脂着重号，点按跳至注条 */
-.poem-gloss {
-  color: inherit;
-  text-emphasis: filled circle var(--rouge-dot);
-  -webkit-text-emphasis: filled circle var(--rouge-dot);
-  text-emphasis-position: under right;
-  -webkit-text-emphasis-position: under right;
-}
-
-.poem-gloss:hover,
-.poem-gloss:focus-visible {
-  color: var(--celadon-deep);
-}
-
 /* =========================================================
    4. 文章页（随笔样板 post-essay）版式
    ========================================================= */
@@ -673,66 +617,296 @@
   margin-bottom: var(--space-8);
 }
 
-/* =========================================================
-   5. 归档页 (archive.html)「岁时笺纸」三远法横轴
-   ---------------------------------------------------------
-   平远山影 · 深远脉络 · 高远引首；右新左旧；无对称双弧
-   ========================================================= */
-.chrono {
+/* Hexo archive adapter for the isolated 3D cylinder viewport. */
+.scroll-viewport.archive-cylinder {
+  --year-rail-offset: 48px;
+  --year-node-pitch: 192px;
+  --rail-safe-pad: 16px;
+  --dock-gap: 28px;
+  --dot-breath: var(--space-3);
+  --title-width: 64px;
+  --title-column-gap: 6px;
+  --title-target-h: 232px;
+  --year-ink: #24211c;
+  --year-ink-muted: #9a9184;
+  --month-ink: rgba(75, 68, 58, 0.45);
+  --date-ink: #756d61;
+  --date-ink-active: #585147;
+  --title-ink: #151311;
+  --year-size: clamp(1.45rem, 2.2vw, 1.85rem);
+  --year-tracking: 0.16em;
+  --month-size: 11px;
+  --month-tracking: 0.24em;
+  --month-gap: 6px;
+  --date-size: 12.5px;
+  --title-active-size: clamp(1.32rem, 1.75vw, 1.52rem);
+  --title-compact-size: 1.15rem;
+  --title-compact-tracking: 0.12em;
   position: relative;
-  margin-top: var(--space-4);
-  scroll-margin-top: var(--header-dock-height);
+  width: min(100%, var(--stream-max));
+  max-width: var(--stream-max);
+  height: clamp(600px, calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-8)), 760px);
+  margin: var(--space-2) auto var(--space-8);
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  touch-action: pan-y;
+  cursor: grab;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.25) 6%, rgba(0, 0, 0, 0.84) 13%, #000 19%, #000 81%, rgba(0, 0, 0, 0.84) 87%, rgba(0, 0, 0, 0.25) 94%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.25) 6%, rgba(0, 0, 0, 0.84) 13%, #000 19%, #000 81%, rgba(0, 0, 0, 0.84) 87%, rgba(0, 0, 0, 0.25) 94%, transparent 100%);
+  mask-mode: alpha;
 }
 
-/* 极弱暗角：内容浮于笺纸之上 */
-.chrono::after {
-  content: "";
+.archive-cylinder.is-dragging { cursor: grabbing; }
+.archive-cylinder.is-empty,
+.archive-cylinder[hidden] { display: none; }
+
+.archive-cylinder .rail-svg,
+.archive-cylinder .year-stage,
+.archive-cylinder .timeline-stage {
   position: absolute;
   inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  background: var(--chrono-vignette);
-}
-
-/* 平远：远山剪影，正片叠底融入纸底 */
-.chrono__vista {
-  position: absolute;
-  inset: auto 0 16% 0;
-  z-index: 0;
-  height: min(42%, 14rem);
-  pointer-events: none;
-  opacity: var(--chrono-vista-opacity);
-  mix-blend-mode: multiply;
-  filter: brightness(1.085) contrast(1.12);
-  overflow: hidden;
-}
-
-.chrono__vista-svg {
-  display: block;
-  width: 140%;
+  width: 100%;
   height: 100%;
-  transform: translateX(var(--chrono-vista-x, 0%));
+}
+
+.archive-cylinder .rail-svg {
+  z-index: 5;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.archive-cylinder .timeline-stage {
+  z-index: 10;
+  perspective: 1150px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  mask: url("#scroll-edge-mask");
+  mask-mode: alpha;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.22) 6%, rgba(0, 0, 0, 0.84) 13%, #000 19%, #000 81%, rgba(0, 0, 0, 0.84) 87%, rgba(0, 0, 0, 0.22) 94%, transparent 100%);
+}
+
+.archive-cylinder .rail-path {
+  fill: none;
+  stroke: var(--ink-rail);
+  stroke-width: 1.15;
+}
+
+.archive-cylinder .rail-echo {
+  fill: none;
+  stroke: var(--ink-rail-echo);
+  stroke-width: 0.75;
+}
+
+.archive-cylinder .year-stage {
+  z-index: 10;
+  pointer-events: none;
+}
+
+.archive-cylinder .year-node {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  font-family: var(--font-title);
+  font-size: var(--year-size);
+  font-weight: 600;
+  line-height: var(--leading-title);
+  letter-spacing: var(--year-tracking);
+  white-space: nowrap;
+  color: var(--year-ink-muted);
+  background-color: var(--paper);
+  box-shadow: 0 0 0 var(--space-2) var(--paper);
+  transform-origin: 50% 50%;
   will-change: transform;
 }
 
-.chrono__vista-far {
-  fill: color-mix(in srgb, var(--ink) 22%, transparent);
+.archive-cylinder .year-node.is-centered { color: var(--year-ink); }
+
+.archive-cylinder .year-month {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: var(--month-gap);
+  font-size: var(--month-size);
+  font-weight: 400;
+  line-height: var(--leading-title);
+  letter-spacing: var(--month-tracking);
+  color: var(--month-ink);
+  opacity: 1;
+  transform: translateX(-50%);
+  transition: opacity var(--dur-feedback) var(--ease-ink);
 }
 
-.chrono__vista-near {
-  fill: color-mix(in srgb, var(--ink) 34%, transparent);
+.archive-cylinder .year-month.is-fading { opacity: 0; }
+
+.archive-cylinder .rail-center-tick {
+  stroke: color-mix(in srgb, var(--cinnabar) 52%, transparent);
+  stroke-width: 1;
+}
+
+.archive-cylinder .timeline-node {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 72px;
+  height: 100%;
+  margin-left: -36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-title);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  outline: none;
+}
+
+.archive-cylinder .timeline-node:focus-visible .node-title {
+  text-decoration: underline;
+  text-decoration-color: var(--cinnabar);
+  text-underline-offset: var(--space-2);
+}
+
+.archive-cylinder .node-upper,
+.archive-cylinder .node-lower {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 0%;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.archive-cylinder .node-lower { gap: 0; }
+
+.archive-cylinder .node-lower > .ink-dot {
+  position: absolute;
+  bottom: calc(100% + var(--dot-breath));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.archive-cylinder .ink-dot {
+  width: var(--space-1);
+  height: var(--space-1);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--node-ink, var(--date-ink));
+  opacity: 0.45;
+}
+
+.archive-cylinder .ink-dot::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-1));
+  border: 1px solid var(--node-ink, var(--date-ink));
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.archive-cylinder .timeline-node.is-centered .ink-dot,
+.archive-cylinder .timeline-node.is-centered .ink-dot::after { opacity: 1; }
+
+.archive-cylinder .node-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  font-family: var(--font-title);
+  font-size: var(--date-size);
+  font-weight: 400;
+  line-height: var(--leading-sm);
+  letter-spacing: var(--tracking-meta);
+  color: var(--date-ink);
+}
+
+.archive-cylinder .timeline-node[data-cat="ci"] { --node-ink: var(--archive-ink-ci); }
+.archive-cylinder .timeline-node[data-cat="essay"] { --node-ink: var(--archive-ink-essay); }
+.archive-cylinder .timeline-node[data-cat="tech"] { --node-ink: var(--archive-ink-tech); }
+.archive-cylinder .timeline-node.is-centered .node-date { color: var(--date-ink-active); }
+
+.archive-cylinder .node-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--title-column-gap);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: start;
+  max-height: var(--max-title-h);
+  max-width: var(--title-width);
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-poetry-title);
+  color: var(--title-ink);
+}
+
+.archive-cylinder .title-col {
+  display: block;
+  flex: 0 0 auto;
+  direction: ltr;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: start;
+  white-space: nowrap;
+  max-height: var(--max-title-h);
+  overflow: hidden;
+}
+
+.archive-cylinder .timeline-node.is-centered .node-title,
+.archive-cylinder .timeline-node .node-title.is-measuring {
+  font-size: var(--title-active-size);
+  font-weight: 600;
+}
+
+.archive-cylinder .timeline-node .node-title.is-compact {
+  font-size: var(--title-compact-size);
+  letter-spacing: var(--title-compact-tracking);
+}
+
+@media (max-width: 640px) {
+  .scroll-viewport.archive-cylinder { height: 600px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-cylinder .year-month { transition: none; }
+}
+
+/* =========================================================
+   5. 归档页「岁时笺纸」双弧曲面时间轴
+   ---------------------------------------------------------
+   原生横向轨道保存滚动与无脚本阅读；增强后按同一投影定位节点和两条曲线。
+   文字只重排字号与坐标，始终正面排印，中央舒展、两端收远。
+   ========================================================= */
+.chrono {
+  position: relative;
+  width: 100%;
+  max-width: min(var(--stream-max), 88vw);
+  height: calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-sag) * 2 + var(--space-8));
+  margin: var(--space-12) auto 0;
+  scroll-margin-top: var(--header-dock-height);
 }
 
 .chrono__rail {
   position: relative;
   z-index: 1;
+  height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   cursor: grab;
-  -webkit-mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
-  mask-image: linear-gradient(to right, transparent, var(--mask-solid) 3%, var(--mask-solid) 97%, transparent);
 }
 
 .chrono__rail::-webkit-scrollbar {
@@ -757,7 +931,6 @@
   outline-offset: var(--space-1);
 }
 
-/* 深远：有机溪山脉络线覆盖层 */
 .chrono__axis {
   position: absolute;
   inset: 0;
@@ -765,451 +938,241 @@
   pointer-events: none;
 }
 
+.chrono__track,
+.chrono__year,
+.chrono__months,
+.chrono__month,
+.chrono__items {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+}
+
 .chrono__track {
   position: relative;
-  display: flex;
-  justify-content: flex-start; /* 右起铺展，不机械均分左右留白 */
-  flex-direction: row-reverse;
+  justify-content: center;
   width: max-content;
   min-width: 100%;
-  padding-inline: var(--chrono-breath);
-  padding-top: var(--chrono-ridge);
-  padding-bottom: var(--space-8);
-}
-
-.chrono__year {
-  display: flex;
-  flex-direction: row-reverse; /* 首子（年题）居右、次子（篇目列）居左 */
-}
-
-/* 年号分置：公元居轴上（宋 xl），列尾沉底、字底距弧 8px；
-   干支居轴下（宋 lg，与题目同号），列首起排、字顶距弧 8px */
-.chrono__year-mark {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  margin-left: var(--space-2);
-  font-family: var(--font-serif);
-  line-height: 1;
-  color: var(--ink);
-}
-
-.chrono__year-mark span {
-  display: block;
-  writing-mode: vertical-rl;
-  white-space: nowrap;
-}
-
-.chrono__year-greg {
-  height: var(--chrono-top);
-  padding-bottom: var(--space-2);
-  font-size: var(--text-xl);
-  text-align: end;
-}
-
-.chrono__year-gz {
-  flex: 1;
-  padding-top: var(--space-2);
-  font-size: var(--text-lg);
-}
-
-/* 组界：空心年号印廓骑轴，纸色描边 */
-.chrono__year-mark::after {
-  content: "";
-  position: absolute;
-  top: var(--chrono-top);
-  left: 50%;
-  z-index: 1;
+  min-height: 100%;
   box-sizing: border-box;
-  transform: translate(-50%, -50%);
-  width: var(--chrono-node-year);
-  height: var(--chrono-node-year);
-  border-radius: 50%;
-  background-color: var(--paper);
-  border: 1.5px solid var(--ochre);
+  padding-inline: var(--chrono-breath);
 }
 
 .chrono__items {
-  display: flex;
-  flex-direction: row-reverse; /* 首篇（最新）居右 */
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* 日列：最小列宽保证竖读呼吸；整列可聚焦 */
-.chrono__item {
+.chrono__node {
   position: relative;
+  top: var(--chrono-y, 0px);
+  left: var(--chrono-x, 0px);
   display: flex;
+  flex: none;
   flex-direction: column;
   align-items: center;
-  min-width: var(--chrono-col-min);
-  padding-inline: calc(var(--chrono-span, var(--chrono-gap)) / 2);
+  margin: 0;
+  padding-inline: var(--chrono-gap);
+  font-family: var(--font-title);
+  font-weight: normal;
+  line-height: var(--leading-title);
+  color: var(--ink);
 }
 
-/* 日差留白：疏可走马，密不透风 */
-.chrono__item--span-close { --chrono-span: var(--chrono-span-close); }
-.chrono__item--span-near  { --chrono-span: var(--chrono-span-near); }
-.chrono__item--span-mid   { --chrono-span: var(--chrono-span-mid); }
-.chrono__item--span-far   { --chrono-span: var(--chrono-span-far); }
-
-/* 深远错落：列随脉络微幅起伏（--curve-y 由 main.js 写入） */
-.chrono__item,
-.chrono__year-mark {
-  top: var(--curve-y, 0px);
+.chrono__head {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  justify-content: center;
+  height: var(--chrono-top);
+  padding-bottom: var(--chrono-day-gap);
 }
 
-/* 节点：朱砂点 / 印廓 / 盘扣，叠于轴线之上 */
-.chrono__node,
+.chrono__date,
+.chrono__month-name {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+.chrono__month-name {
+  font-size: max(var(--text-base), calc(var(--chrono-font-base) * var(--chrono-scale, 1) * var(--chrono-weight-month)));
+  color: var(--chrono-soft-ink, var(--celadon-deep));
+}
+
+.chrono__date {
+  font-size: max(var(--text-sm), calc(var(--chrono-font-base) * var(--chrono-scale, 1) * var(--chrono-weight-date)));
+  color: var(--chrono-note-ink, var(--ink-secondary));
+}
+
+.chrono.is-projected .chrono__date,
+.chrono.is-projected .chrono__rubric,
+.chrono.is-projected .chrono__terms {
+  opacity: var(--chrono-note-opacity, 1);
+}
+
+.chrono.is-projected .chrono__month-name,
+.chrono.is-projected .chrono__terms {
+  color: var(--chrono-soft-ink, var(--celadon-deep));
+}
+
+.chrono__year-greg {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: var(--font-title);
+  font-size: max(var(--text-2xl), calc(var(--chrono-font-base) * var(--chrono-font-scale, 1)));
+  letter-spacing: var(--tracking-meta);
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.chrono__year-gz,
+.chrono__terms {
+  padding-top: var(--chrono-title-gap);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  font-size: max(var(--text-base), calc(var(--chrono-font-base) * var(--chrono-scale, 1) * var(--chrono-weight-month)));
+  letter-spacing: var(--tracking-poetry-title);
+  color: var(--chrono-soft-ink, var(--celadon-deep));
+}
+
+.chrono__terms {
+  display: flex;
+  gap: var(--space-4);
+  font-size: max(var(--text-base), calc(var(--chrono-font-base) * var(--chrono-scale, 1) * var(--chrono-weight-note)));
+  opacity: var(--chrono-note-opacity, 1);
+}
+
+/* 不变的列宽预留完整长标题；缩小字号不会挤压相邻列或触发宽度反馈。 */
+.chrono__entry {
+  height: var(--chrono-bottom);
+  padding-top: var(--chrono-title-gap);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  overflow-wrap: anywhere;
+  font-size: var(--chrono-title-size);
+  font-family: var(--font-title);
+  letter-spacing: var(--chrono-tracking);
+  line-height: var(--leading-body);
+  color: var(--chrono-title-ink, var(--ink));
+  text-decoration: none;
+}
+
+.chrono.is-projected .chrono__node {
+  width: var(--chrono-column);
+}
+
+.chrono.is-projected .chrono__head,
+.chrono.is-projected .chrono__entry,
+.chrono.is-projected .chrono__terms,
+.chrono.is-projected .chrono__year-gz {
+  transform: skewY(calc(var(--chrono-skew, 0deg) * -1)) scaleX(var(--chrono-scale, 1));
+  transform-origin: 50% 0;
+}
+
+.chrono.is-projected .chrono__entry {
+  height: var(--chrono-room);
+  font-size: max(var(--text-base), calc(var(--chrono-font-base) * var(--chrono-font-scale)));
+  letter-spacing: calc(var(--tracking-title) * var(--chrono-scale));
+}
+
+.chrono__entry:hover,
+.chrono__entry:focus-visible {
+  color: var(--cinnabar);
+}
+
+.chrono__rubric {
+  font-size: max(var(--text-sm), calc(var(--chrono-font-base) * var(--chrono-font-scale, 1) * var(--chrono-weight-note)));
+  color: var(--chrono-note-ink, var(--ink-secondary));
+}
+
+.chrono__sep {
+  color: var(--ink-faint);
+}
+
 .chrono__dot {
   position: absolute;
   top: var(--chrono-top);
   left: 50%;
-  z-index: 1;
-  box-sizing: border-box;
-  width: var(--chrono-node-size);
-  height: var(--chrono-node-size);
+  width: calc(var(--chrono-node-size) * var(--chrono-scale, 1));
+  height: calc(var(--chrono-node-size) * var(--chrono-scale, 1));
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background-color: var(--cinnabar);
-  transition: transform var(--dur-feedback) var(--ease-ink),
-              box-shadow var(--dur-feedback) var(--ease-ink);
+  border-radius: 45% 55% 48% 52%;
+  outline: var(--chrono-dot-ring) solid var(--paper);
 }
 
-.chrono__node--ci,
+.chrono__dot--year {
+  width: calc(var(--chrono-node-year) * var(--chrono-scale, 1));
+  height: calc(var(--chrono-node-year) * var(--chrono-scale, 1));
+  background-color: var(--ink);
+}
+
+.chrono__dot--month {
+  width: calc(var(--chrono-node-month) * var(--chrono-scale, 1));
+  height: calc(var(--chrono-node-month) * var(--chrono-scale, 1));
+  background-color: var(--celadon-deep);
+}
+
 .chrono__dot--ci {
-  background-color: var(--cinnabar);
-  border-radius: 50%;
+  background-color: var(--archive-ink-ci);
 }
 
-/* 随笔：空心方印廓 */
-.chrono__node--essay,
 .chrono__dot--essay {
-  background-color: transparent;
-  border: 1px solid var(--bamboo);
-  border-radius: var(--radius-xs);
+  background-color: var(--archive-ink-essay);
 }
 
-/* 技术：空心淡墨圆 */
-.chrono__node--tech,
 .chrono__dot--tech {
-  background-color: transparent;
-  border: 1px solid var(--ink-light);
-  border-radius: 50%;
+  background-color: var(--archive-ink-tech);
 }
 
-/* 项目：赭石盘扣（微旋方） */
-.chrono__node--project,
 .chrono__dot--project {
-  background-color: var(--ochre);
-  border-radius: var(--radius-xs);
-  transform: translate(-50%, -50%) rotate(45deg);
+  background-color: var(--archive-ink-project);
 }
 
-/* 轴上区：分类 + 月日合并为抬头，贴轴沉底 */
-.chrono__head {
-  height: var(--chrono-top);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: var(--space-3);
-}
-
-.chrono__eyebrow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.chrono__rubric {
-  writing-mode: vertical-rl;
-  font-family: var(--font-title);
-  font-size: var(--text-xs);
-  line-height: 1;
-  letter-spacing: var(--tracking-tag);
-  color: var(--ink-faint);
-}
-
-.chrono__item[data-cat="ci"] .chrono__rubric {
-  color: var(--cinnabar);
-}
-
-/* 月日：竖排汉字；节气淡烟缀于其下，墨分五色 */
-.chrono__date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  writing-mode: vertical-rl;
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  line-height: 1.35;
-  letter-spacing: 0.08em;
-  color: var(--chrono-date);
-}
-
-.chrono__mo,
-.chrono__day {
-  display: inline;
-  color: inherit;
-}
-
-.chrono__solar {
-  writing-mode: vertical-rl;
-  font-family: var(--font-title);
-  font-size: var(--text-xs);
-  line-height: 1.3;
-  letter-spacing: 0.16em;
-  color: var(--chrono-solar);
-  opacity: 0.82;
-}
-
-/* 轴下区：题目一列直下；西文按词侧排，超长可折列。 */
-.chrono__entry {
-  position: relative;
-  height: var(--chrono-bottom);
-  padding-top: var(--space-5);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  overflow-wrap: anywhere;
-  font-family: var(--font-title);
-  font-size: var(--text-lg);
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.chrono__title {
-  letter-spacing: var(--tracking-verse);
-}
-
-/* 悬停/聚焦：节点放大、局部染朱、宣纸晕染；不只改字色 */
-.chrono__item::before {
-  content: "";
-  position: absolute;
-  top: calc(var(--chrono-top) - 1.25rem);
-  left: 50%;
-  z-index: 0;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 50%;
-  background: var(--chrono-wash);
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.72);
-  transition: opacity var(--dur-feedback) var(--ease-ink),
-              transform var(--dur-feedback) var(--ease-ink);
-  pointer-events: none;
-}
-
-.chrono__item::after {
-  content: "";
-  position: absolute;
-  top: var(--chrono-top);
-  left: 50%;
-  z-index: 0;
-  width: 1.75rem;
-  height: 2px;
-  border-radius: var(--radius-pill);
-  background: var(--cinnabar);
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  transition: opacity var(--dur-feedback) var(--ease-ink);
-  pointer-events: none;
-}
-
-.chrono__item:hover::before,
-.chrono__item:focus-within::before {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.chrono__item:hover::after,
-.chrono__item:focus-within::after {
-  opacity: 0.72;
-}
-
-.chrono__item:hover .chrono__node,
-.chrono__item:focus-within .chrono__node,
-.chrono__item:hover .chrono__dot,
-.chrono__item:focus-within .chrono__dot {
-  transform: translate(-50%, -50%) scale(1.15);
-}
-
-.chrono__item:hover .chrono__node--project,
-.chrono__item:focus-within .chrono__node--project,
-.chrono__item:hover .chrono__dot--project,
-.chrono__item:focus-within .chrono__dot--project {
-  transform: translate(-50%, -50%) rotate(45deg) scale(1.15);
-}
-
-.chrono__item:hover .chrono__entry,
-.chrono__item:focus-within .chrono__entry {
-  color: var(--cinnabar);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chrono__node,
-  .chrono__dot,
-  .chrono__item::before,
-  .chrono__item::after {
-    transition: none;
-  }
-}
-
-/* 进度朱线（画在 .chrono__axis 同一 SVG 坐标系内）：与赭石弧同曲率反向、
-   上下镜像，朱点示全轴位置（右端＝最新）；弧路径由 main.js 按像素宽构建 */
 .chrono__curve {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-/* 天青水雾实线：溪山远脉 */
-.chrono__axis-mist {
+.chrono__axis-line,
+.chrono__curve-line {
   fill: none;
-  stroke: var(--chrono-axis-mist);
-  stroke-width: 1.25;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--chrono-curve-width);
 }
 
-/* 淡墨虚线：近脉飞白 */
 .chrono__axis-line {
-  fill: none;
-  stroke: var(--chrono-axis-ink);
-  stroke-width: 1;
-  stroke-dasharray: var(--chrono-axis-dash);
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke: var(--ochre);
 }
 
-/* 高远引首：右端开卷题识 */
-.chrono__frontispiece {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 4.5rem;
-  height: calc(var(--chrono-top) + var(--chrono-bottom));
-  padding-inline: var(--space-4);
-  writing-mode: vertical-rl;
+.chrono__curve-line {
+  stroke: var(--chrono-progress-ink);
 }
 
-.chrono__frontispiece-label {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: var(--text-lg);
-  letter-spacing: 0.28em;
-  color: var(--ink-secondary);
+.chrono__curve-dot {
+  r: var(--chrono-dot-r);
+  fill: var(--cinnabar);
+  stroke: var(--paper);
+  stroke-width: var(--chrono-dot-ring);
 }
 
-/* 卷轴缩略游标 */
-.chrono__scrubber {
-  position: relative;
-  z-index: 2;
-  margin: var(--space-4) var(--chrono-breath) 0;
+@media (max-width: 900px) {
+  .chrono {
+    --chrono-gap: var(--space-6);
+    --chrono-breath: var(--space-12);
+  }
 }
 
-.chrono__scrubber-track {
-  position: relative;
-  height: 1.75rem;
-  display: flex;
-  align-items: center;
-  outline: none;
-}
-
-.chrono__scrubber-track:focus-visible {
-  outline: 1px solid var(--celadon-deep);
-  outline-offset: 2px;
-}
-
-.chrono__scrubber-rail {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  transform: translateY(-50%);
-  background: linear-gradient(to right, transparent, var(--chrono-scrubber) 8%, var(--chrono-scrubber) 92%, transparent);
-}
-
-.chrono__scrubber-density {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.chrono__scrubber-mark {
-  position: absolute;
-  top: 50%;
-  width: 1px;
-  height: 0.55rem;
-  transform: translate(-50%, -50%);
-  background: color-mix(in srgb, var(--ink) 28%, transparent);
-}
-
-.chrono__scrubber-years {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.chrono__scrubber-year {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-family: var(--font-title);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  color: var(--ink-faint);
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.chrono__scrubber-year:hover,
-.chrono__scrubber-year:focus-visible {
-  color: var(--cinnabar);
-}
-
-.chrono__scrubber-thumb {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--cinnabar);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.chrono__excerpt {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: var(--space-3);
-  min-height: 1.5rem;
-  margin: var(--space-3) var(--chrono-breath) 0;
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  color: var(--ink-secondary);
-}
-
-.chrono__excerpt[hidden] {
-  display: none;
-}
-
-.chrono__excerpt-label {
-  color: var(--ink-faint);
-  letter-spacing: var(--tracking-meta);
-}
-
-.chrono__excerpt-text {
-  color: var(--ink-secondary);
+@media (prefers-reduced-motion: reduce), (max-width: 900px) {
+  .chrono.is-projected .chrono__head,
+  .chrono.is-projected .chrono__entry,
+  .chrono.is-projected .chrono__terms,
+  .chrono.is-projected .chrono__year-gz {
+    transform: none;
+  }
 }
 
 /* 页头：默认普通流；桌面停靠态见下方 archive-dock 规则 */
@@ -1223,7 +1186,7 @@
 
 .archive-head {
   text-align: center;
-  margin: var(--space-8) 0 var(--space-6);
+  margin: var(--space-4) 0 var(--space-3);
 }
 
 .archive-head-space,
@@ -1231,7 +1194,7 @@
   display: none;
 }
 
-/* 首屏近期篇目：进入后可见；下滑随题头行程渐隐，完整时间轴成为焦点。 */
+/* 首屏近期篇目：进入后可见；下滑时条目向两侧散开，完整时间轴成为焦点。 */
 .archive-recent {
   list-style: none;
   margin: 0 auto;
@@ -1269,12 +1232,13 @@
 .archive-recent__sep {
   color: var(--ink-faint);
   font-size: var(--text-sm);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .archive-recent__title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .archive-recent__date {
@@ -1286,7 +1250,7 @@
   color: var(--ink-faint);
 }
 
-/* 工具栏：视图切换 + 分卷图例 */
+/* 工具栏：分卷图例（视图随窗口比例自动切换，不设手动按钮） */
 .archive-toolbar {
   position: relative;
   z-index: 1;
@@ -1294,37 +1258,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
-  margin: 0 0 var(--space-5);
-}
-
-.archive-view {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.archive-view__item {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-family: var(--font-title);
-  font-size: var(--text-sm);
-  letter-spacing: var(--tracking-meta);
-  color: var(--ink-faint);
-  cursor: pointer;
-  transition: color var(--dur-feedback) var(--ease-ink);
-}
-
-.archive-view__item:hover {
-  color: var(--ink);
-}
-
-.archive-view__item[aria-pressed="true"] {
-  color: var(--cinnabar);
-  text-decoration: underline;
-  text-underline-offset: var(--space-2);
-  text-decoration-color: var(--cinnabar);
+  margin: 0 0 var(--space-2);
 }
 
 /* 分卷图例：与时间轴同屏；默认灰墨点，悬停/选中还原彩墨；点按筛选轴体篇目 */
@@ -1343,7 +1277,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: 0;
-  min-height: var(--space-10);
+  min-height: var(--archive-legend-height);
   border: 0;
   background: none;
   font: inherit;
@@ -1351,19 +1285,21 @@
   line-height: var(--leading-sm);
   color: var(--ink-faint);
   cursor: pointer;
-  transition: color var(--dur-feedback) var(--ease-ink);
+  transition: color var(--dur-unfold) var(--ease-ink);
 }
 
 .archive-legend__item:hover {
-  color: var(--ink);
+  color: var(--archive-ink, var(--ink));
 }
 
 .archive-legend__item[aria-pressed="true"] {
-  color: var(--cinnabar);
-  text-decoration: underline;
-  text-underline-offset: var(--space-2);
-  text-decoration-color: var(--cinnabar);
+  color: var(--archive-ink, var(--ink));
 }
+
+.archive-legend__item[data-cat-filter="ci"] { --archive-ink: var(--archive-ink-ci); }
+.archive-legend__item[data-cat-filter="essay"] { --archive-ink: var(--archive-ink-essay); }
+.archive-legend__item[data-cat-filter="tech"] { --archive-ink: var(--archive-ink-tech); }
+.archive-legend__item[data-cat-filter="project"] { --archive-ink: var(--archive-ink-project); }
 
 .archive-empty {
   text-align: center;
@@ -1371,8 +1307,28 @@
   margin-block: var(--space-12);
 }
 
-.chrono[hidden],
-.archive-list[hidden],
+/* 视图归属由窗口比例决定：横式时间轴 / 竖式目录；无 JS 时同样生效 */
+.archive-list {
+  display: none;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .chrono,
+  .archive-cylinder {
+    display: none;
+  }
+
+  .archive-list {
+    display: block;
+  }
+}
+
+.site-main--archive.is-archive-empty .chrono,
+.site-main--archive.is-archive-empty .archive-list,
+.site-main--archive.is-archive-empty .scroll-viewport.archive-cylinder {
+  display: none;
+}
+
 .archive-empty[hidden] {
   display: none;
 }
@@ -1388,7 +1344,7 @@
 .archive-list__item {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(7.5rem, auto) auto minmax(0, 1fr);
+  grid-template-columns: max-content max-content minmax(0, 1fr);
   align-items: baseline;
   column-gap: var(--space-3);
   padding: var(--space-4) var(--space-2);
@@ -1456,6 +1412,7 @@
 
 .archive-list__title {
   display: inline;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 640px) {
@@ -1469,41 +1426,30 @@
   box-sizing: border-box;
   width: var(--chrono-node-size);
   height: var(--chrono-node-size);
+  flex: 0 0 var(--chrono-node-size);
+  border: 0;
   border-radius: 50%;
-  opacity: 0.45;
-  transition: opacity var(--dur-feedback) var(--ease-ink),
-              color var(--dur-feedback) var(--ease-ink);
+  background-color: var(--archive-ink);
+  opacity: 0.42;
+  transform: scale(0.82);
+  transition: opacity var(--dur-unfold) var(--ease-ink), transform var(--dur-unfold) var(--ease-ink);
 }
 
 .archive-legend__item:hover .archive-legend__dot,
 .archive-legend__item[aria-pressed="true"] .archive-legend__dot {
   opacity: 1;
+  transform: scale(1);
 }
 
-.archive-legend__dot--ci {
-  background-color: var(--cinnabar);
-}
-
-.archive-legend__dot--essay {
-  background-color: transparent;
-  border: 1px solid var(--bamboo);
-  border-radius: var(--radius-xs);
-}
-
-.archive-legend__dot--tech {
-  background-color: transparent;
-  border: 1px solid var(--ink-light);
-}
-
-.archive-legend__dot--project {
-  background-color: var(--ochre);
-  border-radius: var(--radius-xs);
-  transform: rotate(45deg);
-}
+.archive-legend__dot--ci { --archive-ink: var(--archive-ink-ci); }
+.archive-legend__dot--essay { --archive-ink: var(--archive-ink-essay); }
+.archive-legend__dot--tech { --archive-ink: var(--archive-ink-tech); }
+.archive-legend__dot--project { --archive-ink: var(--archive-ink-project); }
 
 /* 筛选褪墨：非当前分卷淡出为残墨，节点保留可扫读 */
 .chrono__item.is-dimmed,
 .chrono__year.is-dimmed,
+.chrono__month.is-dimmed .chrono__month-mark,
 .archive-list__item.is-dimmed {
   opacity: var(--chrono-dim-opacity);
   filter: grayscale(0.85);
@@ -1518,15 +1464,10 @@
   pointer-events: none;
 }
 
-.chrono__item[hidden],
-.chrono__year[hidden],
-.archive-list__item[hidden] {
-  display: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .chrono__item.is-dimmed,
   .chrono__year.is-dimmed,
+  .chrono__month.is-dimmed .chrono__month-mark,
   .archive-list__item.is-dimmed {
     transition: none;
   }
@@ -1559,10 +1500,10 @@
 /* 归档题头停靠：首屏题头偏上居中，篇数贴题头下；近期随之上移；定点后只留缩小题头。 */
 @keyframes archive-mast-dock {
   from {
-    transform: translateY(calc(50svh - var(--header-dock-height) - var(--archive-dock-height) / 2));
+    top: calc(50svh - var(--header-dock-height) - var(--archive-dock-height) / 2 - var(--archive-cover-lift));
   }
   to {
-    transform: translateY(0);
+    top: 0;
   }
 }
 
@@ -1592,17 +1533,19 @@
   }
 }
 
-@keyframes archive-recent-fold {
-  from {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(calc(var(--space-4) * -1));
-  }
+@keyframes archive-recent-hold {
+  from { opacity: 1; visibility: visible; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes archive-recent-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(var(--space-16) * -1)); }
+}
+
+@keyframes archive-recent-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--space-16)); }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
@@ -1614,19 +1557,17 @@
      */
     html:has(body.archive-dock-page) {
       scroll-snap-type: y proximity;
-      --dock-snap: proximity;
-      /* 定点一屏：压缩轴上下高度，整条时间轴落在页眉+题头下 */
-      --chrono-top: 5.5rem;
-      --chrono-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-5));
-      --chrono-bottom: clamp(var(--space-24), calc(var(--chrono-height) - var(--chrono-top) - var(--chrono-ridge) * 2 - var(--space-8)), 18rem);
-      --chrono-gap: 1.35rem;
-      --chrono-ridge: 0.625rem;
-      --chrono-breath: clamp(var(--space-10), 8vw, var(--space-16));
+      /* 定点一屏：轴上区压到栏头下，轴下区按剩余高度铺满至朱线 */
+      --chrono-top: 6.5rem;
+      --chrono-height: calc(100svh - var(--header-dock-height) - var(--archive-dock-height) - var(--archive-legend-height) - var(--space-12) - var(--space-4));
+      --chrono-bottom: clamp(var(--space-24), calc(var(--chrono-height) - var(--chrono-top) - var(--space-8) - var(--chrono-sag) * 2), 22rem);
     }
 
     .archive-dock-page .site-main--archive {
       padding-top: 0;
     }
+
+    .archive-cover-zone { position: relative; }
 
     .archive-head {
       position: sticky;
@@ -1683,13 +1624,30 @@
       left: 0;
       right: 0;
       /* 与居中的题簇共用视口基准，近期列表始终落在篇数下方。 */
-      top: calc(50svh - var(--header-dock-height) + var(--space-16));
+      top: calc(50svh - var(--header-dock-height) + var(--archive-cover-lift) + var(--archive-recent-gap));
       max-width: min(var(--prose-max), calc(100% - var(--space-12)));
       margin-inline: auto;
       z-index: 0;
-      animation: archive-recent-fold linear both;
+      animation: archive-recent-hold linear both;
       animation-timeline: scroll(root block);
       animation-range: 0px calc(var(--archive-travel) * 0.42);
+    }
+
+    .archive-recent__link,
+    .archive-recent__date {
+      animation-timeline: scroll(root block);
+      animation-range: 0px calc(var(--archive-travel) * 0.42);
+      animation-timing-function: ease-in;
+      animation-fill-mode: both;
+    }
+
+    .archive-recent__link {
+      animation-name: archive-recent-left;
+    }
+
+    .archive-recent__date {
+      animation-name: archive-recent-right;
+    }
     }
 
     .archive-head-space {
@@ -1701,7 +1659,7 @@
       scroll-snap-align: start;
       scroll-snap-stop: always;
       scroll-margin-top: calc(var(--header-dock-height) + var(--archive-dock-height));
-      margin: var(--space-8) 0 var(--space-3);
+      margin: var(--space-3) 0 var(--space-3);
     }
 
     .archive-legend {
@@ -1728,14 +1686,14 @@
       z-index: 1;
       margin-top: 0;
       /* 矮窗口压缩题目区；极矮窗口允许页面纵滚，始终容纳轨道与下弧。 */
-      min-height: calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-ridge) * 2 + var(--space-8));
+      min-height: calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-sag) * 2);
       height: var(--chrono-height);
     }
 
     .archive-empty[data-archive-empty] {
       margin-block: 0;
       padding-top: var(--space-12);
-      min-height: max(var(--chrono-height), calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-ridge) * 2 + var(--space-8)));
+      min-height: max(var(--chrono-height), calc(var(--chrono-top) + var(--chrono-bottom) + var(--chrono-sag) * 2));
     }
 
     /* 去掉整屏离场跑道：时间轴上移后直接接页脚，素笺栏头遮住残留 */
@@ -1744,27 +1702,11 @@
       height: 0;
     }
 
-    .archive-dock-page .chrono__track {
-      padding-bottom: var(--space-4);
-    }
-
     .archive-dock-page .site-main--archive {
-      /* 补齐视口底部余量，无页脚时仍能完整抵达时间轴定点。 */
-      padding-bottom: var(--space-2);
+      /* 时间轴下保留离场余白，页脚不进入完整阅读定点。 */
+      padding-bottom: var(--space-8);
     }
 
-    .archive-dock-page .chrono__entry {
-      font-size: var(--text-xl);
-    }
-
-    .archive-dock-page .chrono__year-greg {
-      font-size: var(--text-2xl);
-    }
-
-    .archive-dock-page .chrono__year-gz {
-      font-size: var(--text-lg);
-    }
-  }
 }
 
 @media print {
@@ -1780,7 +1722,9 @@
   .archive-head__mast,
   .archive-head__title,
   .archive-head__count,
-  .archive-recent {
+  .archive-recent,
+  .archive-recent__link,
+  .archive-recent__date {
     animation: none;
     transform: none;
   }
@@ -1788,219 +1732,7 @@
   .archive-exit-space {
     display: none;
   }
-}
 
-/* 移动端：降级为左轴右题的垂直时间线（横排易读，保留纸卷节点语言） */
-@media (max-width: 899px) {
-  .chrono__vista,
-  .chrono__scrubber,
-  .chrono__frontispiece,
-  .chrono__excerpt {
-    display: none;
-  }
-
-  .chrono {
-    margin-top: var(--space-6);
-  }
-
-  .chrono::after {
-    background: radial-gradient(ellipse at center, transparent 70%, color-mix(in srgb, var(--ink) 3%, transparent) 100%);
-  }
-
-  .chrono__rail {
-    overflow: visible;
-    cursor: auto;
-    -webkit-mask-image: none;
-    mask-image: none;
-    scrollbar-width: auto;
-  }
-
-  .chrono__rail.is-dragging {
-    cursor: auto;
-    user-select: auto;
-  }
-
-  /* 双弧改由 CSS 竖虚线承担 */
-  .chrono__axis {
-    display: none;
-  }
-
-  .chrono__track {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    width: 100%;
-    min-width: 0;
-    padding: 0;
-  }
-
-  .chrono__year {
-    display: block;
-    width: 100%;
-    margin-bottom: var(--space-8);
-  }
-
-  .chrono__year:last-child {
-    margin-bottom: 0;
-  }
-
-  .chrono__year-mark {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: var(--space-3);
-    margin: 0 0 var(--space-4);
-    padding-left: calc(var(--space-8) + var(--space-2));
-  }
-
-  .chrono__year-mark span {
-    writing-mode: horizontal-tb;
-    white-space: nowrap;
-  }
-
-  .chrono__year-greg {
-    height: auto;
-    padding: 0;
-    font-size: var(--text-2xl);
-    text-align: start;
-  }
-
-  .chrono__year-gz {
-    flex: none;
-    padding: 0;
-    font-size: var(--text-sm);
-    color: var(--ink-faint);
-  }
-
-  .chrono__year-mark::after {
-    display: none;
-  }
-
-  .chrono__items {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-    width: 100%;
-    padding-left: var(--space-8);
-  }
-
-  /* 左侧断点虚线轴 */
-  .chrono__items::before {
-    content: "";
-    position: absolute;
-    top: var(--space-2);
-    bottom: var(--space-2);
-    left: calc(var(--space-8) / 2);
-    border-left: 1px dashed var(--chrono-axis-ink);
-  }
-
-  .chrono__item,
-  .chrono__year-mark {
-    top: auto;
-  }
-
-  .chrono__item {
-    display: grid;
-    grid-template-columns: var(--chrono-node-size) minmax(0, 1fr);
-    column-gap: var(--space-4);
-    align-items: start;
-    width: 100%;
-    min-width: 0;
-    padding-inline: 0;
-  }
-
-  .chrono__node,
-  .chrono__dot {
-    position: relative;
-    top: auto;
-    left: auto;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    align-self: start;
-    margin-top: 0.55em;
-    transform: none;
-  }
-
-  .chrono__node--project,
-  .chrono__dot--project {
-    transform: rotate(45deg);
-  }
-
-  .chrono__head {
-    grid-column: 2;
-    height: auto;
-    display: block;
-    padding: 0;
-    margin-bottom: var(--space-1);
-  }
-
-  .chrono__eyebrow {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-2);
-  }
-
-  .chrono__rubric {
-    writing-mode: horizontal-tb;
-    letter-spacing: var(--tracking-meta);
-  }
-
-  .chrono__date {
-    flex-direction: row;
-    writing-mode: horizontal-tb;
-    gap: 0;
-    font-size: var(--text-xs);
-    transform: none;
-  }
-
-  .chrono__solar {
-    writing-mode: horizontal-tb;
-    letter-spacing: var(--tracking-meta);
-  }
-
-  .chrono__entry {
-    grid-column: 2;
-    height: auto;
-    padding-top: 0;
-    writing-mode: horizontal-tb;
-    text-orientation: mixed;
-  }
-
-  .chrono__title {
-    font-size: var(--text-lg);
-    letter-spacing: var(--tracking-title);
-  }
-
-  /* 纵轴悬停：晕染落在节点旁，染朱短线改为竖向 */
-  .chrono__item::before {
-    top: calc(0.55em + var(--chrono-node-size) / 2);
-    left: calc(var(--chrono-node-size) / 2);
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-
-  .chrono__item::after {
-    top: calc(0.55em + var(--chrono-node-size) / 2);
-    left: calc(var(--chrono-node-size) / 2);
-    width: 2px;
-    height: 1.25rem;
-  }
-
-  .chrono__item:hover .chrono__node,
-  .chrono__item:focus-within .chrono__node,
-  .chrono__item:hover .chrono__dot,
-  .chrono__item:focus-within .chrono__dot {
-    transform: scale(1.15);
-  }
-
-  .chrono__item:hover .chrono__node--project,
-  .chrono__item:focus-within .chrono__node--project,
-  .chrono__item:hover .chrono__dot--project,
-  .chrono__item:focus-within .chrono__dot--project {
-    transform: rotate(45deg) scale(1.15);
-  }
 }
 
 /* =========================================================

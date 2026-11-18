@@ -36,7 +36,7 @@ hexo.extend.filter.register('before_post_render', function (data) {
   return data;
 });
 
-// 诗词段落只添加语义标记；分阕由作者显式给出，不猜测字数或格律。
+// 分阕由作者显式给出；句读保留原文，仅在桌面竖排时隐藏。
 hexo.extend.filter.register('after_post_render', function (data) {
   if (data.type !== 'ci' || typeof data.content !== 'string') return data;
   const split = Number(data.stanza_break);
@@ -47,25 +47,10 @@ hexo.extend.filter.register('after_post_render', function (data) {
     return starts ? opening.replace(/>$/, ' data-stanza-start="true">') : opening;
   });
   data.content = data.content.replace(/<span\b([^>]*\bclass=["'][^"']*\brhyme-dot\b[^"']*["'][^>]*)>([\s\S]*?)<\/span>/gi, '$2');
-  // 只包装诗词段落的文本标点，保留原字符、链接属性及无脚本阅读内容。
   data.content = data.content.replace(/(<p(?:\s[^>]*)?>)([\s\S]*?)(<\/p>)/g, function (_, opening, content, closing) {
-    return opening + content.replace(/(<[^>]+>)|([，。！？；：、])/g, function (match, tag, punctuation) {
-      return tag || '<span class="poem-punctuation"><span>' + punctuation + '</span></span>';
+    return opening + content.replace(/(<[^>]+>|&(?:#\d+|#x[\da-f]+|[a-z][\da-z]*);)|([，。！？；：、“”‘’（）《》〈〉「」『』【】〔〕…—,.!?;:])/gi, function (match, markup, punctuation) {
+      return markup || '<span class="ci-punctuation">' + punctuation + '</span>';
     }) + closing;
   });
-  // 笺注：难词首次出现处落着重点并链至文末注条（只改文本节点，不触标签）
-  const ciConfig = (hexo.theme && hexo.theme.config && hexo.theme.config.ci) || {};
-  if (ciConfig.show_annotation && Array.isArray(data.annotations)) {
-    data.annotations.forEach(function (note, index) {
-      const word = note && note.word ? String(note.word) : '';
-      if (!word) return;
-      let done = false;
-      data.content = data.content.replace(/>([^<]+)</g, function (match, text) {
-        if (done || text.indexOf(word) < 0) return match;
-        done = true;
-        return '>' + text.replace(word, '<a class="poem-gloss" href="#poem-note-' + (index + 1) + '">' + word + '</a>') + '<';
-      });
-    });
-  }
   return data;
 });

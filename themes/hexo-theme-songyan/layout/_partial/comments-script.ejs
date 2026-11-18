@@ -14,7 +14,8 @@
 document.addEventListener('DOMContentLoaded', function () {
   var mount = document.getElementById('gitalk-container');
   if (!mount || typeof Gitalk === 'undefined') return;
-  var id = '<%= esc(gitalk.id || page.path) %>'.slice(0, 50);
+  var legacyIds = <%- JSON.stringify(gitalk.legacy_path_ids || {}).replace(/</g, '\\u003c') %>;
+  var id = legacyIds[window.location.pathname] || '<%= esc(gitalk.id || page.path) %>'.slice(0, 50);
   var gitalk = new Gitalk({
     clientID: '<%= esc(gitalk.clientID) %>',
     clientSecret: '<%= esc(gitalk.clientSecret) %>',

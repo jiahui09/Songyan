@@ -46,7 +46,8 @@ a:hover, a:focus-visible {
   color: var(--ink);
 }
 
-a:focus-visible {
+a:focus-visible,
+button:focus-visible {
   /* 焦点环须满足 WCAG 2.2 SC 1.4.11 非文本对比 ≥ 3:1：
      --ochre 2.77:1 不达标，改用朱砂悬停色 7.47:1，与站点色系同源 */
   outline: 2px solid var(--celadon-deep);
@@ -175,11 +176,14 @@ img {
   animation: gai-yin var(--dur-stamp) var(--ease-ink) 120ms both;
 }
 
-/* JS 接管封面行程后关闭原生吸附，避免浏览器在自动过渡中改写终点。 */
+/* 场景稳定时保留原生吸附；仅程序过渡与逐列阅读临时让出控制权。 */
 html.cover-scroll-enabled:root {
   overflow-anchor: none;
+}
+html.story-transitioning:root,
+html.story-flow:root,
+html.ci-columns-locked:root {
   scroll-snap-type: none;
-  --dock-snap: none;
 }
 
 /* 尊重减弱动效偏好：动效时长全部经 tokens 归零，入场直接落定 */

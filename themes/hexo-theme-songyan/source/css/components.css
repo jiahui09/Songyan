@@ -24,7 +24,7 @@
 .site-header__brand {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1);
   text-decoration: none;
   flex-shrink: 0;
 }
@@ -84,8 +84,8 @@
 
 /* 页眉内容保持固定字号与尺寸，只沿纵向平移。 */
 @keyframes header-compact {
-  from { transform: translateY(var(--space-4)); }
-  to { transform: translateY(0); }
+  from { top: var(--space-4); }
+  to { top: 0; }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
@@ -105,6 +105,7 @@
     }
 
     :is(.home-cover-page, .archive-dock-page, .reading-dock-page) .site-header__inner {
+      position: relative;
       height: var(--header-dock-height);
       padding-block: var(--space-2);
       background-color: var(--paper);
@@ -498,30 +499,18 @@ body.poem-slip-open {
   background: var(--rain-thread) no-repeat 50% 0 / 40% 1px;
 }
 
-.site-footer__links {
-  display: flex;
-  gap: var(--space-6);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  letter-spacing: 0.2em;
-}
-
-.site-footer__links li {
-  margin: 0;
-}
-
-.site-footer__links a {
-  color: var(--ink-secondary);
-}
-
-.site-footer__links a:hover {
-  color: var(--ink);
-}
-
 .site-footer__copy {
   letter-spacing: 0.12em;
   line-height: var(--leading-xs);
+}
+
+/* 封面保留顶部锚点；页脚遵循普通文流，贴近页面底部。 */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll(root block)) {
+    :is(.home-cover-page, .reading-dock-page, .archive-dock-page) > .site-header {
+      scroll-snap-align: start;
+    }
+  }
 }
 
 /* 页脚版权偶作多段，段落跟随同一行盒 */

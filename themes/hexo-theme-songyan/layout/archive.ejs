@@ -7,60 +7,58 @@
   var groups = {};
   ordered.forEach(function (post) {
     var year = date(post.date, 'YYYY');
-    (groups[year] || (groups[year] = [])).push(post);
+    var month = date(post.date, 'MM');
+    if (!groups[year]) groups[year] = {};
+    (groups[year][month] || (groups[year][month] = [])).push(post);
   });
   function sectionOf(post) {
     if (post.type === 'ci') return 'ci';
     var names = post.categories ? post.categories.toArray().map(function (cat) { return cat.name; }) : [];
-    return Object.keys(cfg.category_names).find(function (key) { return cfg.category_names[key].some(function (name) { return names.includes(name); }); }) || 'essay';
+    return Object.keys(cfg.category_names).find(function (key) { return cfg.category_names[key].some(function (name) { return names.includes(name); }); }) || cfg.fallback_category || 'essay';
+  }
+  var termDays = [5.4055, 20.12, 3.87, 18.73, 5.63, 20.646, 4.81, 20.1, 5.52, 21.04, 5.678, 21.37, 7.108, 22.83, 7.5, 23.13, 7.646, 23.042, 8.318, 23.438, 7.438, 22.36, 7.18, 21.94];
+  function solarTermsFor(year, month, posts) {
+    var names = (cfg.solar_terms || {})[Number(month)] || [];
+    var offset = (Number(month) - 1) * 2;
+    var yearOffset = Number(year) - 2000;
+    var candidates = names.map(function (name, index) {
+      var ordinal = offset + index;
+      var day = Math.floor((yearOffset * 0.2422) + termDays[ordinal]) - Math.floor((yearOffset - 1) / 4);
+      return {name: name, day: day};
+    });
+    var mapped = {};
+    posts.forEach(function (post) {
+      var day = Number(date(post.date, 'D'));
+      var nearest = candidates.reduce(function (best, term) {
+        return Math.abs(term.day - day) < Math.abs(best.day - day) ? term : best;
+      }, candidates[0]);
+      if (nearest && Math.abs(nearest.day - day) <= 7) mapped[nearest.name] = true;
+    });
+    return candidates.filter(function (term) { return mapped[term.name]; }).map(function (term) { return term.name; });
   }
   var digits = '〇一二三四五六七八九';
   var stems = '甲乙丙丁戊己庚辛壬癸';
   var branches = '子丑寅卯辰巳午未申酉戌亥';
-  var hanDigits = '〇一二三四五六七八九';
-  function hanNumber(n) {
-    return n < 10 ? hanDigits[n] : (n < 20 ? '十' : hanDigits[Math.floor(n / 10)] + '十') + (n % 10 ? hanDigits[n % 10] : '');
-  }
-  // 近似廿四节气（公历固定日表；归档抬头淡墨缀字用，非历法推算）
-  var solarTerms = [
-    [1, 5, '小寒'], [1, 20, '大寒'], [2, 3, '立春'], [2, 18, '雨水'], [3, 5, '惊蛰'], [3, 20, '春分'],
-    [4, 4, '清明'], [4, 19, '谷雨'], [5, 5, '立夏'], [5, 20, '小满'], [6, 5, '芒种'], [6, 21, '夏至'],
-    [7, 6, '小暑'], [7, 22, '大暑'], [8, 7, '立秋'], [8, 22, '处暑'], [9, 7, '白露'], [9, 22, '秋分'],
-    [10, 8, '寒露'], [10, 23, '霜降'], [11, 7, '立冬'], [11, 22, '小雪'], [12, 6, '大雪'], [12, 21, '冬至']
-  ];
-  function solarOf(value) {
-    var m = Number(date(value, 'M'));
-    var d = Number(date(value, 'D'));
-    var best = solarTerms[0];
-    var bestDelta = Infinity;
-    solarTerms.forEach(function (term) {
-      var delta = Math.abs((m - term[0]) * 31 + (d - term[1]));
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        best = term;
-      }
-    });
-    return best[2];
-  }
-  function daySpanClass(curr, next) {
-    if (!next) return 'chrono__item--span-far';
-    var delta = Math.round((new Date(date(curr.date, 'YYYY-MM-DD')).getTime() - new Date(date(next.date, 'YYYY-MM-DD')).getTime()) / 86400000);
-    if (delta <= 3) return 'chrono__item--span-close';
-    if (delta <= 31) return 'chrono__item--span-near';
-    if (delta <= 92) return 'chrono__item--span-mid';
-    return 'chrono__item--span-far';
-  }
-  function excerptOf(post) {
-    var raw = (post.excerpt || post.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    return raw ? raw.slice(0, 28) : '';
-  }
   var yearMarks = Object.keys(groups).sort().reverse();
+  var timelinePosts = ordered.map(function (post) {
+    return {
+      date: date(post.date, 'YYYY-MM-DD'),
+      year: date(post.date, 'YYYY'),
+      month: date(post.date, 'M'),
+      day: date(post.date, 'D'),
+      category: sectionOf(post),
+      solarTerm: post.solar_term || '',
+      title: post.title || config.title,
+      href: url_for(post.path)
+    };
+  });
 %>
 <main class="site-main site-main--archive">
+  <div class="archive-cover-zone">
   <header class="archive-head">
     <div class="archive-head__mast">
       <h1 class="archive-head__title"><%= cfg.title %><% if (page.category || page.tag) { %> · <%= page.category || page.tag %><% } %></h1>
-      <p class="archive-head__count" role="status" aria-live="polite"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
+      <p class="archive-head__count" role="status"><%= cfg.count_prefix %>：<span data-archive-count><%= ordered.length %></span> <%= cfg.count_suffix %></p>
     </div>
   </header>
   <div class="archive-intro">
@@ -82,74 +80,54 @@
     <% } %>
     <div class="archive-head-space" aria-hidden="true"></div>
   </div>
+  </div>
   <div class="archive-toolbar">
-    <nav class="archive-view" aria-label="<%= cfg.view_label %>">
-      <button type="button" class="archive-view__item" data-archive-view="axis" aria-pressed="true"><%= cfg.view_axis %></button>
-      <button type="button" class="archive-view__item" data-archive-view="list" aria-pressed="false"><%= cfg.view_list %></button>
-    </nav>
-    <nav class="archive-legend" aria-label="<%= cfg.filter_label %>">
+    <div class="archive-legend" role="group" aria-label="<%= cfg.filter_label %>">
       <% Object.keys(cfg.categories).forEach(function (key) { %><button type="button" class="archive-legend__item" data-cat-filter="<%= key %>" aria-pressed="false"><span class="archive-legend__dot archive-legend__dot--<%= key %>"></span><%= cfg.categories[key] %></button><% }); %>
-    </nav>
+    </div>
   </div>
   <% if (ordered.length) { %>
-  <div class="chrono" id="archive-chrono" data-archive-panel="axis" tabindex="-1">
-    <div class="chrono__vista" aria-hidden="true">
-      <svg class="chrono__vista-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 220" preserveAspectRatio="xMidYMax slice">
-        <path class="chrono__vista-far" d="M0 168 C120 150 180 118 280 128 C390 140 450 96 560 110 C690 128 760 84 880 98 C1000 112 1080 78 1180 92 C1280 106 1360 88 1440 96 L1440 220 L0 220 Z"/>
-        <path class="chrono__vista-near" d="M0 186 C140 170 220 148 340 156 C470 166 540 132 660 142 C800 154 880 120 1000 132 C1120 144 1220 122 1320 130 C1380 134 1410 128 1440 132 L1440 220 L0 220 Z"/>
-      </svg>
-    </div>
-    <div class="chrono__rail" data-chrono-rail tabindex="0" role="region" aria-label="<%= cfg.title %>">
-      <div class="chrono__track">
-        <aside class="chrono__frontispiece" aria-label="<%= cfg.frontispiece %>">
-          <p class="chrono__frontispiece-label"><%= cfg.frontispiece %></p>
-        </aside>
-        <% yearMarks.forEach(function (year) { var n = Number(year) - 4; var posts = groups[year]; %>
-        <section class="chrono__year" data-year="<%= year %>">
-          <h2 class="chrono__year-mark"><span class="chrono__year-greg"><%= year.split('').map(function (digit) { return digits[Number(digit)]; }).join('') %></span><span class="chrono__year-gz"><%= stems[(n % 10 + 10) % 10] + branches[(n % 12 + 12) % 12] + theme.labels.year %></span></h2>
-          <ul class="chrono__items">
-            <% posts.forEach(function (post, index) { var key = sectionOf(post); var next = posts[index + 1] || null; var span = daySpanClass(post, next); %>
-            <li class="archive-item chrono__item <%= span %>" data-cat="<%= key %>" data-date="<%= date(post.date, 'YYYY-MM-DD') %>" data-excerpt="<%= excerptOf(post) %>">
-              <span class="chrono__node chrono__dot chrono__node--<%= key %> chrono__dot--<%= key %>" title="<%= cfg.categories[key] %>" aria-hidden="true"></span>
-              <div class="chrono__head">
-                <span class="chrono__eyebrow">
-                  <span class="chrono__rubric"><%= cfg.categories[key] %></span>
-                  <time class="chrono__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>">
-                    <span class="chrono__mo"><%= hanNumber(Number(date(post.date, 'M'))) + theme.labels.month %></span>
-                    <span class="chrono__day"><%= hanNumber(Number(date(post.date, 'D'))) + theme.labels.day %></span>
-                  </time>
-                  <span class="chrono__solar"><%= solarOf(post.date) %></span>
-                </span>
-              </div>
-              <a href="<%= url_for(post.path) %>" class="chrono__entry"><span class="chrono__title"><%= post.title || config.title %></span></a>
-            </li>
-            <% }); %>
-          </ul>
-        </section>
-        <% }); %>
-      </div>
-    </div>
-    <div class="chrono__axis" aria-hidden="true">
-      <svg class="chrono__curve" xmlns="http://www.w3.org/2000/svg">
-        <path class="chrono__axis-mist"/>
-        <path class="chrono__axis-line"/>
-      </svg>
-    </div>
-    <div class="chrono__scrubber" data-chrono-scrubber>
-      <div class="chrono__scrubber-track" role="slider" tabindex="0" aria-label="<%= cfg.scrubber_label %>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" data-chrono-scrubber-track>
-        <span class="chrono__scrubber-rail" aria-hidden="true"></span>
-        <span class="chrono__scrubber-density" data-chrono-density aria-hidden="true"></span>
-        <span class="chrono__scrubber-years" data-chrono-scrubber-years>
-          <% yearMarks.forEach(function (year) { %>
-          <button type="button" class="chrono__scrubber-year" data-year-jump="<%= year %>"><%= year.split('').map(function (digit) { return digits[Number(digit)]; }).join('') %></button>
-          <% }); %>
-        </span>
-        <span class="chrono__scrubber-thumb" data-chrono-scrubber-thumb aria-hidden="true"></span>
-      </div>
-    </div>
-    <p class="chrono__excerpt" data-chrono-excerpt aria-live="polite" hidden><span class="chrono__excerpt-label"><%= cfg.excerpt_label %></span><span class="chrono__excerpt-text" data-chrono-excerpt-text></span></p>
-  </div>
-  <ol class="archive-list" data-archive-panel="list" data-archive-list aria-label="<%= cfg.list_label %>" hidden>
+  <section class="scroll-viewport archive-cylinder" id="archive-chrono" aria-label="<%= cfg.title %>" data-testid="timeline-viewport" data-archive-nodes="<%= encodeURIComponent(JSON.stringify(timelinePosts)) %>">
+    <svg class="rail-svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="archive-rail-stroke" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--ink-rail)" stop-opacity="0" />
+          <stop offset="14%" stop-color="var(--ink-rail)" />
+          <stop offset="50%" stop-color="var(--ink-rail)" />
+          <stop offset="86%" stop-color="var(--ink-rail)" />
+          <stop offset="100%" stop-color="var(--ink-rail)" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="archive-rail-echo" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--ink-rail-echo)" stop-opacity="0" />
+          <stop offset="18%" stop-color="var(--ink-rail-echo)" />
+          <stop offset="50%" stop-color="var(--ink-rail-echo)" />
+          <stop offset="82%" stop-color="var(--ink-rail-echo)" />
+          <stop offset="100%" stop-color="var(--ink-rail-echo)" stop-opacity="0" />
+        </linearGradient>
+        <mask id="scroll-edge-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+          <linearGradient id="archive-edge-fade" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="black" />
+            <stop offset="0.06" stop-color="#333333" />
+            <stop offset="0.16" stop-color="white" />
+            <stop offset="0.84" stop-color="white" />
+            <stop offset="0.94" stop-color="#333333" />
+            <stop offset="1" stop-color="black" />
+          </linearGradient>
+          <rect x="0" y="0" width="1" height="1" fill="url(#archive-edge-fade)" />
+        </mask>
+      </defs>
+      <path class="rail-echo rail-year" />
+      <path class="rail-echo rail-echo--upper" />
+      <path class="rail-path rail-path--upper" />
+      <path class="rail-path rail-path--lower" />
+      <path class="rail-echo rail-echo--lower" />
+      <line class="rail-center-tick rail-center-tick--upper" />
+      <line class="rail-center-tick rail-center-tick--lower" />
+    </svg>
+    <div class="year-stage" aria-hidden="true"></div>
+    <div class="timeline-stage" data-testid="timeline-stage"></div>
+  </section>
+  <ol class="archive-list" data-archive-list aria-label="<%= cfg.list_label %>">
     <% ordered.forEach(function (post) { var key = sectionOf(post); %>
     <li class="archive-list__item" data-cat="<%= key %>">
       <time class="archive-list__date" datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%- partial('_partial/han-date', {value: post.date, compact: true}) %></time>
@@ -160,6 +138,6 @@
   </ol>
   <div class="archive-exit-space" aria-hidden="true"></div>
   <p class="archive-empty" data-archive-empty role="status" hidden><%= theme.labels.empty %></p>
-  <% } else { %><p class="archive-empty" id="archive-chrono" tabindex="-1"><%= theme.labels.empty %></p><% } %>
-  <%- partial('_partial/pagination') %>
+  <% } else { %><p class="archive-empty" id="archive-chrono" data-archive-empty role="status" tabindex="-1"><%= theme.labels.empty %></p><% } %>
+  <% if (page.category || page.tag || page.year) { %><%- partial('_partial/pagination') %><% } %>
 </main>

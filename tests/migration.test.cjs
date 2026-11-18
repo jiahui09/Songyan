@@ -9,6 +9,63 @@ const root = path.resolve(process.env.SONGYAN_PUBLIC_DIR || path.join(__dirname,
 const prefix = (process.env.SONGYAN_ROOT || '/').replace(/\/$/, '');
 const output = process.env.SONGYAN_QA_DIR || '/tmp/opencode/songyan-migration';
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml' };
+// 以路径上的实际横坐标采样，避免把弧长误当作横向距离。
+async function inspectSurface(page) {
+  return page.locator('.chrono').evaluate(el => {
+    const rail = el.querySelector('.chrono__rail').getBoundingClientRect();
+    const path = el.querySelector('.chrono__axis-line');
+    const svg = path.ownerSVGElement.getBoundingClientRect();
+    const length = path.getTotalLength();
+    return [...el.querySelectorAll('.chrono__node')].map(node => {
+      const dot = node.querySelector('.chrono__dot').getBoundingClientRect();
+      const x = dot.left + dot.width / 2 - svg.left;
+      let lo = 0;
+      let hi = length;
+      for (let index = 0; index < 24; index++) {
+        const mid = (lo + hi) / 2;
+        if (path.getPointAtLength(mid).x < x) lo = mid;
+        else hi = mid;
+      }
+      const point = path.getPointAtLength((lo + hi) / 2);
+      const text = node.querySelector('.chrono__entry,.chrono__year-greg,.chrono__month-name');
+      const entry = node.querySelector('.chrono__entry');
+      const css = getComputedStyle(text);
+      return {
+        visible: x >= 16 && x <= rail.width - 16,
+        x, error: Math.abs(dot.top + dot.height / 2 - svg.top - point.y),
+        scale: Number(getComputedStyle(node).getPropertyValue('--chrono-scale')),
+        size: parseFloat(css.fontSize), opacity: parseFloat(getComputedStyle(node.querySelector('.chrono__date,.chrono__terms,.chrono__rubric') || text).opacity),
+        color: css.color,
+        dotColor: getComputedStyle(node.querySelector('.chrono__dot')).backgroundColor,
+        tracking: node.querySelector('.chrono__entry')
+          ? parseFloat(getComputedStyle(node.querySelector('.chrono__entry')).letterSpacing)
+          : 0,
+        transform: entry ? getComputedStyle(entry).transform : css.transform,
+        tangentAngle: parseFloat(getComputedStyle(node).getPropertyValue('--chrono-skew')),
+        filter: entry ? getComputedStyle(entry).filter : css.filter
+      };
+    }).filter(node => node.visible);
+  });
+}
+async function progressGeometry(page) {
+  return page.locator('.chrono').evaluate(el => {
+    const rail = el.querySelector('.chrono__rail');
+    const curve = el.querySelector('.chrono__curve-line');
+    const dot = el.querySelector('.chrono__curve-dot');
+    const total = rail.scrollWidth - rail.clientWidth;
+    const progress = total > 1 ? rail.scrollLeft / total : 0.5;
+    const point = curve.getPointAtLength(curve.getTotalLength() * progress);
+    const matrix = curve.getScreenCTM();
+    const actual = dot.getBoundingClientRect();
+    const target = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+    return {
+      progress,
+      x: Number(dot.getAttribute('cx')),
+      y: Number(dot.getAttribute('cy')),
+      error: Math.hypot(actual.left + actual.width / 2 - target.x, actual.top + actual.height / 2 - target.y)
+    };
+  });
+}
 const pages = [
   ['index', '/'], ['archive', '/archives/'], ['about', '/about/'], ['404', '/404.html'],
   ['post-ci', '/2026/10/12/qiushi-huaiyuan/'], ['post-essay', '/2026/10/11/qiantang-guanchao/'],
@@ -46,7 +103,8 @@ const pages = [
         assert.equal(response.status(), 200);
         await page.evaluate(() => document.fonts.ready);
         assert.equal(await page.locator('main').count(), 1, `${name}: one main`);
-        assert.equal(await page.locator('.site-footer').count(), ['archive', 'archive-year', 'archive-month', 'category', 'tag'].includes(name) ? 0 : 1, `${name}: archive pages omit footer, other pages retain it`);
+        assert.equal(await page.locator('.site-footer').count(), 1, `${name}: shared footer is present`);
+        assert.equal(await page.locator('.site-footer a, .site-footer__links').count(), 0, `${name}: footer has no page entrances`);
         assert.equal(await page.locator('[class*="placeholder"]').count(), 0, `${name}: no placeholders`);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name}@${width}: page overflow`);
         assert.equal(await page.locator('.rhyme-dot').count(), 0);
@@ -57,7 +115,7 @@ const pages = [
           assert.equal(await page.locator('.post-signature').count(), 1);
           if (name === 'post-ci') {
             assert.equal(await page.locator('.post-signature').evaluate(el => getComputedStyle(el).flexDirection), width >= 1024 ? 'column' : 'row');
-          } else if (name !== 'about') {
+          } else {
             const signature = await page.locator('.post-signature').evaluate(el => {
               const box = el.getBoundingClientRect();
               const author = el.querySelector('.post-signature__author').getBoundingClientRect();
@@ -77,7 +135,8 @@ const pages = [
         if (name === 'post-ci') {
           const composition = await page.evaluate(() => {
             const body = document.querySelector('.post-ci__body-horizontal');
-            const lines = [...body.querySelectorAll(':scope > p')];
+            const verses = body.querySelector('.post-ci__verses');
+            const lines = [...verses.querySelectorAll(':scope > p')];
             const lower = lines.findIndex(line => line.hasAttribute('data-stanza-start'));
             const rects = lines.map(line => line.getBoundingClientRect());
             const signature = body.querySelector('.post-signature');
@@ -85,16 +144,12 @@ const pages = [
             const date = signature.querySelector('time').getBoundingClientRect();
             const title = document.querySelector('.post-title').getBoundingClientRect();
             const bodyRect = body.getBoundingClientRect();
-            const punctuation = body.querySelector('.poem-punctuation');
             const characterRect = (node, offset) => {
               const range = document.createRange();
               range.setStart(node, offset); range.setEnd(node, offset + 1);
               return range.getBoundingClientRect();
             };
             const firstCharacter = characterRect(lines[0].firstChild, 0);
-            const secondCharacter = characterRect(lines[0].firstChild, 1);
-            const beforePunctuation = characterRect(punctuation.previousSibling, punctuation.previousSibling.textContent.length - 1);
-            const afterPunctuation = characterRect(punctuation.nextSibling, 0);
             const authorElement = signature.querySelector('.post-signature__author');
             const authorCharacter = characterRect(authorElement.firstChild, 0);
             return {
@@ -106,11 +161,41 @@ const pages = [
               verseTopErrors: rects.map(rect => Math.abs(rect.top - rects[0].top)),
               gaps: rects.slice(1).map((rect, i) => rects[i].left - rect.right),
               signatureGap: rects.at(-1).left - signature.getBoundingClientRect().right,
+              signatureTextGap: parseFloat(getComputedStyle(signature).gap),
+              signatureSealGap: signature.querySelector('.seal--signature').getBoundingClientRect().top - date.bottom,
+              signatureSealWidth: signature.querySelector('.seal--signature').getBoundingClientRect().width,
+              signatureSlipSize: parseFloat(getComputedStyle(signature.querySelector('[data-poem-slip-open]')).fontSize),
+              signatureSlipGap: parseFloat(getComputedStyle(signature.querySelector('.post-signature__slip')).gap),
+              signatureSlipMargin: parseFloat(getComputedStyle(signature.querySelector('.post-signature__slip')).marginTop),
               stanzaSpace: rects[lower].top - rects[lower - 1].bottom,
-              punctuationHeight: punctuation.getBoundingClientRect().height,
-              punctuationSize: parseFloat(getComputedStyle(punctuation).fontSize),
-              characterAdvance: secondCharacter.top - firstCharacter.top,
-              punctuationAdvance: afterPunctuation.top - beforePunctuation.top,
+              removedFormatting: document.querySelectorAll('.poem-punctuation, .poem-gloss, .poem-annotations').length,
+              columnWidths: rects.map(rect => rect.width),
+              columnHeights: rects.map(rect => rect.height),
+              verseTextHeights: lines.map(line => {
+                const range = document.createRange();
+                range.selectNodeContents(line);
+                return range.getBoundingClientRect().height;
+              }),
+              railEnds: lines.filter(line => getComputedStyle(line, '::after').content !== 'none').map(line => {
+                const style = getComputedStyle(line, '::after');
+                return { top: parseFloat(style.top), bottom: parseFloat(style.bottom), width: parseFloat(style.width) };
+              }),
+              stageHeight: verses.getBoundingClientRect().height,
+              verseSizes: lines.map(line => getComputedStyle(line).fontSize),
+              verseWeights: lines.map(line => getComputedStyle(line).fontWeight),
+              boundaryStarts: lines.map(line => getComputedStyle(line, '::before').content),
+              railOpacity: getComputedStyle(body).getPropertyValue('--silk-rail').trim(),
+              stanzaGap: parseFloat(getComputedStyle(lines[lower]).marginRight),
+              stanzaBoundary: getComputedStyle(lines[lower], '::before').content,
+              punctuationDisplays: [...body.querySelectorAll('.ci-punctuation')].map(node => getComputedStyle(node).display),
+              verseTracking: parseFloat(getComputedStyle(lines[0]).letterSpacing),
+              columnCenterErrors: lines.map((line, index) => {
+                const glyph = characterRect(line.firstChild, 0);
+                return Math.abs((glyph.left + glyph.right - rects[index].left - rects[index].right) / 2);
+              }),
+              columnPitch: parseFloat(getComputedStyle(lines[0]).lineHeight),
+              railContents: lines.map(line => getComputedStyle(line, '::after').content),
+              firstBoundary: getComputedStyle(lines[0], '::before').content,
               firstCharacterTopError: Math.abs(authorCharacter.top - firstCharacter.top),
               authorMatchesVerse: getComputedStyle(authorElement).fontFamily === getComputedStyle(lines[0]).fontFamily,
               authorSize: parseFloat(getComputedStyle(authorElement).fontSize),
@@ -125,23 +210,43 @@ const pages = [
           assert.equal(composition.lower, 4, 'explicit stanza break follows the upper stanza');
           assert.ok(composition.lowerText.startsWith('溯流光'), 'lower stanza starts at the authored boundary');
           assert.ok(composition.titleCenterError <= 2, 'poetry heading stays centered on the viewport');
-          assert.ok(composition.text.includes('露下碧梧冷，风引画檐铃。'), 'punctuation styling preserves the original text');
+          assert.ok(composition.text.includes('露下碧梧冷，风引画檐铃。'), 'native punctuation preserves the original text');
+          assert.equal(composition.removedFormatting, 0, 'poetry has no generated annotations or punctuation wrappers');
           if (width >= 1024) {
-            const normalGaps = composition.gaps.filter((_, i) => i !== composition.lower - 1);
-            const normalGap = normalGaps[0];
-            assert.ok(normalGaps.every(gap => Math.abs(gap - normalGap) <= 1), 'ordinary verse columns have uniform spacing');
-            assert.ok(composition.gaps[composition.lower - 1] >= normalGap * 3, 'stanza boundary has a clearly larger gap');
-            assert.ok(Math.abs(composition.signatureGap - normalGap) <= 1, 'signature follows at the ordinary column spacing');
+            assert.ok(composition.gaps.every((gap, index) => Math.abs(gap - (index === composition.lower - 1 ? composition.stanzaGap : 0)) <= 1), 'only the stanza boundary adds a gap');
+            assert.ok(Math.abs(composition.stanzaGap - composition.columnPitch / 2) <= 1, 'upper and lower stanzas are separated by half a column');
+            assert.equal(composition.stanzaBoundary, 'none', 'stanza gap has no enclosing rail');
+            assert.ok(Math.abs(composition.columnPitch - 61 * 1.12) <= 1, 'ordinary column pitch increases by twelve percent');
+            assert.ok(Math.abs(composition.verseTracking - composition.verseSize * 0.04) <= 0.1, 'vertical character tracking is compact');
+            assert.ok(composition.punctuationDisplays.length > 0 && composition.punctuationDisplays.every(display => display === 'none'), 'desktop verse hides modern punctuation');
+            assert.ok(composition.columnWidths.every(width => Math.abs(width - composition.columnPitch) <= 1), 'all rail intervals use the fixed column pitch');
+            assert.ok(composition.columnCenterErrors.every(error => error <= 1), 'each text column is centered between its rail boundaries');
+            assert.ok(composition.railContents.every((content, index) => content === (index === composition.lower - 1 || index === composition.railContents.length - 1 ? 'none' : '\"\"')), 'faint rails only separate adjacent verses inside each stanza');
+            assert.ok(composition.boundaryStarts.every(content => content === 'none'), 'stanza outer edges have no enclosing rails');
+            assert.ok(Math.max(...composition.verseTextHeights) - Math.min(...composition.verseTextHeights) > composition.verseSize, 'short and long verses retain distinct natural text endings');
+            assert.ok(Math.max(...composition.columnHeights) - Math.min(...composition.columnHeights) <= 1, 'rail containers share the longest verse height');
+            assert.ok(Math.abs(composition.stageHeight - Math.max(...composition.verseTextHeights)) <= 3, 'stage follows the longest verse instead of a fixed full-height frame');
+            assert.ok(composition.railEnds.every(rail => rail.top === 16 && rail.bottom === 16 && rail.width === 1), 'fine rails leave breathing space at both ends');
+            assert.equal(new Set(composition.verseSizes).size, 1, 'all verse columns use one font size');
+            assert.equal(new Set(composition.verseWeights).size, 1, 'all verse columns use one font weight');
+            assert.equal(composition.railOpacity, 'rgba(140, 130, 117, 0.12)', 'stanza rails use increased ink opacity');
+            assert.ok(Math.abs(composition.signatureGap - 32) <= 1, 'signature keeps a wider gutter after the verse');
+            assert.equal(composition.signatureTextGap, 20, 'author and date columns have more breathing room');
+            assert.ok(Math.abs(composition.signatureSealGap - 32) <= 1, 'seal has more breathing room below the date');
+            assert.equal(composition.signatureSlipGap, 12, 'slip label and petal have breathing room');
+            assert.equal(composition.signatureSlipMargin, 12, 'slip label sits farther below the author');
+            assert.ok(Math.abs(composition.signatureSealWidth - 60) <= 1, 'seal retains its original size');
+            assert.equal(composition.signatureSlipSize, 12, 'slip entrance uses a smaller label');
             assert.ok(composition.authorTopError <= 2 && composition.dateTopError <= 2, 'both signature columns align to the verse top');
             assert.ok(composition.verseTopErrors.every(error => error <= 2), 'upper and lower stanza columns share the same top edge');
             assert.ok(composition.bodyCenterError <= 2, 'complete verse/signature composition is centered');
-            assert.ok(composition.punctuationHeight <= 0.1, 'hanging punctuation takes zero character height');
-            assert.ok(Math.abs(composition.punctuationAdvance - composition.characterAdvance) <= 1, 'characters across punctuation keep exactly the ordinary character advance');
             assert.ok(composition.firstCharacterTopError <= 2 && composition.authorMatchesVerse, 'smaller author text retains first-character alignment with verse');
             assert.ok(composition.dateSize < composition.authorSize && composition.authorSize < composition.verseSize, 'signature author size stays between date and verse');
             assert.ok(composition.signatureColumnPitch <= composition.normalColumnPitch * 0.75, 'small author/date text uses compact column spacing');
             assert.ok(composition.dateColumnWidth < 30, 'date column does not reserve the seal width');
           } else {
+            assert.ok(composition.railContents.every(content => content === 'none'), 'horizontal reading has no vertical rails');
+            assert.ok(composition.punctuationDisplays.length > 0 && composition.punctuationDisplays.every(display => display === 'inline'), 'horizontal reading retains modern punctuation');
             assert.ok(composition.stanzaSpace >= 40, 'horizontal reading has a visible stanza break');
           }
         }
@@ -163,7 +268,10 @@ const pages = [
           await page.waitForTimeout(200);
           assert.ok(String(await link.evaluate(el => getComputedStyle(el).backgroundSize)).startsWith('100%'), `${name}: underline appears on hover`);
         }
-        if (['archive', 'category', 'tag'].includes(name)) assert.ok(await page.locator('.chrono__entry').count() > 0);
+        if (['archive', 'category', 'tag'].includes(name)) {
+          assert.ok(await page.locator('.archive-cylinder').count() > 0, `${name}: cylinder viewport is present`);
+          assert.ok(await page.locator('.archive-cylinder .timeline-node').count() > 0, `${name}: article nodes are rendered`);
+        }
         if (name === 'index' && width < 900) {
           assert.equal(await page.locator('.home-cover').evaluate(el => getComputedStyle(el).position), 'static', 'narrow screens drop the pin');
           assert.ok(await page.locator('.home-cover').evaluate(el => el.getBoundingClientRect().height < innerHeight * 0.75), 'short cover leaves room for reading');
@@ -263,49 +371,104 @@ const pages = [
     await page.keyboard.press('Escape');
     console.log('PASS real poetry content: explicit stanza break, generated author seal, preview and PNG export'); checks++;
     await page.goto(origin + prefix + '/archives/');
-    assert.equal(await page.locator('.chrono__item').count(), 4);
-    for (const time of await page.locator('.chrono__date').all()) {
-      const iso = await time.getAttribute('datetime');
-      const month = Number(iso.slice(5, 7));
-      const day = Number(iso.slice(8, 10));
-      assert.ok((await time.locator('.chrono__mo').textContent()).includes('月'));
-      assert.ok((await time.locator('.chrono__day').textContent()).includes('日'));
-      assert.equal(await time.evaluate(el => getComputedStyle(el).transform), 'none');
-      assert.ok(await time.evaluate(el => getComputedStyle(el).writingMode).includes('vertical'));
-      assert.ok(month >= 1 && day >= 1);
-    }
-    assert.ok(await page.locator('.chrono__scrubber').count());
-    assert.ok(await page.locator('.chrono__frontispiece').count());
-    assert.ok(await page.locator('.chrono__vista').count());
+    assert.equal(await page.locator('.archive-cylinder .timeline-node').count(), 4);
+    assert.equal(await page.locator('.chrono__item').count(), 0, 'legacy archive axis is not rendered');
+    await page.setViewportSize({ width: 900, height: 600 });
+    await page.waitForTimeout(200);
+    const cylinderCss = await fs.readFile(path.join(__dirname, '../themes/hexo-theme-songyan/source/css/layouts.css'), 'utf8');
+    const cylinderContract = await page.locator('.archive-cylinder').evaluate(viewport => {
+      const stage = viewport.querySelector('.timeline-stage');
+      const node = stage.querySelector('.timeline-node');
+      const computed = getComputedStyle(viewport);
+      const params = Array.from(new URLSearchParams());
+      return {
+        viewportBackground: computed.backgroundColor,
+        maskImage: computed.maskImage,
+        webkitMaskImage: computed.webkitMaskImage,
+        hasMaskDefinition: !!document.getElementById('scroll-edge-mask'),
+        nodes: stage.querySelectorAll('.timeline-node').length,
+        layers: node ? [...node.children].map(child => child.className) : [],
+        articleHref: node?.dataset.href || null,
+        articleUrl: JSON.parse(decodeURIComponent(viewport.dataset.archiveNodes))[0].href
+      };
+    });
+    assert.equal(cylinderContract.viewportBackground, 'rgba(0, 0, 0, 0)', 'timeline viewport stays transparent');
+    assert.ok(cylinderContract.maskImage.includes('linear-gradient') && cylinderContract.webkitMaskImage.includes('linear-gradient'), 'viewport keeps transparent CSS feather mask');
+    assert.ok(cylinderCss.includes('mask: url("#scroll-edge-mask")') && cylinderContract.hasMaskDefinition, '3D stage keeps the SVG edge-mask reference and definition');
+    assert.equal(cylinderContract.nodes, 4);
+    assert.deepEqual(cylinderContract.layers, ['node-upper', 'node-lower']);
+    assert.equal(cylinderContract.articleUrl, '/2026/10/12/qiushi-huaiyuan/');
+    assert.equal(await page.locator('.archive-cylinder').evaluate(el => getComputedStyle(el).backgroundImage), 'none', 'timeline imports no paper texture');
+    assert.equal(await page.locator('.chrono__vista, .chrono__scrubber, .chrono__frontispiece, .chrono__excerpt').count(), 0, 'three-distance timeline furniture is gone');
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.waitForTimeout(200);
+    const filterInk = await page.locator('[data-cat-filter="essay"]').evaluate(button => {
+      const dot = button.querySelector('.archive-legend__dot');
+      return {
+        textDecoration: getComputedStyle(button).textDecorationLine,
+        idleColor: getComputedStyle(button).color,
+        idleDot: getComputedStyle(dot).backgroundColor,
+        idleOpacity: getComputedStyle(dot).opacity
+      };
+    });
+    await page.locator('[data-cat-filter="essay"]').click();
+    await page.waitForTimeout(250);
+    const selectedInk = await page.locator('[data-cat-filter="essay"]').evaluate(button => ({
+      textDecoration: getComputedStyle(button).textDecorationLine,
+      color: getComputedStyle(button).color,
+      dot: getComputedStyle(button.querySelector('.archive-legend__dot')).backgroundColor,
+      opacity: getComputedStyle(button.querySelector('.archive-legend__dot')).opacity
+    }));
+    assert.equal(selectedInk.textDecoration, 'none', 'selected filter has no underline');
+    assert.notEqual(selectedInk.color, filterInk.idleColor, 'selected filter text takes its category ink');
+    assert.equal(selectedInk.dot, filterInk.idleDot, 'filter ink preserves its category color');
+    assert.equal(selectedInk.opacity, '1', 'selected filter dot fills to full ink');
+    await page.locator('[data-cat-filter="essay"]').click();
     await page.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await page.locator('.chrono__item:not(.is-dimmed)').count(), 1);
+    assert.equal(await page.locator('.archive-cylinder .timeline-node:not(.is-filtered)').count(), 1);
+    assert.equal(await page.locator('.archive-cylinder .timeline-node.is-filtered[aria-hidden="true"]').count(), 3, 'filtered cylinder nodes leave the accessibility tree');
     assert.equal(await page.locator('[data-archive-count]').textContent(), '1');
     await page.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await page.locator('.chrono__item:not(.is-dimmed)').count(), 4);
+    assert.equal(await page.locator('.archive-cylinder .timeline-node:not(.is-filtered)').count(), 4);
+    assert.equal(await page.locator('.archive-list__item:not(.is-dimmed)').count(), 4, 'list panel mirrors the filter');
     await page.locator('[data-cat-filter="project"]').click();
     assert.equal(await page.locator('[data-archive-count]').textContent(), '0');
     assert.ok(await page.locator('[data-archive-empty]').isVisible());
-    assert.ok(await page.locator('.chrono').isHidden());
+    assert.equal(await page.locator('.archive-cylinder').evaluate(el => getComputedStyle(el).display), 'none', 'empty result hides the cylinder');
+    assert.ok(await page.locator('[data-archive-list]').isHidden(), 'empty result hides both panels');
     await page.locator('[data-cat-filter="project"]').click();
     assert.equal(await page.locator('[data-archive-count]').textContent(), '4');
-    assert.ok(await page.locator('.chrono').isVisible());
     assert.ok(await page.locator('[data-archive-empty]').isHidden());
-    await page.locator('[data-archive-view="list"]').click();
-    assert.equal(await page.locator('[data-archive-list]').getAttribute('hidden'), null);
-    assert.ok(await page.locator('.chrono').isHidden());
-    await page.locator('[data-archive-view="axis"]').click();
-    assert.ok(await page.locator('.chrono').isVisible());
+    assert.equal(await page.locator('.archive-view, button[data-archive-view]').count(), 0, 'archive has no manual view switch');
+    assert.ok(await page.locator('[data-archive-list]').isVisible(), 'portrait windows show the vertical list');
+    assert.equal(await page.locator('.archive-cylinder').evaluate(el => getComputedStyle(el).display), 'none', 'portrait windows hide the cylinder');
+    await page.setViewportSize({ width: 900, height: 600 });
+    await page.waitForTimeout(250);
+    assert.ok(await page.locator('.archive-cylinder').isVisible(), 'landscape windows switch back to the cylinder viewport');
     assert.ok(await page.locator('[data-archive-list]').isHidden());
-    console.log('PASS archive data binding, fade filter and list view'); checks++;
-    const wheelProbe = await page.locator('[data-chrono-rail]').evaluate(rail => {
-      rail.scrollLeft = 0;
-      rail.dispatchEvent(new Event('scroll'));
-      const atEdge = rail.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }));
-      const towardContent = rail.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, cancelable: true }));
-      return { atEdge, towardContent, hasOverflow: rail.scrollWidth > rail.clientWidth };
-    });
-    assert.deepEqual(wheelProbe, { atEdge: true, towardContent: false, hasOverflow: true });
-    console.log('PASS archive wheel boundary releases page scrolling and consumes interior scrolling'); checks++;
+    console.log('PASS archive data binding, fade filter and ratio-driven view'); checks++;
+    const cylinderSource = await fs.readFile(path.join(__dirname, '../themes/hexo-theme-songyan/source/js/main.js'), 'utf8');
+    for (const expression of [
+      'metrics.radiusX * Math.sin(theta)',
+      '-metrics.radiusZ * (1 - Math.cos(theta))',
+      'metrics.perspective / (metrics.perspective - z)',
+      '-theta * 11.2 || 0',
+      'theta * 25.0',
+      'Math.exp(-(u * u) / 0.34)',
+      'dragDistance > 4',
+      'window.location.assign(item.href)'
+    ]) assert.ok(cylinderSource.includes(expression), `cylinder physics/input contract remains: ${expression}`);
+    assert.ok(cylinderSource.includes('targetScrollPos = clampScroll(Math.round(targetScrollPos)); }, 150'), 'wheel settles after 150ms');
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const stage = page.locator('.archive-cylinder .timeline-stage');
+    await stage.locator('.timeline-node').nth(1).click();
+    await page.waitForFunction(() => Number(document.querySelector('.archive-cylinder').dataset.activeIndex) === 1);
+    assert.equal(await stage.locator('.timeline-node').nth(1).getAttribute('data-centered'), 'true', 'clicking a non-centered node glides it to the center');
+    const targetUrl = await stage.locator('.timeline-node').nth(1).evaluate(node => JSON.parse(decodeURIComponent(document.querySelector('.archive-cylinder').dataset.archiveNodes))[1].href);
+    await stage.locator('.timeline-node').nth(1).click();
+    await page.waitForURL(url => url.pathname === targetUrl);
+    assert.equal(new URL(page.url()).pathname, targetUrl, 'clicking the centered node navigates to its Hexo article URL');
+    console.log('PASS archive cylinder data, masks, node layers, projection constants, Lerp centering and article navigation'); checks++;
     await context.close();
     const desktopContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const desktopPage = await desktopContext.newPage();
@@ -333,7 +496,7 @@ const pages = [
         hasHint: Boolean(document.querySelector('.home-cover__hint')),
         headerPos: getComputedStyle(document.querySelector('.site-header')).position,
         targetExists: Boolean(document.querySelector('#' + sheet.id)),
-        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        snapType: getComputedStyle(document.documentElement).scrollSnapType,
         coverBg: getComputedStyle(cover).backgroundImage,
         sheetBg: getComputedStyle(sheet).backgroundImage,
         sheetSnap: getComputedStyle(sheet).scrollSnapAlign,
@@ -352,7 +515,7 @@ const pages = [
     assert.ok(coverProbe.titleCenter > 270 && coverProbe.titleCenter < 630, 'initial title sits near the viewport center');
     assert.equal(coverProbe.skipHref, '#home-stream');
     assert.ok(coverProbe.targetExists);
-    assert.equal(coverProbe.dockSnap, 'none', 'cover controller disables competing native snap');
+    assert.equal(coverProbe.snapType, 'y', 'cover keeps proximity snap anchored at the dock point');
     assert.ok(coverProbe.sheetBg.includes('paper-texture'), 'content keeps the shared paper texture');
     assert.equal(coverProbe.coverBg, 'none', 'docked masthead is not a paper overlay covering the page');
     assert.equal(coverProbe.sheetSnap, 'start');
@@ -416,7 +579,6 @@ const pages = [
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const sample = (natural) => {
         const shrink = document.getAnimations().find(a => a.animationName === 'title-shrink');
-        const transform = new DOMMatrix(getComputedStyle(epigraph).transform);
         const fontSize = parseFloat(getComputedStyle(title).fontSize);
         return {
           timeline: shrink && shrink.timeline.constructor.name,
@@ -424,11 +586,11 @@ const pages = [
           opacity: Number(getComputedStyle(title).opacity),
           sourceOpacity: Number(getComputedStyle(document.querySelector('.home-epigraph__source')).opacity),
           headerPaddingTop: parseFloat(getComputedStyle(document.querySelector('.site-header__inner')).paddingTop),
-          headerTranslateY: new DOMMatrix(getComputedStyle(document.querySelector('.site-header__inner')).transform).f,
+          headerLift: parseFloat(getComputedStyle(document.querySelector('.site-header__inner')).top),
           headerTitleSize: getComputedStyle(document.querySelector('.site-header__title')).fontSize,
           sealWidth: document.querySelector('.site-header__seal-gen').getBoundingClientRect().width,
           scale: fontSize / natural,
-          translateY: transform.f,
+          epigraphLift: parseFloat(getComputedStyle(epigraph).top),
           fontSize
         };
       };
@@ -457,14 +619,14 @@ const pages = [
     assert.ok(coverMotion.middle.sourceOpacity < coverMotion.start.sourceOpacity, 'source begins fading while the title shrinks');
     assert.ok(coverMotion.end.sourceOpacity < 0.05, 'source is gone when docking finishes');
     assert.ok(coverMotion.start.scale > coverMotion.middle.scale && coverMotion.middle.scale > coverMotion.end.scale, 'title continuously shrinks instead of switching states');
-    assert.ok(coverMotion.start.translateY > coverMotion.end.translateY, 'title group moves upward');
+    assert.ok(coverMotion.start.epigraphLift > coverMotion.end.epigraphLift, 'title group moves upward through layout position');
     assert.ok(Math.abs(coverMotion.end.fontSize - 28) < 0.1, 'docked title retains a strong 28px hierarchy');
     assert.ok(Math.abs(coverMotion.restored.scale - 1) < 0.02, 'scrolling back restores the same title');
     assert.equal(coverMotion.start.headerPaddingTop, coverMotion.end.headerPaddingTop, 'header padding remains fixed');
     assert.equal(coverMotion.start.headerTitleSize, coverMotion.end.headerTitleSize, 'header title never scales');
-    assert.equal(coverMotion.start.sealWidth, 44, 'navbar seal stays large enough to read');
+    assert.equal(coverMotion.start.sealWidth, 36, 'navbar seal stays large enough to read');
     assert.equal(coverMotion.start.sealWidth, coverMotion.end.sealWidth, 'seal never scales');
-    assert.ok(coverMotion.start.headerTranslateY > coverMotion.end.headerTranslateY, 'header moves by translation alone');
+    assert.ok(coverMotion.start.headerLift > coverMotion.end.headerLift, 'header compacts through layout position');
     assert.equal(await desktopPage.locator('.home-stream .enter').count(), 0, 'post items and titles do not animate separately');
     assert.equal(await desktopPage.locator('.home-cover__enter').count(), 0);
     const shortPageDock = await desktopPage.evaluate(async () => {
@@ -554,30 +716,36 @@ const pages = [
         titleCenter: (titleRect.top + titleRect.bottom) / 2,
         countBelowTitle: countRect.top >= titleRect.bottom - 1,
         recentBelowCount: recentRect.top >= countRect.bottom - 1,
-        railZ: Number(getComputedStyle(document.querySelector('.chrono__rail')).zIndex),
-        axisZ: Number(getComputedStyle(document.querySelector('.chrono__axis')).zIndex),
+        recentGap: recentRect.top - countRect.bottom,
+        mastCenter: (mast.getBoundingClientRect().top + mast.getBoundingClientRect().bottom) / 2,
+        viewportCenter: innerHeight / 2,
+        railZ: Number(getComputedStyle(document.querySelector('.timeline-stage')).zIndex),
+        axisZ: Number(getComputedStyle(document.querySelector('.rail-svg')).zIndex),
         recentCount: recent ? recent.querySelectorAll('.archive-recent__item').length : 0,
         recentOpacity: recent ? Number(getComputedStyle(recent).opacity) : 0,
-        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
-        legendSnap: getComputedStyle(legend).scrollSnapAlign,
-        legendSnapStop: getComputedStyle(legend).scrollSnapStop,
+        recentTitleAnimation: recent ? getComputedStyle(recent.querySelector('.archive-recent__link')).animationName : 'none',
+        recentDateAnimation: recent ? getComputedStyle(recent.querySelector('.archive-recent__date')).animationName : 'none',
+        snapType: getComputedStyle(document.documentElement).scrollSnapType,
+        toolbarSnap: getComputedStyle(document.querySelector('.archive-toolbar')).scrollSnapAlign,
+        toolbarSnapStop: getComputedStyle(document.querySelector('.archive-toolbar')).scrollSnapStop,
         activeNav: [...document.querySelectorAll('.site-header__nav-link--active')].map(el => el.textContent.trim())
       };
     });
     assert.equal(archiveIntro.headPos, 'sticky');
     assert.equal(archiveIntro.headerPos, 'sticky');
-    assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), JSON.stringify(archiveIntro));
+    assert.ok(archiveIntro.titleAnim.includes('archive-title-dock'), 'archive title compactifies while the mast docks');
     assert.ok(archiveIntro.mastAnim.includes('archive-mast-dock'), JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.legendAfterIntro, 'category legend sits with the timeline focus area under the title');
-    assert.ok(archiveIntro.titleCenter > 180 && archiveIntro.titleCenter < 480, 'archive title sits upper-center on intro');
+    assert.ok(archiveIntro.titleCenter > 140 && archiveIntro.titleCenter < 440, 'archive title sits above the viewport center');
+    assert.ok(archiveIntro.mastCenter < archiveIntro.viewportCenter - 20, 'archive mast balances above the page center');
     assert.ok(archiveIntro.countBelowTitle, 'count sits directly under the title');
-    assert.ok(archiveIntro.recentBelowCount, 'recent list sits under the count');
+    assert.ok(archiveIntro.recentBelowCount && archiveIntro.recentGap >= 32, 'recent list sits comfortably below the count');
     assert.ok(archiveIntro.railZ > archiveIntro.axisZ, 'ink dots on the rail stack above the axis line');
     assert.ok(archiveIntro.recentCount >= 1 && archiveIntro.recentCount <= 3, JSON.stringify(archiveIntro));
     assert.ok(archiveIntro.recentOpacity > 0.8, 'recent posts are visible on the archive intro');
-    assert.equal(archiveIntro.dockSnap, 'none', JSON.stringify(archiveIntro));
-    assert.equal(archiveIntro.legendSnap, 'start');
-    assert.equal(archiveIntro.legendSnapStop, 'always');
+    assert.equal(archiveIntro.snapType, 'y', JSON.stringify(archiveIntro));
+    assert.equal(archiveIntro.toolbarSnap, 'start');
+    assert.equal(archiveIntro.toolbarSnapStop, 'always');
     assert.deepEqual(archiveIntro.activeNav, ['归档']);
 
     await desktopPage.evaluate(async () => {
@@ -592,7 +760,7 @@ const pages = [
     const archiveDocked = await desktopPage.evaluate(() => {
       const head = document.querySelector('.archive-head').getBoundingClientRect();
       const header = document.querySelector('.site-header').getBoundingClientRect();
-      const chrono = document.querySelector('.chrono').getBoundingClientRect();
+      const chrono = document.querySelector('.archive-cylinder').getBoundingClientRect();
       const legend = document.querySelector('.archive-legend').getBoundingClientRect();
       const count = document.querySelector('.archive-head__count');
       const title = document.querySelector('.archive-head__title');
@@ -607,45 +775,63 @@ const pages = [
         legendTop: legend.top,
         legendBottom: legend.bottom,
         countOpacity: Number(getComputedStyle(count).opacity),
+        titleTop: title.getBoundingClientRect().top,
+        titleBottom: title.getBoundingClientRect().bottom,
         titleSize: parseFloat(getComputedStyle(title).fontSize),
         recentOpacity: recent ? Number(getComputedStyle(recent).opacity) : 0,
         recentVisibility: recent ? getComputedStyle(recent).visibility : 'hidden',
+        recentTitleAnimation: recent ? getComputedStyle(recent.querySelector('.archive-recent__link')).animationName : 'none',
+        recentDateAnimation: recent ? getComputedStyle(recent.querySelector('.archive-recent__date')).animationName : 'none',
+        recentRowTransform: recent ? getComputedStyle(recent.querySelector('.archive-recent__item')).transform : 'none',
         viewport: innerHeight,
         chronoTopToken: getComputedStyle(document.documentElement).getPropertyValue('--chrono-top').trim(),
+        legendTimelineGap: chrono.top - legend.bottom,
         overlap: legend.bottom > chrono.top + 1
       };
     });
     assert.ok(archiveDocked.headerTop >= -1 && archiveDocked.headerTop <= 1, JSON.stringify(archiveDocked));
-    assert.ok(Math.abs(archiveDocked.headTop - archiveDocked.headerBottom) <= 2, 'archive title docks under the pinned header');
+    assert.ok(archiveDocked.titleTop >= archiveDocked.headerBottom - 2 && archiveDocked.titleBottom <= archiveDocked.legendTop + 2, 'archive title docks below the pinned header without overlapping the legend');
     assert.ok(archiveDocked.legendTop >= archiveDocked.headBottom - 2, 'legend sits under the docked title');
     assert.ok(archiveDocked.chronoTop >= archiveDocked.legendBottom - 2, 'timeline follows the legend without overlap');
+    assert.ok(parseFloat(archiveDocked.chronoTopToken) >= 6.5, 'docked timeline reserves clear space above the upper rail');
+    assert.ok(archiveDocked.legendTimelineGap >= 12, `compact filter controls retain a safe gap above the timeline: ${JSON.stringify(archiveDocked)}`);
     assert.equal(archiveDocked.overlap, false, 'legend and timeline do not overlap');
     assert.ok(archiveDocked.countOpacity < 0.05, 'count fades as the title docks');
     assert.ok(archiveDocked.recentOpacity < 0.05, 'recent posts hide after scrolling into the timeline');
     assert.equal(archiveDocked.recentVisibility, 'hidden');
-    assert.ok(Math.abs(archiveDocked.titleSize - 28) < 0.1, 'archive title compactifies');
+    assert.equal(archiveDocked.recentTitleAnimation, 'archive-recent-left');
+    assert.equal(archiveDocked.recentDateAnimation, 'archive-recent-right');
+    assert.equal(archiveDocked.recentRowTransform, 'none', 'recent rows stay in place while title and date separate');
+    assert.ok(Math.abs(archiveDocked.titleSize - 28) < 1, 'archive title compactifies');
     assert.ok(archiveDocked.chronoBottom <= archiveDocked.viewport + 2, `timeline fits under header+title in one screen: ${JSON.stringify(archiveDocked)}`);
-    assert.ok(archiveDocked.chronoTopToken.includes('5.5'), 'docked archive uses compact chrono metrics');
+    assert.ok(parseFloat(archiveDocked.chronoTopToken) >= 6.5, 'docked archive reserves space above the upper rail');
 
-    // 归档以时间轴收尾，不输出页脚，也不留整屏离场空白。
+    // 归档恢复统一页脚，时间轴与页脚之间不留整屏离场空白。
     const archiveEnd = await desktopPage.evaluate(async () => {
       const exit = document.querySelector('.archive-exit-space');
       scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       return {
-        chronoBottom: document.querySelector('.chrono').getBoundingClientRect().bottom,
+        chronoBottom: document.querySelector('.archive-cylinder').getBoundingClientRect().bottom,
+        chronoTop: document.querySelector('.archive-cylinder').getBoundingClientRect().top,
+        mainTop: document.querySelector('main').getBoundingClientRect().top,
         mainBottom: document.querySelector('main').getBoundingClientRect().bottom,
         mainPadding: parseFloat(getComputedStyle(document.querySelector('main')).paddingBottom),
         headerTop: document.querySelector('.site-header').getBoundingClientRect().top,
         footerCount: document.querySelectorAll('.site-footer').length,
+        footerBottom: document.querySelector('.site-footer').getBoundingClientRect().bottom,
+        footerLinks: document.querySelectorAll('.site-footer a').length,
+        viewport: innerHeight,
         exitDisplay: exit ? getComputedStyle(exit).display : 'none',
         exitHeight: exit ? exit.getBoundingClientRect().height : 0
       };
     });
-    assert.equal(archiveEnd.footerCount, 0, 'archive omits footer markup');
+    assert.equal(archiveEnd.footerCount, 1, 'archive restores the shared footer');
+    assert.equal(archiveEnd.footerLinks, 0, 'archive footer has no page entrances');
+    assert.ok(archiveEnd.footerBottom <= archiveEnd.viewport + 2, 'archive footer is reachable at the page end');
     assert.equal(archiveEnd.exitDisplay, 'none', 'archive exit runway is removed');
     assert.ok(archiveEnd.exitHeight < 1, 'no full-screen blank after timeline');
-    assert.ok(Math.abs(archiveEnd.mainBottom - archiveEnd.chronoBottom - archiveEnd.mainPadding) <= 2, 'archive ends with only the required dock clearance');
+    assert.ok(archiveEnd.chronoBottom <= archiveEnd.mainBottom + 1 && archiveEnd.chronoTop >= archiveEnd.mainTop - 1, 'cylinder remains contained in the archive main region');
     assert.ok(archiveEnd.headerTop >= -1 && archiveEnd.headerTop <= 1, 'header stays pinned at archive end');
 
     // 阅读页题头停靠（词）
@@ -666,7 +852,7 @@ const pages = [
     });
     assert.equal(readingCiIntro.mastPos, 'sticky');
     assert.ok(String(readingCiIntro.clusterAnim).includes('reading-mast-lift'), JSON.stringify(readingCiIntro));
-    assert.ok(String(await desktopPage.locator('.reading-mast .post-title').evaluate(el => getComputedStyle(el).animationName)).includes('reading-ci-title-dock'));
+    assert.ok(!String(await desktopPage.locator('.reading-mast .post-title').evaluate(el => getComputedStyle(el).animationName)).includes('title-dock'), 'reading title keeps its page-title scale while the mast docks');
     assert.ok(readingCiIntro.hasAuthor, 'ci mast shows author/date meta');
     const readingCiCover = await desktopPage.evaluate(() => {
       const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
@@ -693,7 +879,7 @@ const pages = [
       const mast = document.querySelector('.reading-mast').getBoundingClientRect();
       const header = document.querySelector('.site-header').getBoundingClientRect();
       const body = document.querySelector('.reading-body-anchor').getBoundingClientRect();
-      const firstLine = document.querySelector('.post-ci__body--vertical > p');
+      const firstLine = document.querySelector('.post-ci__body--vertical > .post-ci__verses > p');
       const signature = document.querySelector('.post-ci__body--vertical > .post-signature--vertical');
       const endingSignature = document.querySelector('.post-ending .post-signature');
       const annotations = document.querySelector('.poem-annotations');
@@ -710,14 +896,14 @@ const pages = [
         hasVerticalSignature: Boolean(signature),
         endingSignature: Boolean(endingSignature),
         annotations: Boolean(annotations),
-        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        snapType: getComputedStyle(document.documentElement).scrollSnapType,
         bodySnap: getComputedStyle(document.querySelector('.reading-body-anchor')).scrollSnapAlign,
         bodySnapStop: getComputedStyle(document.querySelector('.reading-body-anchor')).scrollSnapStop
       };
     });
     assert.ok(Math.abs(readingCiDocked.mastTop - readingCiDocked.headerBottom) <= 2, 'ci title docks under header');
     assert.ok(readingCiDocked.bodyTop >= readingCiDocked.mastTop + 40, 'ci body sits under docked mast');
-    assert.ok(Math.abs(readingCiDocked.titleSize - 28) < 0.1, 'ci title compactifies');
+    assert.ok(Math.abs(readingCiDocked.titleSize - 40) < 0.1, 'ci title keeps the page-title scale when docked');
     assert.ok(readingCiDocked.metaOpacity < 0.05, 'ci meta fades when docked');
     assert.equal(readingCiDocked.metaVisibility, 'hidden');
     assert.ok(readingCiDocked.lineOpacity < 0.05 || readingCiDocked.lineTransform !== 'none', 'ci columns wait off-screen before wheel reveal');
@@ -725,13 +911,13 @@ const pages = [
     assert.equal(readingCiDocked.hasVerticalSignature, true, 'ci signature follows vertical columns');
     assert.equal(readingCiDocked.endingSignature, false, 'ci does not duplicate horizontal ending signature');
     assert.equal(readingCiDocked.annotations, false, 'ci annotations are off by default');
-    assert.equal(readingCiDocked.dockSnap, 'none');
+    assert.equal(readingCiDocked.snapType, 'none', 'column lock yields native snap while reading');
     assert.equal(readingCiDocked.bodySnap, 'start');
     assert.equal(readingCiDocked.bodySnapStop, 'always', 'reading dock holds at the body start');
 
     // 定点后锁页：滚轮逐列淡入，落款字后再末拍盖章
     const readingCiColumns = await desktopPage.evaluate(async () => {
-      const lines = [...document.querySelectorAll('.post-ci__body--vertical > p')];
+      const lines = [...document.querySelectorAll('.post-ci__body--vertical > .post-ci__verses > p')];
       const signature = document.querySelector('.post-ci__body--vertical > .post-signature--vertical');
       const steps = lines.length + (signature ? 2 : 0);
       const date = signature.querySelector('.post-signature__mark time');
@@ -789,7 +975,7 @@ const pages = [
       const m = mark.getBoundingClientRect();
       const t = time.getBoundingClientRect();
       const stamp = seal.getBoundingClientRect();
-      const firstLine = document.querySelector('.post-ci__body--vertical > p').getBoundingClientRect();
+      const firstLine = document.querySelector('.post-ci__body--vertical > .post-ci__verses > p').getBoundingClientRect();
       return {
         metaDirection: getComputedStyle(meta).flexDirection,
         writingMode: getComputedStyle(trigger).writingMode,
@@ -867,7 +1053,7 @@ const pages = [
     assert.ok(readingEssayDocked.metaSize < readingEssayDocked.epiSize && readingEssayDocked.epiSize < readingEssayDocked.bodySize, 'caption size sits between metadata and body');
     assert.ok(readingEssayDocked.metaOpacity < 0.05, 'essay author/date fade when docking into body');
     assert.equal(readingEssayDocked.metaVisibility, 'hidden');
-    assert.ok(Math.abs(readingEssayDocked.titleSize - 28) < 0.1, 'essay title compactifies');
+    assert.ok(Math.abs(readingEssayDocked.titleSize - 40) < 0.1, 'essay title keeps the page-title scale when docked');
     assert.equal(readingEssayDocked.commentsMount, false, 'gitalk stays off until configured');
 
     // 独立页（关于）同款题头停靠，并可继续滑到页脚
@@ -907,7 +1093,7 @@ const pages = [
         scrollY
       };
     });
-    assert.ok(Math.abs(aboutDocked.titleSize - 28) < 0.1, 'about title compactifies');
+    assert.ok(Math.abs(aboutDocked.titleSize - 40) < 0.1, 'about title keeps the page-title scale when docked');
     assert.ok(aboutDocked.tagOpacity < 0.05, 'about tagline fades when docking');
     assert.ok(aboutDocked.footerBottomVisible, 'about page can reach the footer after docking');
 
@@ -922,13 +1108,13 @@ const pages = [
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const footer = document.querySelector('.site-footer').getBoundingClientRect();
       return {
-        dockSnap: getComputedStyle(document.documentElement).getPropertyValue('--dock-snap').trim(),
+        snapType: getComputedStyle(document.documentElement).scrollSnapType,
         sheetStop: getComputedStyle(document.querySelector('.home-sheet')).scrollSnapStop,
         footerBottomVisible: footer.bottom <= innerHeight + 2,
         scrollY
       };
     });
-    assert.equal(homeFooter.dockSnap, 'none');
+    assert.equal(homeFooter.snapType, 'y', 'home keeps proximity snap while still reaching the footer');
     assert.equal(homeFooter.sheetStop, 'always');
     assert.ok(homeFooter.footerBottomVisible, 'home can pass the dock snap and reach the footer');
 
@@ -972,14 +1158,30 @@ const pages = [
       scrollTo({ top: legend.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height - head.getBoundingClientRect().height, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     });
-    const archiveCenterOffset = await desktopPage.locator('.chrono__year').evaluate(year => {
-      const group = year.getBoundingClientRect();
-      const rail = year.closest('.chrono__rail').getBoundingClientRect();
-      return Math.abs((group.left + group.right - rail.left - rail.right) / 2);
-    });
-    assert.ok(archiveCenterOffset < 2, 'a short archive is centered in its rail');
-    assert.equal(await desktopPage.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).textOrientation), 'mixed');
-    assert.equal(await desktopPage.locator('.chrono__item').first().evaluate(el => getComputedStyle(el).animationName.includes('chrono-curve')), false);
+    const archiveViewport = desktopPage.locator('.archive-cylinder');
+    await archiveViewport.scrollIntoViewIfNeeded();
+    const centerButton = archiveViewport.locator('.timeline-node').nth(1);
+    await centerButton.click();
+    await desktopPage.waitForTimeout(450);
+    assert.equal(await centerButton.getAttribute('data-centered'), 'true', 'non-centered article closes the cylinder seam');
+    const centeredTitleStyle = await centerButton.locator('.node-title').evaluate(el => ({
+      writingMode: getComputedStyle(el).writingMode,
+      transform: getComputedStyle(el).transform
+    }));
+    assert.equal(centeredTitleStyle.writingMode, 'vertical-rl', 'cylinder lower title remains upright vertical text');
+    assert.equal(centeredTitleStyle.transform, 'none', 'center article title is upright at the seam');
+    assert.equal(await archiveViewport.locator('.timeline-node').count(), 4, 'archive cylinder renders each Hexo article');
+    assert.equal(await desktopPage.locator('.chrono__item').count(), 0, 'legacy hand-built axis is removed');
+    const archiveYearRoute = '/archives/2026/';
+    await desktopPage.goto(origin + prefix + archiveYearRoute);
+    await desktopPage.evaluate(() => document.fonts.ready);
+    assert.equal(await desktopPage.locator('.archive-head__title').textContent(), '岁时笺纸 · 历年归档');
+    assert.equal(await desktopPage.locator('.archive-cylinder .timeline-node').count(), 4, 'archive-year maps each post to a cylinder node');
+    await desktopPage.goto(origin + prefix + '/archives/2026/10/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    assert.equal(await desktopPage.locator('.archive-head__title').textContent(), '岁时笺纸 · 历年归档');
+    assert.equal(await desktopPage.locator('.archive-cylinder .timeline-node').count(), 4, 'archive-month maps each post to a cylinder node');
+    console.log('PASS archive cylinder: Hexo routes, node layer geometry, seam docking and article links'); checks++;
     console.log('PASS archive/reading docks: no overlap, timeline exits, reading mast docks, home intros balanced'); checks++;
     // 统一字号需要同时覆盖正文、标题、辅助信息和列表摘要。
     for (const width of [390, 1280]) {
@@ -1032,19 +1234,31 @@ const pages = [
           const group = document.querySelector('.home-epigraph, .archive-head__title, .reading-mast .post-title, .page-about__name').getBoundingClientRect();
           const image = document.querySelector('.site-header__brand img');
           return { center: (group.top + group.bottom) / 2, headerHeight: document.querySelector('.site-header').getBoundingClientRect().height,
+          archive: document.body.classList.contains('archive-dock-page'),
             imageReady: image.complete && image.naturalWidth > 0, src: image.getAttribute('src'),
-            signatureImages: document.querySelectorAll('.post-signature img[src*="stamp-1794585749485"]').length };
+            signatureImages: document.querySelectorAll('.post-signature img[src*="stamp-1794661989454"]').length };
         });
-        assert.ok(Math.abs(coverStart.center - viewport.height / 2) < 1, `${name}: main title itself centers independently of supplementary content: ${JSON.stringify(coverStart)}`);
-        assert.ok(coverStart.imageReady && coverStart.src.endsWith('/images/stamp-1794585749485.png'), `${name}: navbar uses the supplied PNG`);
+        assert.ok(coverStart.archive
+          ? coverStart.center < viewport.height / 2 - 20
+          : Math.abs(coverStart.center - viewport.height / 2) < 1,
+        `${name}: archive title sits above center while other page titles stay centered: ${JSON.stringify(coverStart)}`);
+        assert.ok(coverStart.imageReady && coverStart.src.endsWith('/images/stamp-1794661989454.png'), `${name}: navbar uses the supplied PNG`);
         assert.equal(coverStart.signatureImages, 0, 'navbar image never replaces signature seal');
         await desktopPage.screenshot({ path: path.join(output, `${name}-${viewport.width}-cover-centered.png`) });
+        const motion = await desktopPage.evaluate(() => {
+          const duration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-dock'));
+          const ease = progress => progress ** 3 * (progress * (progress * 6 - 15) + 10);
+          return { duration, early: ease(0.25), middle: ease(0.5), late: ease(0.75) };
+        });
+        assert.ok(motion.duration >= 900, `${name}: cover travel allows an unhurried transition`);
+        assert.ok(motion.early < 0.11 && Math.abs(motion.middle - 0.5) < 0.001 && motion.late > 0.89,
+          `${name}: cover travel eases in and out without a fast initial lurch`);
         await desktopPage.mouse.move(20, viewport.height / 2);
         await desktopPage.mouse.wheel(0, 30);
         await desktopPage.waitForTimeout(220);
         assert.ok(await desktopPage.evaluate(() => scrollY <= 1), `${name}: subthreshold wheel stays at cover`);
         for (let i = 0; i < 3; i++) await desktopPage.mouse.wheel(0, 30);
-        await desktopPage.waitForTimeout(750);
+        await desktopPage.waitForTimeout(1250);
         const landed = await desktopPage.evaluate(() => {
           const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
           const mast = rect('.home-cover, .archive-head, .reading-mast');
@@ -1059,11 +1273,16 @@ const pages = [
             revealed: document.querySelectorAll('[data-ci-columns] .is-revealed').length };
         });
         assert.ok(landed.y > viewport.height / 2, `${name}: threshold completes full travel`);
-        assert.ok(Math.abs(landed.mast.top - landed.header.bottom) <= 2, `${name}: mast aligns below header`);
-        assert.ok(Math.abs(landed.anchor.top - landed.mast.bottom) <= 2, `${name}: anchor aligns below mast`);
+        if (['archive', 'archive-year', 'archive-month', 'category', 'tag'].includes(name)) {
+          assert.ok(landed.mast.top <= landed.header.bottom + 2 && landed.mast.bottom <= landed.anchor.top + 2,
+            `${name}: archive mast tucks under the header with the legend following`);
+        } else {
+          assert.ok(Math.abs(landed.mast.top - landed.header.bottom) <= 2, `${name}: mast aligns below header`);
+          assert.ok(Math.abs(landed.anchor.top - landed.mast.bottom) <= 2, `${name}: anchor aligns below mast`);
+        }
         assert.ok(landed.title.top >= landed.mast.top - 1 && landed.title.bottom <= landed.mast.bottom + 1,
           `${name}: complete title fits at dock: ${JSON.stringify(landed)}`);
-        assert.equal(landed.titleSize, 28, `${name}: dock title remains larger than 18px prose and 20px verse`);
+        assert.ok(Math.abs(landed.titleSize - (['index', 'archive', 'archive-year', 'archive-month', 'category', 'tag'].includes(name) ? 28 : 40)) < 1, `${name}: dock title keeps its hierarchy above 18px prose and 20px verse`);
         if (landed.eyebrow) {
           assert.ok(landed.eyebrow.top >= landed.header.bottom + 2 && landed.eyebrow.bottom <= landed.title.top,
             `${name}: rubric and title are both completely visible below header: ${JSON.stringify(landed)}`);
@@ -1085,12 +1304,12 @@ const pages = [
             window.coverReturnFrames.push({ t: now - start, y: scrollY, titleTop: title.getBoundingClientRect().top,
               center: (rect.top + rect.bottom) / 2, headerHeight: header.getBoundingClientRect().height,
               mastTop: mast.getBoundingClientRect().top });
-            if (now - start < 900) requestAnimationFrame(record);
+            if (now - start < 1250) requestAnimationFrame(record);
           }
           requestAnimationFrame(record);
         });
         await desktopPage.mouse.wheel(0, -120);
-        await desktopPage.waitForTimeout(1000);
+        await desktopPage.waitForTimeout(1250);
         const returnedFrames = await desktopPage.evaluate(() => window.coverReturnFrames);
         assert.ok(await desktopPage.evaluate(() => scrollY <= 1), `${name}: reverse gesture returns completely to cover`);
         assert.ok(returnedFrames.every(frame => Math.abs(frame.headerHeight - coverStart.headerHeight) < 0.1), `${name}: compact header never changes document flow height`);
@@ -1119,28 +1338,30 @@ const pages = [
     await desktopPage.waitForTimeout(250);
     assert.ok(await desktopPage.evaluate(y => scrollY > y + 80, heldY), 'a fresh gesture scrolls normally beyond the dock');
     await desktopPage.goto(origin + prefix + '/');
+    await desktopPage.evaluate(() => document.fonts.ready);
+    await desktopPage.waitForTimeout(100);
     await desktopPage.keyboard.press('PageDown');
-    await desktopPage.waitForTimeout(750);
+    await desktopPage.waitForTimeout(1250);
     assert.ok(Math.abs(await desktopPage.evaluate(() => scrollY) - heldY) <= 2, 'PageDown completes cover transition');
     await desktopPage.keyboard.press('PageUp');
-    await desktopPage.waitForTimeout(750);
+    await desktopPage.waitForTimeout(1250);
     assert.ok(await desktopPage.evaluate(() => scrollY <= 1), 'PageUp returns to cover');
-    await desktopPage.evaluate(() => scrollTo({ top: 260, behavior: 'instant' }));
-    await desktopPage.waitForTimeout(950);
-    assert.ok(Math.abs(await desktopPage.evaluate(() => scrollY) - heldY) <= 2, 'manual partial travel settles forward');
+    await desktopPage.evaluate(() => scrollTo({ top: 500, behavior: 'instant' }));
+    await desktopPage.waitForTimeout(1250);
+    assert.ok(Math.abs(await desktopPage.evaluate(() => scrollY) - heldY) <= 2, 'manual partial travel settles forward beyond the snap threshold');
     await desktopPage.evaluate(() => scrollTo({ top: 400, behavior: 'instant' }));
-    await desktopPage.waitForTimeout(950);
+    await desktopPage.waitForTimeout(1250);
     assert.ok(await desktopPage.evaluate(() => scrollY <= 1), 'manual reverse travel settles back to cover');
     await desktopPage.goto(origin + prefix + '/2026/10/10/test/#' + encodeURIComponent('图片与图注'));
     await desktopPage.evaluate(() => document.fonts.ready);
-    await desktopPage.waitForTimeout(950);
+    await desktopPage.waitForTimeout(1250);
     assert.ok(await desktopPage.locator('.reading-body h2').last().evaluate(el =>
       el.getBoundingClientRect().top >= document.querySelector('.reading-mast').getBoundingClientRect().bottom),
     'direct body heading hash clears both sticky headers');
     await desktopPage.goto(origin + prefix + '/');
     await desktopPage.keyboard.press('Tab');
     await desktopPage.keyboard.press('Enter');
-    await desktopPage.waitForTimeout(950);
+    await desktopPage.waitForTimeout(1250);
     assert.ok(await desktopPage.locator('#home-stream').evaluate(el =>
       document.activeElement === el && Math.abs(el.getBoundingClientRect().top - document.querySelector('.home-cover').getBoundingClientRect().bottom) <= 2),
     'animated cover skip link preserves focus and corrected dock alignment');
@@ -1163,221 +1384,113 @@ const pages = [
     }
     console.log('PASS cover gestures: threshold, full forward/reverse travel, aligned titles, inertia, keyboard, manual settling and native fallbacks'); checks++;
     await desktopContext.close();
-    // 时间轴专测：保持真实页面结构，临时构造跨年密集内容，不改测试站文章。
+    // The cylinder integration contract above exercises projection constants, click-to-dock,
+    // centered article navigation, archive filters, and the Hexo-generated node URLs.
     const timelineContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const timelinePage = await timelineContext.newPage();
     const timelineErrors = [];
     timelinePage.on('pageerror', error => timelineErrors.push(error.message));
-    async function openTimeline() {
-      await timelinePage.goto(origin + prefix + '/archives/');
-      await timelinePage.evaluate(() => document.fonts.ready);
-      await timelinePage.mouse.move(20, 200);
-      await timelinePage.mouse.wheel(0, 120);
-      await timelinePage.waitForTimeout(950);
-    }
-    for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 720 }, { width: 1440, height: 900 },
-      { width: 1024, height: 480 }, { width: 1440, height: 360 }]) {
-      await timelinePage.setViewportSize(viewport);
-      await openTimeline();
-      const geometry = await timelinePage.locator('.chrono').evaluate(el => {
-        const outer = el.getBoundingClientRect();
-        const rail = el.querySelector('.chrono__rail').getBoundingClientRect();
-        const ridge = el.querySelector('.chrono__axis-line').getBoundingClientRect();
-        const scrubber = el.querySelector('.chrono__scrubber');
-        const year = document.createRange();
-        year.selectNodeContents(el.querySelector('.chrono__year-greg'));
-        return { outerBottom: outer.bottom, railBottom: rail.bottom, ridgeBottom: ridge.bottom,
-          yearTop: year.getBoundingClientRect().top, railTop: rail.top,
-          scrubberBottom: scrubber ? scrubber.getBoundingClientRect().bottom : outer.bottom,
-          mainBottom: document.querySelector('main').getBoundingClientRect().bottom,
-          viewport: innerHeight, widthFits: document.documentElement.scrollWidth <= innerWidth + 1 };
-      });
-      assert.ok(geometry.railBottom <= geometry.outerBottom + 1, `rail fits short viewport: ${JSON.stringify(geometry)}`);
-      assert.ok(geometry.yearTop >= geometry.railTop - 1, 'year first glyph is not clipped by ridge lift');
-      assert.ok(geometry.ridgeBottom <= geometry.outerBottom + 1, `ridge line stays in frame: ${JSON.stringify(geometry)}`);
-      assert.ok(geometry.mainBottom >= geometry.railBottom - 1, 'rail remains contained in archive main');
-      assert.ok(geometry.widthFits, 'archive keeps horizontal overflow inside rail');
-      if (viewport.height >= 480) assert.ok(geometry.outerBottom <= viewport.height + 2, 'dock fits usable viewport');
-      await timelinePage.screenshot({ path: path.join(output, `timeline-${viewport.width}-${viewport.height}.png`) });
-    }
-    await timelinePage.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
-      const track = document.querySelector('.chrono__track');
-      if (!track) return;
-      const yearTemplate = track.querySelector('.chrono__year').cloneNode(true);
-      const itemTemplate = yearTemplate.querySelector('.chrono__item').cloneNode(true);
-      const titles = ['跨年长标题的折列与完整显示验证：江南山水之间的旧事与新篇',
-        'Hexo Timeline: Keyboard and Pointer Interaction', 'SupercalifragilisticexpialidociousTimelineLayout', '短题'];
-      track.replaceChildren();
-      for (let year = 2026; year >= 2024; year--) {
-        const group = yearTemplate.cloneNode(true);
-        group.querySelector('.chrono__year-greg').textContent = [...String(year)].map(digit => '〇一二三四五六七八九'[Number(digit)]).join('');
-        const list = group.querySelector('.chrono__items');
-        list.replaceChildren();
-        for (let index = 0; index < 10; index++) {
-          const item = itemTemplate.cloneNode(true);
-          item.dataset.cat = ['ci', 'essay', 'tech'][index % 3];
-          item.querySelector('.chrono__title').textContent = titles[index % titles.length];
-          list.append(item);
-        }
-        track.append(group);
+    await timelinePage.goto(origin + prefix + '/archives/');
+    await timelinePage.evaluate(() => document.fonts.ready);
+    await timelinePage.waitForTimeout(250);
+    const cylinderStage = timelinePage.locator('.archive-cylinder .timeline-stage');
+    const cylinderNodes = cylinderStage.locator('.timeline-node');
+    assert.equal(await cylinderNodes.count(), 4);
+    assert.deepEqual(await cylinderNodes.first().evaluate(node => [...node.children].map(child => child.className)), ['node-upper', 'node-lower']);
+    const yearRailContract = await timelinePage.locator('.archive-cylinder').evaluate(viewport => {
+      const samples = selector => [...viewport.querySelector(selector).getAttribute('d').matchAll(/[ML]([\d.-]+),([\d.-]+)/g)].map(match => [+match[1], +match[2]]);
+      const upper = samples('.rail-path--upper');
+      const years = samples('.rail-year');
+      const posts = JSON.parse(decodeURIComponent(viewport.dataset.archiveNodes));
+      return {
+        expectedYears: [...new Set(posts.map(post => post.year))],
+        years: [...viewport.querySelectorAll('.year-node')].map(label => label.firstChild.textContent),
+        parallel: years.every((point, index) => point[0] === upper[index][0] && Math.abs(upper[index][1] - point[1] - 48) < 0.11),
+        centered: viewport.querySelector('.year-node.is-centered')?.style.transform,
+        dots: [...viewport.querySelectorAll('.timeline-node')].every(node => node.querySelectorAll('.ink-dot').length === 1 && node.querySelector('.ink-dot').parentElement.matches('.node-lower') && node.querySelector('.ink-dot').nextElementSibling.matches('.node-title') && !node.querySelector('.dock-joint')),
+        upperYears: [...viewport.querySelectorAll('.node-date')].filter(date => /[年月]/u.test(date.textContent)).length,
+        month: viewport.querySelector('.year-month')?.textContent,
+        yearStyle: (() => { const style = getComputedStyle(viewport.querySelector('.year-node.is-centered')); return { size: parseFloat(style.fontSize), weight: style.fontWeight, color: style.color, background: style.backgroundColor, shadow: style.boxShadow, paper: getComputedStyle(document.body).backgroundColor }; })(),
+        maxTitle: parseFloat(getComputedStyle(viewport).getPropertyValue('--max-title-h')),
+        titleStyles: [...viewport.querySelectorAll('.node-title')].map(title => {
+          const style = getComputedStyle(title);
+          return { orientation: style.textOrientation, align: style.textAlign, overflow: style.overflow, width: title.offsetWidth, height: title.offsetHeight, maxHeight: parseFloat(style.maxHeight), cols: [...title.children].map(col => ({text: col.textContent, top: col.offsetTop, left: col.offsetLeft, height: col.scrollHeight, whiteSpace: getComputedStyle(col).whiteSpace})) };
+        })
+      };
+    });
+    assert.deepEqual(yearRailContract.years, yearRailContract.expectedYears, 'year rail lists ordered distinct post years');
+    assert.ok(yearRailContract.parallel, 'year rail stays exactly 48px above the upper curve');
+    assert.ok(yearRailContract.centered.endsWith('rotate(0deg)'), 'center year is horizontal');
+    assert.ok(yearRailContract.dots, 'each title owns its only category dot, replacing the red joint');
+    assert.equal(yearRailContract.upperYears, 0, 'upper dates contain day and optional solar term only');
+    assert.equal(yearRailContract.month, '十月', 'the active month sits below the center year');
+    assert.equal(yearRailContract.yearStyle.weight, '600');
+    assert.equal(yearRailContract.yearStyle.color, 'rgb(36, 33, 28)');
+    assert.equal(yearRailContract.yearStyle.background, yearRailContract.yearStyle.paper, 'year text masks its rail with the existing paper color');
+    assert.notEqual(yearRailContract.yearStyle.shadow, 'none', 'paper clearance extends past the year text');
+    assert.ok(yearRailContract.yearStyle.size >= 23.2 && yearRailContract.yearStyle.size <= 29.61);
+    assert.ok(yearRailContract.maxTitle >= 220 && yearRailContract.maxTitle <= 240, 'waist reserves 220–240px for titles');
+    for (const style of yearRailContract.titleStyles) {
+      assert.equal(style.orientation, 'mixed');
+      assert.equal(style.align, 'start');
+      assert.equal(style.overflow, 'hidden');
+      assert.ok(style.width <= 64 && style.height <= style.maxHeight + 1, 'titles stay within the two-column budget');
+      assert.ok(style.cols.length >= 1 && style.cols.length <= 2, 'JS emits at most two explicit columns');
+      for (const col of style.cols) {
+        assert.equal(col.whiteSpace, 'nowrap', 'CSS never splits a word across columns');
+        assert.equal(col.top, 0, 'all columns align at their top edge');
+        assert.ok(col.height <= style.maxHeight, 'each measured column fits its height budget');
       }
-    }));
-    await timelinePage.setViewportSize({ width: 1440, height: 900 });
-    await openTimeline();
-    const rail = timelinePage.locator('[data-chrono-rail]');
-    assert.ok(await rail.evaluate(el => Math.abs(el.scrollLeft - (el.scrollWidth - el.clientWidth)) < 2), 'dense archive initially shows newest end');
-    const overlap = await rail.evaluate(el => [...el.querySelectorAll('.chrono__items')].some(list => {
-      const items = [...list.children].map(item => item.getBoundingClientRect());
-      return items.slice(1).some((rect, index) => rect.right > items[index].left + 1);
-    }));
-    assert.equal(overlap, false, 'long mixed-language titles wrap without overlapping adjacent columns');
-    assert.ok(await rail.evaluate(el => [...el.querySelectorAll('.chrono__entry')].every(entry => {
-      const range = document.createRange();
-      range.selectNodeContents(entry);
-      const glyphs = range.getBoundingClientRect();
-      const rect = entry.getBoundingClientRect();
-      return glyphs.left >= rect.left - 2 && glyphs.right <= rect.right + 2 && glyphs.bottom <= rect.bottom + 2;
-    })), 'actual title glyphs remain inside their columns');
-    assert.ok(await rail.evaluate(el => {
-      const svg = document.querySelector('.chrono__curve');
-      const axis = document.querySelector('.chrono__axis-line');
-      const bounds = svg.getBoundingClientRect();
-      const length = axis.getTotalLength();
-      return [...el.querySelectorAll('.chrono__dot')].every(dot => {
-        const rect = dot.getBoundingClientRect();
-        const x = rect.left + rect.width / 2 - bounds.left;
-        if (x < 0 || x > bounds.width) return true;
-        const point = axis.getPointAtLength(length * x / bounds.width);
-        return Math.abs(rect.top + rect.height / 2 - bounds.top - point.y) < 1;
-      });
-    }), 'visible date nodes stay on the arc within one pixel');
-    // 纸卷平面：题列不再做圆柱透视；边缘与中心同为可读墨色。
-    const planarSamples = await rail.evaluate(el => {
-      const bounds = el.getBoundingClientRect();
-      return [...el.querySelectorAll('.chrono__item')].map(item => {
-        const rect = item.getBoundingClientRect();
-        const css = getComputedStyle(item.querySelector('.chrono__entry'));
-        const matrix = new DOMMatrix(css.transform);
-        return {
-          distance: Math.abs(rect.left + rect.width / 2 - bounds.left - bounds.width / 2),
-          visible: rect.right > bounds.left && rect.left < bounds.right,
-          z: matrix.m43,
-          rotation: Math.abs(matrix.m13),
-          opacity: Number(css.opacity),
-          blur: parseFloat(String(css.filter).replace(/blur\(([^)]+)\).*/, '$1')) || 0
-        };
-      }).filter(item => item.visible).sort((a, b) => a.distance - b.distance);
-    });
-    assert.ok(planarSamples.length >= 2, 'planar archive still exposes multiple visible columns');
-    assert.ok(planarSamples.every(sample => Math.abs(sample.z) < 1 && sample.rotation < 0.01 && sample.blur < 0.05),
-      `planar paper scroll keeps columns unrotated and unblurred: ${JSON.stringify(planarSamples.slice(0, 3))}`);
-    await timelinePage.screenshot({ path: path.join(output, 'timeline-paper-scroll.png') });
-    const railBox = await rail.boundingBox();
-    await timelinePage.mouse.move(railBox.x + railBox.width / 2, railBox.y + 150);
-    const beforeWheel = await rail.evaluate(el => el.scrollLeft);
-    await timelinePage.mouse.wheel(0, 160);
-    await timelinePage.waitForTimeout(900);
-    assert.ok(await rail.evaluate((el, before) => el.scrollLeft < before - 100, beforeWheel), 'real wheel moves toward older entries');
-    await rail.focus();
-    await timelinePage.keyboard.press('End');
-    await timelinePage.waitForTimeout(1800);
-    assert.ok(await rail.evaluate(el => el.scrollLeft < 1), 'End reaches oldest end');
-    await timelinePage.keyboard.press('Home');
-    await timelinePage.waitForTimeout(1800);
-    assert.ok(await rail.evaluate(el => Math.abs(el.scrollLeft - (el.scrollWidth - el.clientWidth)) < 1), 'Home reaches newest end');
-    await rail.evaluate(el => { el.scrollLeft = (el.scrollWidth - el.clientWidth) * 0.5; });
-    await timelinePage.waitForTimeout(80);
-    const progressBefore = await rail.evaluate(el => el.scrollLeft / (el.scrollWidth - el.clientWidth));
-    await timelinePage.setViewportSize({ width: 1024, height: 480 });
-    await timelinePage.waitForTimeout(300);
-    assert.ok(await rail.evaluate((el, before) => Math.abs(el.scrollLeft / (el.scrollWidth - el.clientWidth) - before) < 0.01, progressBefore), 'resizing and title reflow preserve reading progress');
-    await timelinePage.screenshot({ path: path.join(output, 'timeline-dense-short.png') });
-    await timelinePage.setViewportSize({ width: 1440, height: 900 });
-    await timelinePage.waitForTimeout(300);
-    assert.ok(await rail.evaluate((el, before) => Math.abs(el.scrollLeft / (el.scrollWidth - el.clientWidth) - before) < 0.01, progressBefore), 'reverse resize also preserves reading progress');
-    await rail.evaluate(el => { el.scrollLeft = el.scrollWidth; });
-    await timelinePage.waitForTimeout(80);
-    await timelinePage.setViewportSize({ width: 1900, height: 900 });
-    await timelinePage.waitForTimeout(200);
-    assert.ok(await rail.evaluate(el => Math.abs(el.scrollLeft - (el.scrollWidth - el.clientWidth)) < 2), 'newest endpoint stays pinned when viewport widens');
-    await timelinePage.setViewportSize({ width: 1440, height: 900 });
-    await timelinePage.waitForTimeout(200);
-    await rail.evaluate(el => { el.scrollLeft = (el.scrollWidth - el.clientWidth) * 0.5; });
-    const box = await rail.boundingBox();
-    await timelinePage.mouse.move(box.x + box.width * 0.6, box.y + 140);
-    const dragStart = await rail.evaluate(el => el.scrollLeft);
-    await timelinePage.mouse.down();
-    await timelinePage.mouse.move(box.x + box.width * 0.65, box.y + 140, { steps: 3 });
-    assert.equal(await rail.evaluate(el => el.hasPointerCapture(1)), true, 'drag captures pointer after threshold');
-    await timelinePage.mouse.move(box.x + box.width + 15, box.y + 140, { steps: 8 });
-    await timelinePage.mouse.up();
-    assert.ok(await rail.evaluate((el, start) => el.scrollLeft < start - 200, dragStart), 'drag continues outside rail bounds');
-    assert.equal(await rail.evaluate(el => el.classList.contains('is-dragging')), false, 'drag state clears on release');
-    assert.ok(timelinePage.url().includes('/archives/'), 'drag never navigates an article link');
-    await timelinePage.locator('[data-cat-filter="ci"]').click();
-    assert.equal(await timelinePage.locator('.chrono__item:not(.is-dimmed)').count(), 12, 'filter preserves matching entries across years');
-    await timelinePage.locator('[data-cat-filter="project"]').click();
-    assert.ok(await timelinePage.locator('.chrono').isHidden(), 'empty category hides entire axis');
-    assert.ok(await timelinePage.locator('[data-archive-empty]').isVisible(), 'empty result remains readable');
-    assert.ok(await timelinePage.locator('.archive-legend').evaluate(el => Math.abs(el.getBoundingClientRect().top - document.querySelector('.archive-head').getBoundingClientRect().bottom) < 2), 'empty filter preserves dock instead of collapsing back to cover');
-    await timelinePage.locator('[data-cat-filter="project"]').click();
-    await timelinePage.waitForTimeout(100);
-    assert.equal(await timelinePage.locator('.chrono__item:not(.is-dimmed)').count(), 30, 'restore shows all years and columns');
-    assert.ok(await rail.evaluate(el => Math.abs(el.scrollLeft - (el.scrollWidth - el.clientWidth)) < 2), 'filter restore aligns newest end after reflow');
-    await timelinePage.screenshot({ path: path.join(output, 'timeline-dense-restored.png') });
-    const modes = await rail.evaluate(el => {
-      el.scrollLeft = el.scrollWidth;
-      const lineStart = el.scrollLeft;
-      const lineEvent = new WheelEvent('wheel', { deltaY: 3, deltaMode: 1, cancelable: true });
-      const consumed = !el.dispatchEvent(lineEvent);
-      return { consumed, lineStart };
-    });
-    await timelinePage.waitForTimeout(900);
-    assert.ok(modes.consumed && await rail.evaluate((el, start) => el.scrollLeft < start - 30, modes.lineStart), 'line-mode wheel uses line height instead of treating lines as pixels');
-    await rail.evaluate(el => el.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, deltaMode: 2, cancelable: true })));
-    await timelinePage.waitForTimeout(80);
-    await timelinePage.emulateMedia({ reducedMotion: 'reduce' });
-    await timelinePage.waitForTimeout(200);
-    assert.equal(await rail.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).transform), 'none', 'reduced motion disables timeline perspective');
-    const reducedPosition = await rail.evaluate(el => el.scrollLeft);
-    await timelinePage.waitForTimeout(350);
-    assert.equal(await rail.evaluate(el => el.scrollLeft), reducedPosition, 'motion preference change settles pending glide');
-    await timelinePage.emulateMedia({ reducedMotion: 'no-preference' });
-    await openTimeline();
-    await rail.evaluate(el => { el.scrollLeft = 50; });
-    await timelinePage.waitForTimeout(80);
-    const boundary = await rail.evaluate(el => {
-      el.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }));
-      const next = new WheelEvent('wheel', { deltaY: 100, cancelable: true });
-      el.dispatchEvent(next);
-      return next.defaultPrevented;
-    });
-    assert.ok(boundary, 'page scrolling waits for remaining horizontal travel at endpoint');
-    await timelinePage.waitForTimeout(1100);
-    assert.equal(await rail.evaluate(el => el.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }))), true, 'settled endpoint releases vertical scroll');
-    const focusedEntry = rail.locator('.chrono__entry').first();
-    await focusedEntry.focus();
-    assert.ok(await focusedEntry.evaluate(el => {
-      const rect = el.getBoundingClientRect();
-      const bounds = el.closest('.chrono__rail').getBoundingClientRect();
-      return rect.left >= bounds.left + bounds.width * 0.03 && rect.right <= bounds.right - bounds.width * 0.03;
-    }), 'keyboard focus reveals whole title outside edge fade');
-    await focusedEntry.evaluate(el => el.addEventListener('click', event => {
-      el.dataset.clickPrevented = String(event.defaultPrevented);
-      event.preventDefault();
-    }, { once: true }));
-    await focusedEntry.click();
-    assert.equal(await focusedEntry.getAttribute('data-click-prevented'), 'false', 'ordinary link click still works after a drag');
-    for (const width of [360, 390, 768]) {
-      await timelinePage.setViewportSize({ width, height: 900 });
-      await timelinePage.waitForTimeout(150);
-      assert.ok(await timelinePage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `dense archive at ${width}: no page overflow`);
-      assert.equal(await rail.locator('.chrono__entry').first().evaluate(el => getComputedStyle(el).transform), 'none', `dense archive at ${width}: narrow layout stays flat`);
-      await timelinePage.screenshot({ path: path.join(output, `timeline-dense-${width}.png`), fullPage: true });
+      if (style.cols.length === 2) assert.ok(style.cols[0].left > style.cols[1].left, 'columns run from right to left');
     }
-    assert.deepEqual(timelineErrors, [], 'timeline has no script or ResizeObserver errors');
+    await timelinePage.locator('[data-cat-filter="essay"]').click();
+    await timelinePage.waitForTimeout(900);
+    await timelinePage.locator('.archive-cylinder').evaluate(async viewport => {
+      for (let frame = 0; frame < 12; frame++) {
+        viewport.dispatchEvent(new WheelEvent('wheel', { deltaY: 600, cancelable: true, bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 16));
+      }
+    });
+    await timelinePage.waitForTimeout(900);
+    assert.equal(await timelinePage.locator('.timeline-node.is-centered').getAttribute('data-cat'), 'essay', 'filtered wheel remains on a visible article at the trailing edge');
+    assert.equal(await timelinePage.locator('.archive-cylinder').getAttribute('data-active-index'), '1', 'filtered timeline clamps to its own final article');
+    await timelinePage.locator('[data-cat-filter="essay"]').click();
+    await timelinePage.waitForTimeout(900);
+    await timelinePage.locator('.archive-cylinder').evaluate(async viewport => {
+      for (let frame = 0; frame < 12; frame++) {
+        viewport.dispatchEvent(new WheelEvent('wheel', { deltaY: 600, cancelable: true, bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 16));
+      }
+    });
+    await timelinePage.waitForTimeout(900);
+    assert.equal(await timelinePage.locator('.archive-cylinder').getAttribute('data-active-index'), '1', 'continuous wheel inertia advances at most one article before snapping');
+    const stationaryYearTransform = await timelinePage.locator('.year-node.is-centered').getAttribute('style');
+    const viewportMetrics = await timelinePage.locator('.archive-cylinder').evaluate(el => ({
+      bg: getComputedStyle(el).backgroundColor,
+      mask: getComputedStyle(el).maskImage,
+      maskWebkit: getComputedStyle(el).webkitMaskImage,
+      pageOverflow: document.documentElement.scrollWidth > innerWidth + 1
+    }));
+    assert.equal(viewportMetrics.bg, 'rgba(0, 0, 0, 0)');
+    assert.ok(viewportMetrics.mask.includes('linear-gradient') && viewportMetrics.maskWebkit.includes('linear-gradient'));
+    assert.equal(viewportMetrics.pageOverflow, false);
+    const initialTitle = await cylinderNodes.nth(0).locator('.node-title').textContent();
+    await cylinderNodes.nth(2).click();
+    await cylinderNodes.nth(2).waitFor({ state: 'visible' });
+    await timelinePage.waitForFunction(() => document.querySelectorAll('.timeline-node')[2]?.dataset.centered === 'true', null, { timeout: 5000 });
+    assert.equal(await cylinderNodes.nth(2).getAttribute('data-centered'), 'true', 'clicking another node Lerp-docks it at center');
+    assert.equal(await timelinePage.locator('.year-node.is-centered').getAttribute('style'), stationaryYearTransform, 'moving between articles in one year leaves the year rail stationary');
+    const centeredHref = await cylinderNodes.nth(2).evaluate((node, title) => {
+      const data = JSON.parse(decodeURIComponent(document.querySelector('.archive-cylinder').dataset.archiveNodes));
+      return data.find(item => item.title === title).href;
+    }, await cylinderNodes.nth(2).locator('.node-title').textContent());
+    await cylinderNodes.nth(2).click();
+    await timelinePage.waitForURL(url => url.pathname === centeredHref);
+    assert.equal(new URL(timelinePage.url()).pathname, centeredHref, 'clicking centered article follows Hexo url_for path');
+    assert.notEqual(initialTitle, '', 'archive article title is mapped into the node');
+    assert.deepEqual(timelineErrors, [], 'cylinder archive has no runtime or ResizeObserver errors');
     await timelineContext.close();
-    console.log('PASS archive timeline: short-window geometry, cross-year long titles, wheel, keyboard, pointer capture, filtering and resize'); checks++;
+    console.log('PASS archive cylinder runtime: transparent viewport, DOM layers, Lerp docking and Hexo article navigation'); checks++;
     const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 900 }, reducedMotion: 'reduce' });
     const staticPage = await staticContext.newPage();
     for (const [name, route] of pages) {

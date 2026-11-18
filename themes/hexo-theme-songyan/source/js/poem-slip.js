@@ -123,7 +123,7 @@ function collectPoemSlipData() {
   const watermark = document.querySelector('.poem-slip__watermark');
   const authorEl = document.querySelector('.post-signature__author');
   const dateEl = document.querySelector('.post-signature__mark time, .post-signature__meta time, .reading-mast__meta time');
-  const lineEls = document.querySelectorAll('.post-ci__body-horizontal .post-ci__line, .post-ci__body-horizontal > p');
+  const lineEls = document.querySelectorAll('.post-ci__body-horizontal .post-ci__line, .post-ci__body-horizontal > .post-ci__verses > p');
 
   const titleText = title ? title.textContent.trim() : '';
   const sepIndex = titleText.indexOf('·');

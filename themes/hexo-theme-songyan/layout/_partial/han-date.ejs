@@ -7,7 +7,10 @@
   var hanYear = date(value, 'YYYY').split('').map(function (n) { return hanDigits[Number(n)]; }).join('') + theme.labels.year;
   var hanMonth = hanNumber(Number(date(value, 'M'))) + theme.labels.month;
   var hanDay = hanMonth + hanNumber(Number(date(value, 'D'))) + theme.labels.day;
-  var text = typeof compact !== 'undefined' && compact
-    ? hanYear + ' ' + hanMonth
-    : (typeof withYear !== 'undefined' && withYear === false ? '' : hanYear) + hanDay;
+  var part = typeof part !== 'undefined' ? part : null;
+  var text;
+  if (part === 'month') text = hanMonth;
+  else if (part === 'day') text = hanNumber(Number(date(value, 'D')));
+  else if (typeof compact !== 'undefined' && compact) text = hanYear + ' ' + hanMonth;
+  else text = (typeof withYear !== 'undefined' && withYear === false ? '' : hanYear) + hanDay;
 %><%= text %>
